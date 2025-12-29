@@ -1,0 +1,40 @@
+import styled from "styled-components";
+
+const Container = styled.div`
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  gap: 5px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
+
+const Button = styled.button<{ $selected?: boolean }>`
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: ${(props) => (props.$selected ? "#e0dfff" : "transparent")};
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+`;
+
+const ToolBar = () => {
+  return (
+    <Container>
+      <Button $selected={true}>✏️</Button>
+      <Button>🧹</Button>
+      <Button>✋</Button>
+    </Container>
+  );
+};
+
+export default ToolBar;
