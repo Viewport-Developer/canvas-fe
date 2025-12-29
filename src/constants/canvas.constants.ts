@@ -1,0 +1,13 @@
+// src/constants/canvas.constants.ts
+export const CANVAS_CONFIG = {
+  MIN_ZOOM: 0.2,
+  MAX_ZOOM: 5,
+
+  ZOOM_DELTA_IN: 1.2,
+  ZOOM_DELTA_OUT: 0.8,
+
+  DRAW_THROTTLE_MS: 16,
+  MIN_POINT_DISTANCE: 2,
+
+  ERASER_RADIUS: 16,
+} as const;
