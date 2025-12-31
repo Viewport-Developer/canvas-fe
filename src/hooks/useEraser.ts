@@ -2,14 +2,18 @@ import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import { isInEraserRange } from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
+import { useHistoryStore } from "../store/historyStore";
 import { useState } from "react";
 
 export const useEraser = () => {
-  const paths = useCanvasStore((state) => state.paths);
-  const removePaths = useCanvasStore((state) => state.removePaths);
-  const pathsToErase = useCanvasStore((state) => state.pathsToErase);
-  const clearPathsToErase = useCanvasStore((state) => state.clearPathsToErase);
-  const addPathToErase = useCanvasStore((state) => state.addPathToErase);
+  const {
+    paths,
+    removePaths,
+    pathsToErase,
+    clearPathsToErase,
+    addPathToErase,
+  } = useCanvasStore();
+  const { saveHistory } = useHistoryStore();
 
   const [isErasing, setIsErasing] = useState(false);
 
@@ -25,7 +29,7 @@ export const useEraser = () => {
       const hasCollision = path.points.some((pathPoint) =>
         isInEraserRange(pathPoint, point, totalRadius)
       );
-      console.log(path.id, hasCollision);
+
       if (hasCollision) {
         addPathToErase(path.id);
       }
@@ -44,8 +48,11 @@ export const useEraser = () => {
 
   const stopErasing = () => {
     setIsErasing(false);
-    removePaths(pathsToErase);
-    clearPathsToErase();
+    if (pathsToErase.length > 0) {
+      removePaths(pathsToErase);
+      clearPathsToErase();
+      saveHistory();
+    }
   };
 
   return {

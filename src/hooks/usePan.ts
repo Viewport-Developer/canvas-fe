@@ -2,13 +2,12 @@ import { useState } from "react";
 import type { Point } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useToolStore } from "../store/toolStore";
+import { useHistoryStore } from "../store/historyStore";
 
 export const usePan = () => {
-  const setIsPanning = useToolStore((state) => state.setIsPanning);
-
-  const zoom = useCanvasStore((state) => state.zoom);
-  const pan = useCanvasStore((state) => state.pan);
-  const setPan = useCanvasStore((state) => state.setPan);
+  const { setIsPanning } = useToolStore();
+  const { zoom, pan, setPan } = useCanvasStore();
+  const { saveHistory } = useHistoryStore();
 
   const [panStart, setPanStart] = useState<Point | null>(null);
 
@@ -37,6 +36,7 @@ export const usePan = () => {
   const stopPanning = () => {
     setPanStart(null);
     setIsPanning(false);
+    saveHistory();
   };
 
   return {

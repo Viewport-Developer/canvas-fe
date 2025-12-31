@@ -7,16 +7,14 @@ import {
   restoreCanvas,
 } from "../utils/canvas.utils";
 import { useCanvasStore } from "../store/canvasStore";
+import { useHistoryStore } from "../store/historyStore";
 
 export const useCanvas = (
   canvasRef: RefObject<HTMLCanvasElement | null>,
   containerRef: RefObject<HTMLDivElement | null>
 ) => {
-  const paths = useCanvasStore((state) => state.paths);
-  const currentPath = useCanvasStore((state) => state.currentPath);
-  const pathsToErase = useCanvasStore((state) => state.pathsToErase);
-  const zoom = useCanvasStore((state) => state.zoom);
-  const pan = useCanvasStore((state) => state.pan);
+  const { paths, currentPath, pathsToErase, zoom, pan } = useCanvasStore();
+  const { saveHistory } = useHistoryStore();
 
   const redraw = () => {
     const canvas = canvasRef.current;
@@ -37,6 +35,10 @@ export const useCanvas = (
 
     restoreCanvas(ctx);
   };
+
+  useEffect(() => {
+    saveHistory();
+  }, []);
 
   useEffect(() => {
     const updateSize = () => {

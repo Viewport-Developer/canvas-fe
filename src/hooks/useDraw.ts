@@ -3,14 +3,12 @@ import type { Point, Path } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import { calculateDistance } from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
+import { useHistoryStore } from "../store/historyStore";
 
 export const useDraw = () => {
-  const addPath = useCanvasStore((state) => state.addPath);
-  const currentPath = useCanvasStore((state) => state.currentPath);
-  const setCurrentPath = useCanvasStore((state) => state.setCurrentPath);
-  const addCurrentPathPoint = useCanvasStore(
-    (state) => state.addCurrentPathPoint
-  );
+  const { addPath, currentPath, setCurrentPath, addCurrentPathPoint } =
+    useCanvasStore();
+  const { saveHistory } = useHistoryStore();
 
   const [lastPoint, setLastPoint] = useState<Point | null>(null);
   const [lastTime, setLastTime] = useState(0);
@@ -41,7 +39,6 @@ export const useDraw = () => {
 
     setLastTime(now);
     setLastPoint(point);
-
     addCurrentPathPoint(point);
   };
 
@@ -51,6 +48,7 @@ export const useDraw = () => {
     addPath(currentPath);
     setCurrentPath(null);
     setLastPoint(null);
+    saveHistory();
   };
 
   return {

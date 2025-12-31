@@ -4,10 +4,7 @@ import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import { useCanvasStore } from "../store/canvasStore";
 
 export const useZoom = (canvasRef: RefObject<HTMLCanvasElement | null>) => {
-  const zoom = useCanvasStore((state) => state.zoom);
-  const setZoom = useCanvasStore((state) => state.setZoom);
-  const pan = useCanvasStore((state) => state.pan);
-  const setPan = useCanvasStore((state) => state.setPan);
+  const { zoom, setZoom, pan, setPan } = useCanvasStore();
 
   useEffect(() => {
     const canvas = canvasRef.current;

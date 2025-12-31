@@ -9,4 +9,6 @@ export const CANVAS_CONFIG = {
   MIN_POINT_DISTANCE: 2,
 
   ERASER_RADIUS: 32,
+
+  MAX_STACK_SIZE: 50,
 } as const;
