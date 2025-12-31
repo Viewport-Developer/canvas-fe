@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useToolStore } from "../store/toolStore";
 
 const Container = styled.div`
   position: fixed;
@@ -11,6 +12,7 @@ const Container = styled.div`
   padding: 5px;
   gap: 5px;
   border-radius: 6px;
+  background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
@@ -28,11 +30,20 @@ const Button = styled.button<{ $selected?: boolean }>`
 `;
 
 const ToolBar = () => {
+  const tool = useToolStore((state) => state.tool);
+  const setTool = useToolStore((state) => state.setTool);
+
   return (
     <Container>
-      <Button $selected={true}>✏️</Button>
-      <Button>🧹</Button>
-      <Button>✋</Button>
+      <Button onClick={() => setTool("draw")} $selected={tool === "draw"}>
+        ✏️
+      </Button>
+      <Button onClick={() => setTool("eraser")} $selected={tool === "eraser"}>
+        🧹
+      </Button>
+      <Button onClick={() => setTool("pan")} $selected={tool === "pan"}>
+        ✋
+      </Button>
     </Container>
   );
 };

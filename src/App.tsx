@@ -3,9 +3,10 @@ import styled from "styled-components";
 import ToolBar from "./components/ToolBar";
 import Canvas from "./components/Canvas";
 
-const Container = styled.div`
+const Container = styled.main`
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  overflow: hidden;
 `;
 
 function App() {
@@ -13,8 +14,8 @@ function App() {
 
   return (
     <Container ref={containerRef}>
-      <ToolBar></ToolBar>
-      <Canvas></Canvas>
+      <ToolBar />
+      <Canvas containerRef={containerRef} />
     </Container>
   );
 }
