@@ -30,8 +30,7 @@ const Button = styled.button<{ $selected?: boolean }>`
 `;
 
 const ToolBar = () => {
-  const tool = useToolStore((state) => state.tool);
-  const setTool = useToolStore((state) => state.setTool);
+  const { tool, setTool } = useToolStore();
 
   return (
     <Container>

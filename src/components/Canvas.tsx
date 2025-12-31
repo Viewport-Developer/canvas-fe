@@ -1,4 +1,4 @@
-import { useRef, type RefObject } from "react";
+import { useRef, useEffect, type RefObject } from "react";
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
 import { useDraw } from "../hooks/useDraw";
@@ -6,6 +6,7 @@ import { useEraser } from "../hooks/useEraser";
 import { usePan } from "../hooks/usePan";
 import type { Point } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
+import { useHistoryStore } from "../store/historyStore";
 import { useCanvas } from "../hooks/useCanvas";
 import { useZoom } from "../hooks/useZoom";
 
@@ -33,11 +34,9 @@ const Container = styled.canvas<ContainerProps>`
 `;
 
 const Canvas = ({ containerRef }: CanvasProps) => {
-  const tool = useToolStore((state) => state.tool);
-  const isPanning = useToolStore((state) => state.isPanning);
-
-  const zoom = useCanvasStore((state) => state.zoom);
-  const pan = useCanvasStore((state) => state.pan);
+  const { tool, isPanning } = useToolStore();
+  const { zoom, pan } = useCanvasStore();
+  const { canUndo, undo, canRedo, redo } = useHistoryStore();
 
   const { startDrawing, draw, stopDrawing } = useDraw();
   const { startErasing, erase, stopErasing } = useEraser();
@@ -81,13 +80,34 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "eraser") stopErasing();
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "z") {
+        e.preventDefault();
+        if (canUndo()) {
+          undo();
+        }
+      }
+      if (e.ctrlKey && e.key === "y") {
+        e.preventDefault();
+        if (canRedo()) {
+          redo();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <Container
       ref={canvasRef}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       $tool={tool}
       $isPanning={isPanning}
     />
