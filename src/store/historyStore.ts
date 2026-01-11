@@ -1,19 +1,21 @@
 import { create } from "zustand";
-import type { Path, Point } from "../types";
+import type {
+  HistoryAction,
+  DrawAction,
+  EraseAction,
+  PanAction,
+  Point,
+} from "../types";
 import { useCanvasStore } from "./canvasStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
-export interface CanvasSnapshot {
-  paths: Path[];
-  zoom: number;
-  pan: Point;
-}
-
 interface HistoryStore {
-  undoStack: CanvasSnapshot[];
-  redoStack: CanvasSnapshot[];
+  undoStack: HistoryAction[];
+  redoStack: HistoryAction[];
 
-  saveHistory: () => void;
+  saveDrawAction: (path: DrawAction["path"]) => void;
+  saveEraseAction: (paths: EraseAction["paths"]) => void;
+  savePanAction: (previousPan: Point, newPan: Point) => void;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
@@ -24,22 +26,63 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
   undoStack: [],
   redoStack: [],
 
-  saveHistory: () => {
-    const canvasState = useCanvasStore.getState();
-    const currentSnapshot: CanvasSnapshot = {
-      paths: [...canvasState.paths],
-      zoom: canvasState.zoom,
-      pan: { ...canvasState.pan },
+  saveDrawAction: (path) => {
+    const action: DrawAction = {
+      type: "draw",
+      path,
     };
 
     set((prevState) => {
-      const newUndoStack = [...prevState.undoStack, currentSnapshot];
+      const newUndoStack = [...prevState.undoStack, action];
 
       const trimmedUndoStack =
         newUndoStack.length > CANVAS_CONFIG.MAX_STACK_SIZE
           ? newUndoStack.slice(-CANVAS_CONFIG.MAX_STACK_SIZE)
           : newUndoStack;
-      console.log(trimmedUndoStack);
+
+      return {
+        undoStack: trimmedUndoStack,
+        redoStack: [],
+      };
+    });
+  },
+
+  saveEraseAction: (paths) => {
+    const action: EraseAction = {
+      type: "erase",
+      paths: paths.map((path) => ({ ...path })),
+    };
+
+    set((prevState) => {
+      const newUndoStack = [...prevState.undoStack, action];
+
+      const trimmedUndoStack =
+        newUndoStack.length > CANVAS_CONFIG.MAX_STACK_SIZE
+          ? newUndoStack.slice(-CANVAS_CONFIG.MAX_STACK_SIZE)
+          : newUndoStack;
+
+      return {
+        undoStack: trimmedUndoStack,
+        redoStack: [],
+      };
+    });
+  },
+
+  savePanAction: (previousPan, newPan) => {
+    const action: PanAction = {
+      type: "pan",
+      previousPan: { ...previousPan },
+      newPan: { ...newPan },
+    };
+
+    set((prevState) => {
+      const newUndoStack = [...prevState.undoStack, action];
+
+      const trimmedUndoStack =
+        newUndoStack.length > CANVAS_CONFIG.MAX_STACK_SIZE
+          ? newUndoStack.slice(-CANVAS_CONFIG.MAX_STACK_SIZE)
+          : newUndoStack;
+
       return {
         undoStack: trimmedUndoStack,
         redoStack: [],
@@ -49,44 +92,51 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
 
   undo: () => {
     const state = get();
+    if (state.undoStack.length === 0) return;
 
-    const previousSnapshot = state.undoStack[state.undoStack.length - 2];
-    const currentSnapshot = state.undoStack[state.undoStack.length - 1];
-
+    const lastAction = state.undoStack[state.undoStack.length - 1];
     const canvasStore = useCanvasStore.getState();
-    canvasStore.setPaths(previousSnapshot.paths);
-    canvasStore.setZoom(previousSnapshot.zoom);
-    canvasStore.setPan(previousSnapshot.pan);
+
+    if (lastAction.type === "draw") {
+      canvasStore.removePaths([lastAction.path.id]);
+    } else if (lastAction.type === "erase") {
+      lastAction.paths.forEach((path) => {
+        canvasStore.addPath(path);
+      });
+    } else if (lastAction.type === "pan") {
+      canvasStore.setPan(lastAction.previousPan);
+    }
 
     set({
       undoStack: state.undoStack.slice(0, -1),
-      redoStack: [...state.redoStack, currentSnapshot],
+      redoStack: [...state.redoStack, lastAction],
     });
   },
 
   redo: () => {
     const state = get();
+    if (state.redoStack.length === 0) return;
 
+    const nextAction = state.redoStack[state.redoStack.length - 1];
     const canvasStore = useCanvasStore.getState();
-    const nextSnapshot = state.redoStack[state.redoStack.length - 1];
-    const currentSnapshot: CanvasSnapshot = {
-      paths: [...canvasStore.paths],
-      zoom: canvasStore.zoom,
-      pan: { ...canvasStore.pan },
-    };
 
-    canvasStore.setPaths(nextSnapshot.paths);
-    canvasStore.setZoom(nextSnapshot.zoom);
-    canvasStore.setPan(nextSnapshot.pan);
+    if (nextAction.type === "draw") {
+      canvasStore.addPath(nextAction.path);
+    } else if (nextAction.type === "erase") {
+      const pathIds = nextAction.paths.map((path) => path.id);
+      canvasStore.removePaths(pathIds);
+    } else if (nextAction.type === "pan") {
+      canvasStore.setPan(nextAction.newPan);
+    }
 
     set({
-      undoStack: [...state.undoStack, currentSnapshot],
+      undoStack: [...state.undoStack, nextAction],
       redoStack: state.redoStack.slice(0, -1),
     });
   },
 
   canUndo: () => {
-    return get().undoStack.length > 1;
+    return get().undoStack.length > 0;
   },
 
   canRedo: () => {

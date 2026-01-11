@@ -8,7 +8,7 @@ import { useHistoryStore } from "../store/historyStore";
 export const useDraw = () => {
   const { addPath, currentPath, setCurrentPath, addCurrentPathPoint } =
     useCanvasStore();
-  const { saveHistory } = useHistoryStore();
+  const { saveDrawAction } = useHistoryStore();
 
   const [lastPoint, setLastPoint] = useState<Point | null>(null);
   const [lastTime, setLastTime] = useState(0);
@@ -46,9 +46,9 @@ export const useDraw = () => {
     if (!currentPath) return;
 
     addPath(currentPath);
+    saveDrawAction(currentPath);
     setCurrentPath(null);
     setLastPoint(null);
-    saveHistory();
   };
 
   return {

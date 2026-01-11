@@ -13,7 +13,7 @@ export const useEraser = () => {
     clearPathsToErase,
     addPathToErase,
   } = useCanvasStore();
-  const { saveHistory } = useHistoryStore();
+  const { saveEraseAction } = useHistoryStore();
 
   const [isErasing, setIsErasing] = useState(false);
 
@@ -49,9 +49,12 @@ export const useEraser = () => {
   const stopErasing = () => {
     setIsErasing(false);
     if (pathsToErase.length > 0) {
+      const pathsToEraseData = paths.filter((path) =>
+        pathsToErase.includes(path.id)
+      );
       removePaths(pathsToErase);
+      saveEraseAction(pathsToEraseData);
       clearPathsToErase();
-      saveHistory();
     }
   };
 

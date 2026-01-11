@@ -7,12 +7,14 @@ import { useHistoryStore } from "../store/historyStore";
 export const usePan = () => {
   const { setIsPanning } = useToolStore();
   const { zoom, pan, setPan } = useCanvasStore();
-  const { saveHistory } = useHistoryStore();
+  const { savePanAction } = useHistoryStore();
 
   const [panStart, setPanStart] = useState<Point | null>(null);
+  const [initialPan, setInitialPan] = useState<Point | null>(null);
 
   const startPanning = (e: React.MouseEvent) => {
     setPanStart({ x: e.clientX, y: e.clientY });
+    setInitialPan({ ...pan });
     setIsPanning(true);
   };
 
@@ -34,9 +36,17 @@ export const usePan = () => {
   };
 
   const stopPanning = () => {
+    if (initialPan !== null) {
+      const panChanged = initialPan.x !== pan.x || initialPan.y !== pan.y;
+
+      if (panChanged) {
+        savePanAction(initialPan, pan);
+      }
+    }
+
     setPanStart(null);
+    setInitialPan(null);
     setIsPanning(false);
-    saveHistory();
   };
 
   return {

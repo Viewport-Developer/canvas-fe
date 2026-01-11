@@ -8,7 +8,7 @@ export const CANVAS_CONFIG = {
   DRAW_THROTTLE_MS: 16,
   MIN_POINT_DISTANCE: 2,
 
-  ERASER_RADIUS: 32,
+  ERASER_RADIUS: 24,
 
   MAX_STACK_SIZE: 50,
 } as const;
