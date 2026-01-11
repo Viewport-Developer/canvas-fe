@@ -3,6 +3,8 @@ import {
   clearCanvas,
   drawAllPaths,
   drawPath,
+  drawAllShapes,
+  drawShape,
   applyCanvasZoom,
   restoreCanvas,
 } from "../utils/canvas.utils";
@@ -13,7 +15,8 @@ export const useCanvas = (
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   containerRef: RefObject<HTMLDivElement | null>
 ) => {
-  const { paths, currentPath, pathsToErase, zoom, pan } = useCanvasStore();
+  const { paths, currentPath, shapes, currentShape, pathsToErase, zoom, pan } =
+    useCanvasStore();
 
   const redrawBackground = () => {
     const canvas = backgroundCanvasRef.current;
@@ -27,6 +30,7 @@ export const useCanvas = (
     applyCanvasZoom(ctx, zoom, pan.x, pan.y);
 
     drawAllPaths(ctx, paths, pathsToErase);
+    drawAllShapes(ctx, shapes, pathsToErase);
 
     restoreCanvas(ctx);
   };
@@ -40,9 +44,14 @@ export const useCanvas = (
 
     clearCanvas(ctx, canvas.width, canvas.height);
 
-    if (currentPath) {
+    if (currentPath || currentShape) {
       applyCanvasZoom(ctx, zoom, pan.x, pan.y);
-      drawPath(ctx, currentPath, false);
+      if (currentPath) {
+        drawPath(ctx, currentPath, false);
+      }
+      if (currentShape) {
+        drawShape(ctx, currentShape, false);
+      }
       restoreCanvas(ctx);
     }
   };
@@ -74,9 +83,9 @@ export const useCanvas = (
 
   useEffect(() => {
     redrawBackground();
-  }, [paths, pathsToErase, zoom, pan]);
+  }, [paths, shapes, pathsToErase, zoom, pan]);
 
   useEffect(() => {
     redrawForeground();
-  }, [currentPath]);
+  }, [currentPath, currentShape]);
 };

@@ -1,9 +1,11 @@
 import { create } from "zustand";
-import type { Point, Path } from "../types";
+import type { Point, Path, Shape } from "../types";
 
 interface CanvasStore {
   paths: Path[];
   currentPath: Path | null;
+  shapes: Shape[];
+  currentShape: Shape | null;
   pathsToErase: string[];
   zoom: number;
   pan: Point;
@@ -15,6 +17,13 @@ interface CanvasStore {
   setCurrentPath: (path: Path | null) => void;
   addCurrentPathPoint: (point: Point) => void;
 
+  setShapes: (shapes: Shape[]) => void;
+  addShape: (shape: Shape) => void;
+  removeShapes: (ids: string[]) => void;
+
+  setCurrentShape: (shape: Shape | null) => void;
+  updateCurrentShape: (endPoint: Point) => void;
+
   clearPathsToErase: () => void;
   addPathToErase: (id: string) => void;
 
@@ -25,6 +34,8 @@ interface CanvasStore {
 export const useCanvasStore = create<CanvasStore>((set) => ({
   paths: [],
   currentPath: null,
+  shapes: [],
+  currentShape: null,
   pathsToErase: [],
   zoom: 1,
   pan: { x: 0, y: 0 },
@@ -43,6 +54,26 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
         currentPath: {
           ...state.currentPath,
           points: [...state.currentPath.points, point],
+        },
+      };
+    }),
+
+  setShapes: (shapes) => set({ shapes }),
+  addShape: (shape) => set((state) => ({ shapes: [...state.shapes, shape] })),
+  removeShapes: (ids) =>
+    set((state) => ({
+      shapes: state.shapes.filter((v) => !ids.includes(v.id)),
+    })),
+
+  setCurrentShape: (currentShape) => set({ currentShape }),
+  updateCurrentShape: (endPoint) =>
+    set((state) => {
+      if (!state.currentShape) return state;
+
+      return {
+        currentShape: {
+          ...state.currentShape,
+          endPoint,
         },
       };
     }),

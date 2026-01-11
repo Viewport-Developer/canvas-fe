@@ -34,4 +34,21 @@ export type PanAction = {
   newPan: Point;
 };
 
-export type HistoryAction = DrawAction | EraseAction | PanAction;
+export type ShapeType = "rectangle" | "triangle" | "circle";
+
+export type Shape = {
+  id: string;
+  type: ShapeType;
+  startPoint: Point;
+  endPoint: Point;
+  color: string;
+  width: number;
+  boundingBox: BoundingBox;
+};
+
+export type ShapeAction = {
+  type: "shape";
+  shape: Shape;
+};
+
+export type HistoryAction = DrawAction | EraseAction | PanAction | ShapeAction;

@@ -4,6 +4,7 @@ import { useToolStore } from "../store/toolStore";
 import { useDraw } from "../hooks/useDraw";
 import { useEraser } from "../hooks/useEraser";
 import { usePan } from "../hooks/usePan";
+import { useShape } from "../hooks/useShape";
 import type { Point } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -15,7 +16,7 @@ type CanvasProps = {
 };
 
 type ContainerProps = {
-  $tool: "draw" | "eraser" | "pan";
+  $tool: "draw" | "eraser" | "pan" | "rectangle" | "triangle" | "circle";
   $isPanning: boolean;
 };
 
@@ -44,12 +45,17 @@ const CanvasLayer = styled.canvas<ContainerProps>`
 
 const Canvas = ({ containerRef }: CanvasProps) => {
   const { tool, isPanning } = useToolStore();
-  const { zoom, pan, currentPath } = useCanvasStore();
+  const { zoom, pan, currentPath, currentShape } = useCanvasStore();
   const { canUndo, undo, canRedo, redo } = useHistoryStore();
 
   const { startDrawing, draw, stopDrawing } = useDraw();
   const { startErasing, erase, stopErasing } = useEraser();
   const { startPanning, doPanning, stopPanning } = usePan();
+  const {
+    startDrawing: startShapeDrawing,
+    draw: drawShape,
+    stopDrawing: stopShapeDrawing,
+  } = useShape();
 
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -58,9 +64,10 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   useZoom(backgroundCanvasRef);
 
   const getMousePos = (e: React.MouseEvent): Point => {
-    const canvas = currentPath
-      ? foregroundCanvasRef.current
-      : backgroundCanvasRef.current;
+    const canvas =
+      currentPath || currentShape
+        ? foregroundCanvasRef.current
+        : backgroundCanvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
@@ -77,6 +84,9 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "draw") startDrawing(point);
     if (tool === "pan") startPanning(e);
     if (tool === "eraser") startErasing(point);
+    if (tool === "rectangle") startShapeDrawing(point, "rectangle");
+    if (tool === "triangle") startShapeDrawing(point, "triangle");
+    if (tool === "circle") startShapeDrawing(point, "circle");
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -85,12 +95,18 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "draw") draw(point);
     if (tool === "pan") doPanning(e);
     if (tool === "eraser") erase(point);
+    if (tool === "rectangle" || tool === "triangle" || tool === "circle") {
+      drawShape(point);
+    }
   };
 
   const handleMouseUp = () => {
     if (tool === "draw") stopDrawing();
     if (tool === "pan") stopPanning();
     if (tool === "eraser") stopErasing();
+    if (tool === "rectangle" || tool === "triangle" || tool === "circle") {
+      stopShapeDrawing();
+    }
   };
 
   useEffect(() => {
@@ -132,7 +148,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseUp={handleMouseUp}
         $tool={tool}
         $isPanning={isPanning}
-        style={currentPath ? { display: "block" } : { display: "none" }}
+        style={
+          currentPath || currentShape
+            ? { display: "block" }
+            : { display: "none" }
+        }
       />
     </CanvasContainer>
   );

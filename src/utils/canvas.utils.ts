@@ -1,4 +1,4 @@
-import type { Path } from "../types";
+import type { Path, Shape } from "../types";
 
 export const clearCanvas = (
   ctx: CanvasRenderingContext2D,
@@ -55,4 +55,59 @@ export const applyCanvasZoom = (
 
 export const restoreCanvas = (ctx: CanvasRenderingContext2D) => {
   ctx.restore();
+};
+
+export const drawShape = (
+  ctx: CanvasRenderingContext2D,
+  shape: Shape,
+  isInPathsToErase: boolean = false
+) => {
+  ctx.beginPath();
+  ctx.strokeStyle = shape.color;
+  ctx.lineWidth = shape.width;
+  ctx.globalAlpha = isInPathsToErase ? 0.3 : 1;
+
+  const { startPoint, endPoint } = shape;
+  const width = endPoint.x - startPoint.x;
+  const height = endPoint.y - startPoint.y;
+  const centerX = startPoint.x + width / 2;
+  const centerY = startPoint.y + height / 2;
+  const radiusX = Math.abs(width) / 2;
+  const radiusY = Math.abs(height) / 2;
+
+  switch (shape.type) {
+    case "rectangle":
+      ctx.rect(startPoint.x, startPoint.y, width, height);
+      break;
+    case "circle":
+      ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+      break;
+    case "triangle": {
+      const topX = centerX;
+      const topY = startPoint.y;
+      const bottomLeftX = startPoint.x;
+      const bottomLeftY = endPoint.y;
+      const bottomRightX = endPoint.x;
+      const bottomRightY = endPoint.y;
+
+      ctx.moveTo(topX, topY);
+      ctx.lineTo(bottomLeftX, bottomLeftY);
+      ctx.lineTo(bottomRightX, bottomRightY);
+      ctx.closePath();
+      break;
+    }
+  }
+
+  ctx.stroke();
+};
+
+export const drawAllShapes = (
+  ctx: CanvasRenderingContext2D,
+  shapes: Shape[],
+  pathsToErase: string[] = []
+) => {
+  shapes.forEach((shape) => {
+    const willBeErased = pathsToErase.includes(shape.id);
+    drawShape(ctx, shape, willBeErased);
+  });
 };

@@ -1,1 +1,1 @@
-export type Tool = "draw" | "eraser" | "pan";
+export type Tool = "draw" | "eraser" | "pan" | "rectangle" | "triangle" | "circle";

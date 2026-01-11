@@ -44,6 +44,21 @@ const ToolBar = () => {
       <Button onClick={() => setTool("pan")} $selected={tool === "pan"}>
         ✋
       </Button>
+      <Button
+        onClick={() => setTool("rectangle")}
+        $selected={tool === "rectangle"}
+      >
+        ⬜
+      </Button>
+      <Button
+        onClick={() => setTool("triangle")}
+        $selected={tool === "triangle"}
+      >
+        🔺
+      </Button>
+      <Button onClick={() => setTool("circle")} $selected={tool === "circle"}>
+        ⭕
+      </Button>
     </Container>
   );
 };

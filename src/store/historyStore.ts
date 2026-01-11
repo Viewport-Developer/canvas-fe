@@ -4,6 +4,7 @@ import type {
   DrawAction,
   EraseAction,
   PanAction,
+  ShapeAction,
   Point,
 } from "../types";
 import { useCanvasStore } from "./canvasStore";
@@ -16,6 +17,7 @@ interface HistoryStore {
   saveDrawAction: (path: DrawAction["path"]) => void;
   saveEraseAction: (paths: EraseAction["paths"]) => void;
   savePanAction: (previousPan: Point, newPan: Point) => void;
+  saveShapeAction: (shape: ShapeAction["shape"]) => void;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
@@ -90,6 +92,27 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     });
   },
 
+  saveShapeAction: (shape) => {
+    const action: ShapeAction = {
+      type: "shape",
+      shape: { ...shape },
+    };
+
+    set((prevState) => {
+      const newUndoStack = [...prevState.undoStack, action];
+
+      const trimmedUndoStack =
+        newUndoStack.length > CANVAS_CONFIG.MAX_STACK_SIZE
+          ? newUndoStack.slice(-CANVAS_CONFIG.MAX_STACK_SIZE)
+          : newUndoStack;
+
+      return {
+        undoStack: trimmedUndoStack,
+        redoStack: [],
+      };
+    });
+  },
+
   undo: () => {
     const state = get();
     if (state.undoStack.length === 0) return;
@@ -105,6 +128,8 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       });
     } else if (lastAction.type === "pan") {
       canvasStore.setPan(lastAction.previousPan);
+    } else if (lastAction.type === "shape") {
+      canvasStore.removeShapes([lastAction.shape.id]);
     }
 
     set({
@@ -127,6 +152,8 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       canvasStore.removePaths(pathIds);
     } else if (nextAction.type === "pan") {
       canvasStore.setPan(nextAction.newPan);
+    } else if (nextAction.type === "shape") {
+      canvasStore.addShape(nextAction.shape);
     }
 
     set({
