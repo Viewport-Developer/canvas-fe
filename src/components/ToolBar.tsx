@@ -14,6 +14,7 @@ const Container = styled.div`
   border-radius: 6px;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 `;
 
 const Button = styled.button<{ $selected?: boolean }>`

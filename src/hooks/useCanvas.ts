@@ -9,13 +9,14 @@ import {
 import { useCanvasStore } from "../store/canvasStore";
 
 export const useCanvas = (
-  canvasRef: RefObject<HTMLCanvasElement | null>,
+  backgroundCanvasRef: RefObject<HTMLCanvasElement | null>,
+  foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   containerRef: RefObject<HTMLDivElement | null>
 ) => {
   const { paths, currentPath, pathsToErase, zoom, pan } = useCanvasStore();
 
-  const redraw = () => {
-    const canvas = canvasRef.current;
+  const redrawBackground = () => {
+    const canvas = backgroundCanvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
@@ -27,19 +28,39 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
 
-    if (currentPath) {
-      drawPath(ctx, currentPath, false);
-    }
-
     restoreCanvas(ctx);
+  };
+
+  const redrawForeground = () => {
+    const canvas = foregroundCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    clearCanvas(ctx, canvas.width, canvas.height);
+
+    if (currentPath) {
+      applyCanvasZoom(ctx, zoom, pan.x, pan.y);
+      drawPath(ctx, currentPath, false);
+      restoreCanvas(ctx);
+    }
   };
 
   useEffect(() => {
     const updateSize = () => {
-      if (canvasRef.current && containerRef.current) {
+      if (backgroundCanvasRef.current && containerRef.current) {
         const container = containerRef.current;
-        canvasRef.current.width = container.clientWidth;
-        canvasRef.current.height = container.clientHeight;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        backgroundCanvasRef.current.width = width;
+        backgroundCanvasRef.current.height = height;
+
+        if (foregroundCanvasRef.current) {
+          foregroundCanvasRef.current.width = width;
+          foregroundCanvasRef.current.height = height;
+        }
       }
     };
 
@@ -49,9 +70,13 @@ export const useCanvas = (
     return () => {
       window.removeEventListener("resize", updateSize);
     };
-  }, [canvasRef, containerRef]);
+  }, [backgroundCanvasRef, foregroundCanvasRef, containerRef]);
 
   useEffect(() => {
-    redraw();
-  }, [canvasRef, paths, currentPath, pathsToErase, zoom, pan]);
+    redrawBackground();
+  }, [paths, pathsToErase, zoom, pan]);
+
+  useEffect(() => {
+    redrawForeground();
+  }, [currentPath]);
 };
