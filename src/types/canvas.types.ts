@@ -26,6 +26,7 @@ export type DrawAction = {
 export type EraseAction = {
   type: "erase";
   paths: Path[];
+  shapes: Shape[];
 };
 
 export type PanAction = {

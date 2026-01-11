@@ -17,7 +17,7 @@ export const useShape = () => {
       startPoint: point,
       endPoint: point,
       color: "#000000",
-      width: 1,
+      width: 2,
       boundingBox: {
         topLeft: { x: 0, y: 0 },
         topRight: { x: 0, y: 0 },

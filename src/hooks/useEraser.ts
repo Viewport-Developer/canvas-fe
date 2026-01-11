@@ -1,6 +1,10 @@
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import { isInEraserRange, isPointInBoundingBox } from "../utils/geometry.utils";
+import {
+  isInEraserRange,
+  isPointInBoundingBox,
+  isPointInShape,
+} from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 import { useState } from "react";
@@ -12,6 +16,11 @@ export const useEraser = () => {
     pathsToErase,
     clearPathsToErase,
     addPathToErase,
+    shapes,
+    removeShapes,
+    shapesToErase,
+    clearShapesToErase,
+    addShapeToErase,
   } = useCanvasStore();
   const { saveEraseAction } = useHistoryStore();
 
@@ -20,6 +29,7 @@ export const useEraser = () => {
   const eraseAtPoint = (point: Point) => {
     const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
 
+    // Path 지우기
     paths.forEach((path) => {
       if (pathsToErase.includes(path.id)) return;
 
@@ -38,6 +48,15 @@ export const useEraser = () => {
         addPathToErase(path.id);
       }
     });
+
+    // Shape 지우기: 지우개 중심이 도형의 실제 영역 내부에 있는지 확인
+    shapes.forEach((shape) => {
+      if (shapesToErase.includes(shape.id)) return;
+
+      if (isPointInShape(point, shape)) {
+        addShapeToErase(shape.id);
+      }
+    });
   };
 
   const startErasing = (point: Point) => {
@@ -52,13 +71,19 @@ export const useEraser = () => {
 
   const stopErasing = () => {
     setIsErasing(false);
-    if (pathsToErase.length > 0) {
+    if (pathsToErase.length > 0 || shapesToErase.length > 0) {
       const pathsToEraseData = paths.filter((path) =>
         pathsToErase.includes(path.id)
       );
+      const shapesToEraseData = shapes.filter((shape) =>
+        shapesToErase.includes(shape.id)
+      );
+
       removePaths(pathsToErase);
-      saveEraseAction(pathsToEraseData);
+      removeShapes(shapesToErase);
+      saveEraseAction(pathsToEraseData, shapesToEraseData);
       clearPathsToErase();
+      clearShapesToErase();
     }
   };
 

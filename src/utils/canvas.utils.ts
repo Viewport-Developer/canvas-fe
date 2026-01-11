@@ -104,10 +104,10 @@ export const drawShape = (
 export const drawAllShapes = (
   ctx: CanvasRenderingContext2D,
   shapes: Shape[],
-  pathsToErase: string[] = []
+  shapesToErase: string[] = []
 ) => {
   shapes.forEach((shape) => {
-    const willBeErased = pathsToErase.includes(shape.id);
+    const willBeErased = shapesToErase.includes(shape.id);
     drawShape(ctx, shape, willBeErased);
   });
 };

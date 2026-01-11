@@ -15,8 +15,16 @@ export const useCanvas = (
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   containerRef: RefObject<HTMLDivElement | null>
 ) => {
-  const { paths, currentPath, shapes, currentShape, pathsToErase, zoom, pan } =
-    useCanvasStore();
+  const {
+    paths,
+    currentPath,
+    shapes,
+    currentShape,
+    pathsToErase,
+    shapesToErase,
+    zoom,
+    pan,
+  } = useCanvasStore();
 
   const redrawBackground = () => {
     const canvas = backgroundCanvasRef.current;
@@ -30,7 +38,7 @@ export const useCanvas = (
     applyCanvasZoom(ctx, zoom, pan.x, pan.y);
 
     drawAllPaths(ctx, paths, pathsToErase);
-    drawAllShapes(ctx, shapes, pathsToErase);
+    drawAllShapes(ctx, shapes, shapesToErase);
 
     restoreCanvas(ctx);
   };
@@ -83,7 +91,7 @@ export const useCanvas = (
 
   useEffect(() => {
     redrawBackground();
-  }, [paths, shapes, pathsToErase, zoom, pan]);
+  }, [paths, shapes, pathsToErase, shapesToErase, zoom, pan]);
 
   useEffect(() => {
     redrawForeground();

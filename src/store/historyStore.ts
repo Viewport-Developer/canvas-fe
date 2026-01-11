@@ -15,7 +15,10 @@ interface HistoryStore {
   redoStack: HistoryAction[];
 
   saveDrawAction: (path: DrawAction["path"]) => void;
-  saveEraseAction: (paths: EraseAction["paths"]) => void;
+  saveEraseAction: (
+    paths: EraseAction["paths"],
+    shapes: EraseAction["shapes"]
+  ) => void;
   savePanAction: (previousPan: Point, newPan: Point) => void;
   saveShapeAction: (shape: ShapeAction["shape"]) => void;
   undo: () => void;
@@ -49,10 +52,11 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     });
   },
 
-  saveEraseAction: (paths) => {
+  saveEraseAction: (paths, shapes) => {
     const action: EraseAction = {
       type: "erase",
       paths: paths.map((path) => ({ ...path })),
+      shapes: shapes.map((shape) => ({ ...shape })),
     };
 
     set((prevState) => {
@@ -126,6 +130,9 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       lastAction.paths.forEach((path) => {
         canvasStore.addPath(path);
       });
+      lastAction.shapes.forEach((shape) => {
+        canvasStore.addShape(shape);
+      });
     } else if (lastAction.type === "pan") {
       canvasStore.setPan(lastAction.previousPan);
     } else if (lastAction.type === "shape") {
@@ -149,7 +156,9 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       canvasStore.addPath(nextAction.path);
     } else if (nextAction.type === "erase") {
       const pathIds = nextAction.paths.map((path) => path.id);
+      const shapeIds = nextAction.shapes.map((shape) => shape.id);
       canvasStore.removePaths(pathIds);
+      canvasStore.removeShapes(shapeIds);
     } else if (nextAction.type === "pan") {
       canvasStore.setPan(nextAction.newPan);
     } else if (nextAction.type === "shape") {
