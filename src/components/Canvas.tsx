@@ -5,6 +5,7 @@ import { useDraw } from "../hooks/useDraw";
 import { useEraser } from "../hooks/useEraser";
 import { usePan } from "../hooks/usePan";
 import { useShape } from "../hooks/useShape";
+import { useSelect } from "../hooks/useSelect";
 import type { Point } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -16,7 +17,14 @@ type CanvasProps = {
 };
 
 type ContainerProps = {
-  $tool: "draw" | "eraser" | "pan" | "rectangle" | "triangle" | "circle";
+  $tool:
+    | "draw"
+    | "eraser"
+    | "pan"
+    | "rectangle"
+    | "triangle"
+    | "circle"
+    | "select";
   $isPanning: boolean;
 };
 
@@ -39,6 +47,9 @@ const CanvasLayer = styled.canvas<ContainerProps>`
     if (props.$tool === "eraser") {
       return "cell";
     }
+    if (props.$tool === "select") {
+      return "pointer";
+    }
     return "crosshair";
   }};
 `;
@@ -56,6 +67,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     draw: drawShape,
     stopDrawing: stopShapeDrawing,
   } = useShape();
+  const { selectAtPoint } = useSelect();
 
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -87,6 +99,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "rectangle") startShapeDrawing(point, "rectangle");
     if (tool === "triangle") startShapeDrawing(point, "triangle");
     if (tool === "circle") startShapeDrawing(point, "circle");
+    if (tool === "select") selectAtPoint(point);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {

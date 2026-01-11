@@ -31,6 +31,12 @@ interface CanvasStore {
   clearShapesToErase: () => void;
   addShapeToErase: (id: string) => void;
 
+  selectedPathIds: string[];
+  selectedShapeIds: string[];
+  setSelectedPathIds: (ids: string[]) => void;
+  setSelectedShapeIds: (ids: string[]) => void;
+  clearSelection: () => void;
+
   setZoom: (zoom: number) => void;
   setPan: (pan: Point) => void;
 }
@@ -42,6 +48,8 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
   currentShape: null,
   pathsToErase: [],
   shapesToErase: [],
+  selectedPathIds: [],
+  selectedShapeIds: [],
   zoom: 1,
   pan: { x: 0, y: 0 },
 
@@ -90,6 +98,10 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
   clearShapesToErase: () => set({ shapesToErase: [] }),
   addShapeToErase: (id) =>
     set((state) => ({ shapesToErase: [...state.shapesToErase, id] })),
+
+  setSelectedPathIds: (ids) => set({ selectedPathIds: ids }),
+  setSelectedShapeIds: (ids) => set({ selectedShapeIds: ids }),
+  clearSelection: () => set({ selectedPathIds: [], selectedShapeIds: [] }),
 
   setZoom: (zoom) => set({ zoom }),
   setPan: (pan) => set({ pan }),

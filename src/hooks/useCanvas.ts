@@ -5,6 +5,7 @@ import {
   drawPath,
   drawAllShapes,
   drawShape,
+  drawSelectionBox,
   applyCanvasZoom,
   restoreCanvas,
 } from "../utils/canvas.utils";
@@ -22,6 +23,8 @@ export const useCanvas = (
     currentShape,
     pathsToErase,
     shapesToErase,
+    selectedPathIds,
+    selectedShapeIds,
     zoom,
     pan,
   } = useCanvasStore();
@@ -39,6 +42,19 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
     drawAllShapes(ctx, shapes, shapesToErase);
+
+    // 선택된 항목의 바운딩 박스 그리기
+    paths.forEach((path) => {
+      if (selectedPathIds.includes(path.id)) {
+        drawSelectionBox(ctx, path.boundingBox);
+      }
+    });
+
+    shapes.forEach((shape) => {
+      if (selectedShapeIds.includes(shape.id)) {
+        drawSelectionBox(ctx, shape.boundingBox);
+      }
+    });
 
     restoreCanvas(ctx);
   };
@@ -91,7 +107,16 @@ export const useCanvas = (
 
   useEffect(() => {
     redrawBackground();
-  }, [paths, shapes, pathsToErase, shapesToErase, zoom, pan]);
+  }, [
+    paths,
+    shapes,
+    pathsToErase,
+    shapesToErase,
+    selectedPathIds,
+    selectedShapeIds,
+    zoom,
+    pan,
+  ]);
 
   useEffect(() => {
     redrawForeground();

@@ -59,6 +59,9 @@ const ToolBar = () => {
       <Button onClick={() => setTool("circle")} $selected={tool === "circle"}>
         ⭕
       </Button>
+      <Button onClick={() => setTool("select")} $selected={tool === "select"}>
+        👆
+      </Button>
     </Container>
   );
 };

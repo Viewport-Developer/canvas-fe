@@ -1,4 +1,4 @@
-import type { Path, Shape } from "../types";
+import type { Path, Shape, BoundingBox } from "../types";
 
 export const clearCanvas = (
   ctx: CanvasRenderingContext2D,
@@ -110,4 +110,21 @@ export const drawAllShapes = (
     const willBeErased = shapesToErase.includes(shape.id);
     drawShape(ctx, shape, willBeErased);
   });
+};
+
+export const drawSelectionBox = (
+  ctx: CanvasRenderingContext2D,
+  boundingBox: BoundingBox
+) => {
+  ctx.save();
+  ctx.strokeStyle = "#5B57D1";
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 1;
+
+  const { topLeft, topRight, bottomLeft } = boundingBox;
+  const width = topRight.x - topLeft.x;
+  const height = bottomLeft.y - topLeft.y;
+
+  ctx.strokeRect(topLeft.x - 20, topLeft.y - 20, width + 40, height + 40);
+  ctx.restore();
 };
