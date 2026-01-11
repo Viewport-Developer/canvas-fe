@@ -1,7 +1,10 @@
 import { useState } from "react";
 import type { Point, Path } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import { calculateDistance } from "../utils/geometry.utils";
+import {
+  calculateDistance,
+  calculateBoundingBox,
+} from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 
@@ -19,6 +22,12 @@ export const useDraw = () => {
       points: [point],
       color: "#000000",
       width: 2,
+      boundingBox: {
+        topLeft: { x: 0, y: 0 },
+        topRight: { x: 0, y: 0 },
+        bottomLeft: { x: 0, y: 0 },
+        bottomRight: { x: 0, y: 0 },
+      },
     };
 
     setCurrentPath(newPath);
@@ -45,8 +54,14 @@ export const useDraw = () => {
   const stopDrawing = () => {
     if (!currentPath) return;
 
-    addPath(currentPath);
-    saveDrawAction(currentPath);
+    // 최종 경계 박스 계산
+    const finalPath: Path = {
+      ...currentPath,
+      boundingBox: calculateBoundingBox(currentPath.points),
+    };
+
+    addPath(finalPath);
+    saveDrawAction(finalPath);
     setCurrentPath(null);
     setLastPoint(null);
   };

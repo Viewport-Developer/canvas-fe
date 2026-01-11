@@ -1,6 +1,6 @@
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import { isInEraserRange } from "../utils/geometry.utils";
+import { isInEraserRange, isPointInBoundingBox } from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 import { useState } from "react";
@@ -22,6 +22,10 @@ export const useEraser = () => {
 
     paths.forEach((path) => {
       if (pathsToErase.includes(path.id)) return;
+
+      if (!isPointInBoundingBox(point, path.boundingBox)) {
+        return;
+      }
 
       const pathRadius = 2 / 2;
       const totalRadius = eraserRadius + pathRadius;

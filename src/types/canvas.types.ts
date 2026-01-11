@@ -3,11 +3,19 @@ export type Point = {
   y: number;
 };
 
+export type BoundingBox = {
+  topLeft: Point;
+  topRight: Point;
+  bottomLeft: Point;
+  bottomRight: Point;
+};
+
 export type Path = {
   id: string;
   points: Point[];
   color: string;
   width: number;
+  boundingBox: BoundingBox;
 };
 
 export type DrawAction = {
