@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { Point, Shape } from "../types";
 
-// 도형 스토어 인터페이스
 interface ShapeStore {
   // 완성된 도형 목록
   shapes: Shape[];

@@ -2,7 +2,11 @@ import type { Path } from "./path.types";
 import type { Shape } from "./shape.types";
 import type { Point, BoundingBox } from "./common.types";
 
-// 히스토리 관련 타입
+// 그리기 액션
+export type DrawAction = {
+  type: "draw";
+  path: Path;
+};
 
 // 지우기 액션
 export type EraseAction = {
@@ -18,14 +22,18 @@ export type PanAction = {
   newPan: Point;
 };
 
+// 도형 생성 액션
+export type ShapeAction = {
+  type: "shape";
+  shape: Shape;
+};
+
 // 리사이즈 액션
 export type ResizeAction = {
   type: "resize";
-  // 리사이즈 전 상태
   previousPaths: Path[];
   previousShapes: Shape[];
   previousBoundingBox: BoundingBox;
-  // 리사이즈 후 상태
   newPaths: Path[];
   newShapes: Shape[];
   newBoundingBox: BoundingBox;

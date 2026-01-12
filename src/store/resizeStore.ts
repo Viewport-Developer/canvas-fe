@@ -1,14 +1,10 @@
 import { create } from "zustand";
 import type { BoundingBox } from "../types";
-import {
-  scalePathToBoundingBox,
-  scaleShapeToBoundingBox,
-} from "../utils/scaling.utils";
+import { scalePathToBoundingBox, scaleShapeToBoundingBox } from "../utils/scaling.utils";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
 import { useSelectionStore } from "./selectionStore";
 
-// 리사이즈 스토어 인터페이스
 interface ResizeStore {
   resizeSelectedPaths: (newBoundingBox: BoundingBox) => void;
   resizeSelectedShapes: (newBoundingBox: BoundingBox) => void;

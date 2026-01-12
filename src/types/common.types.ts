@@ -1,5 +1,3 @@
-// 공통 타입 정의
-
 // 2D 좌표점
 export type Point = {
   x: number;

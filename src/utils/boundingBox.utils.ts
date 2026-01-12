@@ -1,7 +1,5 @@
 import type { Point, BoundingBox } from "../types";
 
-// 바운딩 박스 관련 유틸리티
-
 // 포인트 배열로부터 바운딩 박스를 계산합니다.
 export const calculateBoundingBox = (points: Point[]): BoundingBox => {
   if (points.length === 0) {
@@ -29,18 +27,13 @@ export const calculateBoundingBox = (points: Point[]): BoundingBox => {
 };
 
 // 점이 바운딩 박스 내부에 있는지 확인합니다.
-export const isPointInBoundingBox = (
-  point: Point,
-  boundingBox: BoundingBox
-): boolean => {
+export const isPointInBoundingBox = (point: Point, boundingBox: BoundingBox): boolean => {
   const minX = boundingBox.topLeft.x;
   const maxX = boundingBox.topRight.x;
   const minY = boundingBox.topLeft.y;
   const maxY = boundingBox.bottomLeft.y;
 
-  return (
-    point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY
-  );
+  return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
 };
 
 // 바운딩 박스의 크기를 계산합니다.

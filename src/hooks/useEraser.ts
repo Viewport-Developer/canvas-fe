@@ -7,8 +7,6 @@ import { isPointOnShape } from "../utils/shapeLineDetection.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 
-// 지우개 훅
-// 마우스 드래그로 경로와 도형을 지우는 기능을 제공합니다.
 export const useEraser = () => {
   const {
     paths,
@@ -38,12 +36,10 @@ export const useEraser = () => {
         continue;
       }
 
-      const pathRadius = 2 / 2; // 경로 선의 반지름
+      const pathRadius = path.width / 2; // 경로 선의 반지름
       const totalRadius = eraserRadius + pathRadius;
 
-      const hasCollision = path.points.some((pathPoint) =>
-        isInEraserRange(pathPoint, point, totalRadius)
-      );
+      const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
 
       if (hasCollision) {
         addPathToErase(path.id);
@@ -77,13 +73,8 @@ export const useEraser = () => {
     setIsErasing(false);
 
     if (pathsToErase.length > 0 || shapesToErase.length > 0) {
-      // 삭제할 데이터 백업 (히스토리용)
-      const pathsToEraseData = paths.filter((path) =>
-        pathsToErase.includes(path.id)
-      );
-      const shapesToEraseData = shapes.filter((shape) =>
-        shapesToErase.includes(shape.id)
-      );
+      const pathsToEraseData = paths.filter((path) => pathsToErase.includes(path.id));
+      const shapesToEraseData = shapes.filter((shape) => shapesToErase.includes(shape.id));
 
       // 요소 삭제
       removePaths(pathsToErase);

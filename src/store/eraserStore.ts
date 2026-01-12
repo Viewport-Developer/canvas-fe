@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-// 지우개 스토어 인터페이스
 interface EraserStore {
   // 지울 경로 ID 목록
   pathsToErase: string[];

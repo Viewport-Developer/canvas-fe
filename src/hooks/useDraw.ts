@@ -6,11 +6,8 @@ import { calculateBoundingBox } from "../utils/boundingBox.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 
-// 자유 곡선 그리기 훅
-// 마우스 드래그로 자유 곡선을 그리는 기능을 제공합니다.
 export const useDraw = () => {
-  const { addPath, currentPath, setCurrentPath, addCurrentPathPoint } =
-    useCanvasStore();
+  const { addPath, currentPath, setCurrentPath, addCurrentPathPoint } = useCanvasStore();
   const { saveDrawAction } = useHistoryStore();
 
   const [lastPoint, setLastPoint] = useState<Point | null>(null);
@@ -21,8 +18,8 @@ export const useDraw = () => {
     const newPath: Path = {
       id: `path-${Date.now()}`,
       points: [point],
-      color: "#000000",
-      width: 2,
+      color: CANVAS_CONFIG.DEFAULT_STROKE_COLOR,
+      width: CANVAS_CONFIG.DEFAULT_STROKE_WIDTH,
       boundingBox: {
         topLeft: { x: 0, y: 0 },
         topRight: { x: 0, y: 0 },
@@ -37,7 +34,6 @@ export const useDraw = () => {
   };
 
   // 그리기를 계속합니다.
-  // 스로틀링과 최소 거리 체크를 통해 성능을 최적화합니다.
   const draw = (point: Point) => {
     if (!currentPath) return;
 

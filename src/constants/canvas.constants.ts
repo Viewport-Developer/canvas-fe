@@ -1,4 +1,3 @@
-// 캔버스 설정 상수
 export const CANVAS_CONFIG = {
   // 최소 줌 레벨
   MIN_ZOOM: 0.2,
@@ -27,4 +26,19 @@ export const CANVAS_CONFIG = {
   RESIZE_HANDLE_RADIUS: 5,
   // 최소 리사이즈 크기
   MIN_RESIZE_SIZE: 1,
+
+  // 선과 도형의 기본 색상
+  DEFAULT_STROKE_COLOR: "#000000",
+  // 선과 도형의 기본 두께
+  DEFAULT_STROKE_WIDTH: 2,
+
+  // 바운딩 박스 색상
+  SELECTION_BOX_COLOR: "#5B57D1",
+  // 바운딩 박스 선 두께
+  SELECTION_BOX_LINE_WIDTH: 1,
+  // 바운딩 박스 핸들 색상
+  SELECTION_BOX_HANDLE_COLOR: "#5B57D1",
+
+  // 지워질 요소 표시용 투명도
+  ERASE_PREVIEW_ALPHA: 0.3,
 } as const;

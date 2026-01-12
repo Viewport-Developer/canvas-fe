@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { Point, Path } from "../types";
 
-// 경로 스토어 인터페이스
 interface PathStore {
   // 완성된 경로 목록
   paths: Path[];

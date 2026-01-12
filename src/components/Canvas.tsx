@@ -48,8 +48,6 @@ const CanvasLayer = styled.canvas<ContainerProps>`
   }};
 `;
 
-// 캔버스 컴포넌트
-// 모든 사용자 인터랙션을 처리하고 캔버스를 렌더링합니다.
 const Canvas = ({ containerRef }: CanvasProps) => {
   const { tool, isPanning } = useToolStore();
   const { zoom, pan, currentPath, currentShape } = useCanvasStore();
@@ -59,11 +57,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const { startDrawing, draw, stopDrawing } = useDraw();
   const { startErasing, erase, stopErasing } = useEraser();
   const { startPanning, doPanning, stopPanning } = usePan();
-  const {
-    startDrawing: startShapeDrawing,
-    draw: drawShape,
-    stopDrawing: stopShapeDrawing,
-  } = useShape();
+  const { startShapeDrawing, drawShape, stopShapeDrawing } = useShape();
   const { selectAtPoint } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
 
@@ -75,14 +69,10 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   useCanvas(backgroundCanvasRef, foregroundCanvasRef, containerRef);
   useZoom(backgroundCanvasRef);
 
-  // 마우스 이벤트의 캔버스 좌표를 계산합니다.
-  // 줌과 팬을 고려하여 실제 캔버스 좌표로 변환합니다.
+  // 마우스 이벤트의 캔버스 좌표 계산
   const getMousePos = (e: React.MouseEvent): Point => {
     // 현재 그리는 중인 요소가 있으면 포그라운드 캔버스 사용
-    const canvas =
-      currentPath || currentShape
-        ? foregroundCanvasRef.current
-        : backgroundCanvasRef.current;
+    const canvas = currentPath || currentShape ? foregroundCanvasRef.current : backgroundCanvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
@@ -219,11 +209,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseUp={handleMouseUp}
         $tool={tool}
         $isPanning={isPanning}
-        style={
-          currentPath || currentShape
-            ? { display: "block" }
-            : { display: "none" }
-        }
+        style={currentPath || currentShape ? { display: "block" } : { display: "none" }}
       />
     </CanvasContainer>
   );

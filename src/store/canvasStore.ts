@@ -9,8 +9,6 @@ import { useEraserStore } from "./eraserStore";
 import { useResizeStore } from "./resizeStore";
 import type { Point, Path, Shape, BoundingBox } from "../types";
 
-// 캔버스 스토어 인터페이스
-// 모든 하위 스토어를 통합한 인터페이스입니다.
 interface CanvasStore {
   // ========== 상태 ==========
 
@@ -79,8 +77,6 @@ interface CanvasStore {
   resizeSelectedShapes: (newBoundingBox: BoundingBox) => void;
 }
 
-// 통합된 캔버스 스토어 훅
-// 모든 하위 스토어를 통합하여 제공합니다.
 export const useCanvasStore = (): CanvasStore => {
   const pathStore = usePathStore();
   const shapeStore = useShapeStore();

@@ -1,14 +1,8 @@
 import type { Path, Shape, BoundingBox } from "../types";
 import { calculateBoundingBox, calculateBoundingBoxSize } from "./boundingBox.utils";
 
-// 스케일링 관련 유틸리티
-
 // 경로를 새로운 바운딩 박스에 맞게 스케일링합니다.
-export const scalePathToBoundingBox = (
-  path: Path,
-  oldBox: BoundingBox,
-  newBox: BoundingBox
-): Path => {
+export const scalePathToBoundingBox = (path: Path, oldBox: BoundingBox, newBox: BoundingBox): Path => {
   const oldSize = calculateBoundingBoxSize(oldBox);
   const newSize = calculateBoundingBoxSize(newBox);
 
@@ -34,11 +28,7 @@ export const scalePathToBoundingBox = (
 };
 
 // 도형을 새로운 바운딩 박스에 맞게 스케일링합니다.
-export const scaleShapeToBoundingBox = (
-  shape: Shape,
-  oldBox: BoundingBox,
-  newBox: BoundingBox
-): Shape => {
+export const scaleShapeToBoundingBox = (shape: Shape, oldBox: BoundingBox, newBox: BoundingBox): Shape => {
   const oldSize = calculateBoundingBoxSize(oldBox);
   const newSize = calculateBoundingBoxSize(newBox);
 
@@ -52,25 +42,13 @@ export const scaleShapeToBoundingBox = (
 
   // startPoint와 endPoint를 스케일링하고 이동
   const newStartPoint = {
-    x:
-      (shape.startPoint.x - oldBox.topLeft.x) * scaleX +
-      oldBox.topLeft.x +
-      offsetX,
-    y:
-      (shape.startPoint.y - oldBox.topLeft.y) * scaleY +
-      oldBox.topLeft.y +
-      offsetY,
+    x: (shape.startPoint.x - oldBox.topLeft.x) * scaleX + oldBox.topLeft.x + offsetX,
+    y: (shape.startPoint.y - oldBox.topLeft.y) * scaleY + oldBox.topLeft.y + offsetY,
   };
 
   const newEndPoint = {
-    x:
-      (shape.endPoint.x - oldBox.topLeft.x) * scaleX +
-      oldBox.topLeft.x +
-      offsetX,
-    y:
-      (shape.endPoint.y - oldBox.topLeft.y) * scaleY +
-      oldBox.topLeft.y +
-      offsetY,
+    x: (shape.endPoint.x - oldBox.topLeft.x) * scaleX + oldBox.topLeft.x + offsetX,
+    y: (shape.endPoint.y - oldBox.topLeft.y) * scaleY + oldBox.topLeft.y + offsetY,
   };
 
   const minX = Math.min(newStartPoint.x, newEndPoint.x);

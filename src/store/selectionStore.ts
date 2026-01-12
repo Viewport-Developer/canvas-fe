@@ -1,6 +1,5 @@
 import { create } from "zustand";
 
-// 선택 스토어 인터페이스
 interface SelectionStore {
   // 선택된 경로 ID 목록
   selectedPathIds: string[];

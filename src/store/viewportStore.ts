@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { Point } from "../types";
 
-// 뷰포트 스토어 인터페이스
 interface ViewportStore {
   // 줌 레벨
   zoom: number;
