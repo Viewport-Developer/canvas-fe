@@ -125,6 +125,31 @@ export const drawSelectionBox = (
   const width = topRight.x - topLeft.x;
   const height = bottomLeft.y - topLeft.y;
 
-  ctx.strokeRect(topLeft.x - 20, topLeft.y - 20, width + 40, height + 40);
+  const padding = 10;
+  const cornerRadius = 5;
+
+  // 테두리 그리기
+  ctx.strokeRect(
+    topLeft.x - padding,
+    topLeft.y - padding,
+    width + padding * 2,
+    height + padding * 2
+  );
+
+  // 모서리 동그라미 그리기
+  ctx.fillStyle = "#5B57D1";
+  const corners = [
+    { x: topLeft.x - padding, y: topLeft.y - padding }, // topLeft
+    { x: topRight.x + padding, y: topRight.y - padding }, // topRight
+    { x: topLeft.x - padding, y: bottomLeft.y + padding }, // bottomLeft
+    { x: topRight.x + padding, y: bottomLeft.y + padding }, // bottomRight
+  ];
+
+  corners.forEach((corner) => {
+    ctx.beginPath();
+    ctx.arc(corner.x, corner.y, cornerRadius, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
   ctx.restore();
 };

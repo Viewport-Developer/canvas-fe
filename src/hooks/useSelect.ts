@@ -17,6 +17,8 @@ export const useSelect = () => {
   } = useCanvasStore();
 
   const selectAtPoint = (point: Point) => {
+    let isSelected = false;
+
     paths.forEach((path) => {
       const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
 
@@ -34,6 +36,7 @@ export const useSelect = () => {
       if (hasCollision) {
         clearSelection();
         setSelectedPathIds([path.id]);
+        isSelected = true;
         return;
       }
     });
@@ -41,11 +44,15 @@ export const useSelect = () => {
     shapes.forEach((shape) => {
       if (isPointInShape(point, shape)) {
         clearSelection();
-        console.log("shape", shape.id);
         setSelectedShapeIds([shape.id]);
+        isSelected = true;
         return;
       }
     });
+
+    if (!isSelected) {
+      clearSelection();
+    }
   };
 
   return {
