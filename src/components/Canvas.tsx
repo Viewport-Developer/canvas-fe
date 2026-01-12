@@ -50,8 +50,20 @@ const CanvasLayer = styled.canvas<ContainerProps>`
 
 const Canvas = ({ containerRef }: CanvasProps) => {
   const { tool, isPanning } = useToolStore();
-  const { zoom, pan, currentPath, currentShape } = useCanvasStore();
-  const { canUndo, undo, canRedo, redo } = useHistoryStore();
+  const {
+    zoom,
+    pan,
+    currentPath,
+    currentShape,
+    paths,
+    shapes,
+    selectedPathIds,
+    selectedShapeIds,
+    removePaths,
+    removeShapes,
+    clearSelection,
+  } = useCanvasStore();
+  const { canUndo, undo, canRedo, redo, saveEraseAction } = useHistoryStore();
 
   // 각 기능별 훅
   const { startDrawing, draw, stopDrawing } = useDraw();
@@ -169,20 +181,48 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     }
   };
 
-  // 키보드 단축키 처리 (Undo/Redo)
+  // 키보드 단축키 처리 (Undo/Redo, Delete)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Undo: Ctrl+Z
       if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
         if (canUndo()) {
           undo();
         }
+        return;
       }
+      // Redo: Ctrl+Y
       if (e.ctrlKey && e.key === "y") {
         e.preventDefault();
         if (canRedo()) {
           redo();
         }
+        return;
+      }
+      // Backspace 키로 선택된 요소 삭제
+      if (e.key === "Backspace" && (selectedPathIds.length > 0 || selectedShapeIds.length > 0)) {
+        e.preventDefault();
+
+        // 삭제할 데이터 백업 (히스토리용)
+        const pathsToDelete = paths.filter((path) => selectedPathIds.includes(path.id));
+        const shapesToDelete = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
+
+        // 요소 삭제
+        if (selectedPathIds.length > 0) {
+          removePaths(selectedPathIds);
+        }
+        if (selectedShapeIds.length > 0) {
+          removeShapes(selectedShapeIds);
+        }
+
+        // 히스토리에 저장
+        if (pathsToDelete.length > 0 || shapesToDelete.length > 0) {
+          saveEraseAction(pathsToDelete, shapesToDelete);
+        }
+
+        // 선택 해제
+        clearSelection();
       }
     };
 
@@ -190,7 +230,20 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [canUndo, canRedo, undo, redo]);
+  }, [
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    selectedPathIds,
+    selectedShapeIds,
+    paths,
+    shapes,
+    removePaths,
+    removeShapes,
+    clearSelection,
+    saveEraseAction,
+  ]);
 
   return (
     <CanvasContainer>
