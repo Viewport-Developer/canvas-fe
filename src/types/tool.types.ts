@@ -3,6 +3,6 @@ export type Tool =
   | "eraser"
   | "pan"
   | "rectangle"
-  | "triangle"
+  | "diamond"
   | "circle"
   | "select";

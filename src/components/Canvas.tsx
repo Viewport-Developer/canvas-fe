@@ -6,6 +6,7 @@ import { useEraser } from "../hooks/useEraser";
 import { usePan } from "../hooks/usePan";
 import { useShape } from "../hooks/useShape";
 import { useSelect } from "../hooks/useSelect";
+import { useResize } from "../hooks/useResize";
 import type { Point } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -22,7 +23,7 @@ type ContainerProps = {
     | "eraser"
     | "pan"
     | "rectangle"
-    | "triangle"
+    | "diamond"
     | "circle"
     | "select";
   $isPanning: boolean;
@@ -68,6 +69,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     stopDrawing: stopShapeDrawing,
   } = useShape();
   const { selectAtPoint } = useSelect();
+  const { isResizing, startResizing, resize, stopResizing } = useResize();
 
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -97,9 +99,15 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "pan") startPanning(e);
     if (tool === "eraser") startErasing(point);
     if (tool === "rectangle") startShapeDrawing(point, "rectangle");
-    if (tool === "triangle") startShapeDrawing(point, "triangle");
+    if (tool === "diamond") startShapeDrawing(point, "diamond");
     if (tool === "circle") startShapeDrawing(point, "circle");
-    if (tool === "select") selectAtPoint(point);
+    if (tool === "select") {
+      // 먼저 resize 핸들을 확인
+      if (!startResizing(point)) {
+        // resize 핸들이 아니면 선택 시도
+        selectAtPoint(point);
+      }
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -108,8 +116,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "draw") draw(point);
     if (tool === "pan") doPanning(e);
     if (tool === "eraser") erase(point);
-    if (tool === "rectangle" || tool === "triangle" || tool === "circle") {
+    if (tool === "rectangle" || tool === "diamond" || tool === "circle") {
       drawShape(point);
+    }
+    if (tool === "select" && isResizing) {
+      resize(point);
     }
   };
 
@@ -117,8 +128,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     if (tool === "draw") stopDrawing();
     if (tool === "pan") stopPanning();
     if (tool === "eraser") stopErasing();
-    if (tool === "rectangle" || tool === "triangle" || tool === "circle") {
+    if (tool === "rectangle" || tool === "diamond" || tool === "circle") {
       stopShapeDrawing();
+    }
+    if (tool === "select" && isResizing) {
+      stopResizing();
     }
   };
 

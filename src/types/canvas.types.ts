@@ -35,7 +35,7 @@ export type PanAction = {
   newPan: Point;
 };
 
-export type ShapeType = "rectangle" | "triangle" | "circle";
+export type ShapeType = "rectangle" | "diamond" | "circle";
 
 export type Shape = {
   id: string;
@@ -53,3 +53,13 @@ export type ShapeAction = {
 };
 
 export type HistoryAction = DrawAction | EraseAction | PanAction | ShapeAction;
+
+export type ResizeHandleType =
+  | "topLeft"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomRight"
+  | "top"
+  | "bottom"
+  | "left"
+  | "right";

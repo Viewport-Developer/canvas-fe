@@ -51,10 +51,10 @@ const ToolBar = () => {
         ⬜
       </Button>
       <Button
-        onClick={() => setTool("triangle")}
-        $selected={tool === "triangle"}
+        onClick={() => setTool("diamond")}
+        $selected={tool === "diamond"}
       >
-        🔺
+        💎
       </Button>
       <Button onClick={() => setTool("circle")} $selected={tool === "circle"}>
         ⭕
