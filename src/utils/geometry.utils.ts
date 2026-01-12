@@ -48,27 +48,68 @@ export const isPointInBoundingBox = (
   );
 };
 
-// 지우개 중심이 사각형 내부에 있는지 확인
-const isPointInRectangle = (
+// 점이 선분에 가까운지 확인 (선의 두께 고려)
+const isPointNearLineSegment = (
+  point: Point,
+  p1: Point,
+  p2: Point,
+  threshold: number
+): boolean => {
+  // 선분의 길이
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const lengthSquared = dx * dx + dy * dy;
+
+  if (lengthSquared === 0) {
+    // 선분이 점인 경우
+    return calculateDistance(point, p1) <= threshold;
+  }
+
+  // 점에서 선분까지의 최단 거리 계산
+  const t = Math.max(
+    0,
+    Math.min(1, ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / lengthSquared)
+  );
+  const closestPoint = {
+    x: p1.x + t * dx,
+    y: p1.y + t * dy,
+  };
+
+  return calculateDistance(point, closestPoint) <= threshold;
+};
+
+// 점이 사각형의 선에 가까운지 확인
+const isPointOnRectangle = (
   point: Point,
   startPoint: Point,
-  endPoint: Point
+  endPoint: Point,
+  threshold: number
 ): boolean => {
   const minX = Math.min(startPoint.x, endPoint.x);
   const maxX = Math.max(startPoint.x, endPoint.x);
   const minY = Math.min(startPoint.y, endPoint.y);
   const maxY = Math.max(startPoint.y, endPoint.y);
 
+  // 4개의 변 체크
+  const topLeft = { x: minX, y: minY };
+  const topRight = { x: maxX, y: minY };
+  const bottomLeft = { x: minX, y: maxY };
+  const bottomRight = { x: maxX, y: maxY };
+
   return (
-    point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY
+    isPointNearLineSegment(point, topLeft, topRight, threshold) || // 상단
+    isPointNearLineSegment(point, bottomLeft, bottomRight, threshold) || // 하단
+    isPointNearLineSegment(point, topLeft, bottomLeft, threshold) || // 좌측
+    isPointNearLineSegment(point, topRight, bottomRight, threshold) // 우측
   );
 };
 
-// 지우개 중심이 원/타원 내부에 있는지 확인
-const isPointInCircle = (
+// 점이 원/타원의 선에 가까운지 확인
+const isPointOnCircle = (
   point: Point,
   startPoint: Point,
-  endPoint: Point
+  endPoint: Point,
+  threshold: number
 ): boolean => {
   const width = endPoint.x - startPoint.x;
   const height = endPoint.y - startPoint.y;
@@ -77,17 +118,23 @@ const isPointInCircle = (
   const radiusX = Math.abs(width) / 2;
   const radiusY = Math.abs(height) / 2;
 
-  // 타원 방정식: ((x - cx) / rx)^2 + ((y - cy) / ry)^2 <= 1
+  // 타원 방정식: ((x - cx) / rx)^2 + ((y - cy) / ry)^2 = 1
   const dx = (point.x - centerX) / radiusX;
   const dy = (point.y - centerY) / radiusY;
-  return dx * dx + dy * dy <= 1;
+  const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
+
+  // 타원의 둘레에 가까운지 확인 (1에 가까운지)
+  return (
+    Math.abs(distanceFromCenter - 1) * Math.min(radiusX, radiusY) <= threshold
+  );
 };
 
-// 지우개 중심이 마름모 내부에 있는지 확인 (외적을 이용한 방법)
-const isPointInDiamond = (
+// 점이 마름모의 선에 가까운지 확인
+const isPointOnDiamond = (
   point: Point,
   startPoint: Point,
-  endPoint: Point
+  endPoint: Point,
+  threshold: number
 ): boolean => {
   const width = endPoint.x - startPoint.x;
   const height = endPoint.y - startPoint.y;
@@ -100,48 +147,48 @@ const isPointInDiamond = (
   const bottom = { x: centerX, y: endPoint.y };
   const left = { x: startPoint.x, y: centerY };
 
-  // 외적을 이용한 마름모 내부 판단 (4개의 삼각형으로 나누어 판단)
-  const sign = (p1: Point, p2: Point, p3: Point) => {
-    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-  };
-
-  // 중심점을 기준으로 4개의 삼각형으로 나누어 판단
-  const checkTriangle = (p1: Point, p2: Point, p3: Point) => {
-    const d1 = sign(point, p1, p2);
-    const d2 = sign(point, p2, p3);
-    const d3 = sign(point, p3, p1);
-    const hasNeg = d1 < 0 || d2 < 0 || d3 < 0;
-    const hasPos = d1 > 0 || d2 > 0 || d3 > 0;
-    return !(hasNeg && hasPos);
-  };
-
-  // 중심점
-  const center = { x: centerX, y: centerY };
-
-  // 4개의 삼각형 중 하나라도 내부에 있으면 마름모 내부
+  // 4개의 변 체크
   return (
-    checkTriangle(top, right, center) ||
-    checkTriangle(right, bottom, center) ||
-    checkTriangle(bottom, left, center) ||
-    checkTriangle(left, top, center)
+    isPointNearLineSegment(point, top, right, threshold) ||
+    isPointNearLineSegment(point, right, bottom, threshold) ||
+    isPointNearLineSegment(point, bottom, left, threshold) ||
+    isPointNearLineSegment(point, left, top, threshold)
   );
 };
 
-// 지우개 중심이 도형 내부에 있는지 확인
-export const isPointInShape = (point: Point, shape: Shape): boolean => {
+// 점이 도형의 선에 가까운지 확인 (선 클릭 선택용)
+export const isPointOnShape = (point: Point, shape: Shape): boolean => {
   // 먼저 바운딩 박스 체크로 빠르게 필터링
   if (!isPointInBoundingBox(point, shape.boundingBox)) {
     return false;
   }
 
-  // 도형 타입별로 실제 영역 내부인지 확인
+  // 선의 두께를 고려한 임계값 (선의 두께 + 여유 공간)
+  const threshold = shape.width / 2 + 5; // 선의 반 두께 + 5px 여유
+
+  // 도형 타입별로 선에 가까운지 확인
   switch (shape.type) {
     case "rectangle":
-      return isPointInRectangle(point, shape.startPoint, shape.endPoint);
+      return isPointOnRectangle(
+        point,
+        shape.startPoint,
+        shape.endPoint,
+        threshold
+      );
     case "circle":
-      return isPointInCircle(point, shape.startPoint, shape.endPoint);
+      return isPointOnCircle(
+        point,
+        shape.startPoint,
+        shape.endPoint,
+        threshold
+      );
     case "diamond":
-      return isPointInDiamond(point, shape.startPoint, shape.endPoint);
+      return isPointOnDiamond(
+        point,
+        shape.startPoint,
+        shape.endPoint,
+        threshold
+      );
     default:
       return false;
   }

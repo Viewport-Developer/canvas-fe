@@ -2,7 +2,7 @@ import type { Point } from "../types";
 import {
   isInEraserRange,
   isPointInBoundingBox,
-  isPointInShape,
+  isPointOnShape,
 } from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
@@ -42,7 +42,7 @@ export const useSelect = () => {
     });
 
     shapes.forEach((shape) => {
-      if (isPointInShape(point, shape)) {
+      if (isPointOnShape(point, shape)) {
         clearSelection();
         setSelectedShapeIds([shape.id]);
         isSelected = true;

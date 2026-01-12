@@ -3,7 +3,7 @@ import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import {
   isInEraserRange,
   isPointInBoundingBox,
-  isPointInShape,
+  isPointOnShape,
 } from "../utils/geometry.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -49,11 +49,11 @@ export const useEraser = () => {
       }
     });
 
-    // Shape 지우기: 지우개 중심이 도형의 실제 영역 내부에 있는지 확인
+    // Shape 지우기: 지우개 중심이 도형의 선에 가까운지 확인
     shapes.forEach((shape) => {
       if (shapesToErase.includes(shape.id)) return;
 
-      if (isPointInShape(point, shape)) {
+      if (isPointOnShape(point, shape)) {
         addShapeToErase(shape.id);
       }
     });
