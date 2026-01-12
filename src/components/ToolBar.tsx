@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
+import { useCanvasStore } from "../store/canvasStore";
 
 const Container = styled.div`
   position: fixed;
@@ -32,34 +33,55 @@ const Button = styled.button<{ $selected?: boolean }>`
 
 const ToolBar = () => {
   const { tool, setTool } = useToolStore();
+  const { clearSelection } = useCanvasStore();
+
+  const handleToolChange = (newTool: typeof tool) => {
+    clearSelection();
+    setTool(newTool);
+  };
 
   return (
     <Container>
-      <Button onClick={() => setTool("draw")} $selected={tool === "draw"}>
+      <Button
+        onClick={() => handleToolChange("draw")}
+        $selected={tool === "draw"}
+      >
         ✏️
       </Button>
-      <Button onClick={() => setTool("eraser")} $selected={tool === "eraser"}>
+      <Button
+        onClick={() => handleToolChange("eraser")}
+        $selected={tool === "eraser"}
+      >
         🧹
       </Button>
-      <Button onClick={() => setTool("pan")} $selected={tool === "pan"}>
+      <Button
+        onClick={() => handleToolChange("pan")}
+        $selected={tool === "pan"}
+      >
         ✋
       </Button>
       <Button
-        onClick={() => setTool("rectangle")}
+        onClick={() => handleToolChange("rectangle")}
         $selected={tool === "rectangle"}
       >
         ⬜
       </Button>
       <Button
-        onClick={() => setTool("diamond")}
+        onClick={() => handleToolChange("diamond")}
         $selected={tool === "diamond"}
       >
         💎
       </Button>
-      <Button onClick={() => setTool("circle")} $selected={tool === "circle"}>
+      <Button
+        onClick={() => handleToolChange("circle")}
+        $selected={tool === "circle"}
+      >
         ⭕
       </Button>
-      <Button onClick={() => setTool("select")} $selected={tool === "select"}>
+      <Button
+        onClick={() => handleToolChange("select")}
+        $selected={tool === "select"}
+      >
         👆
       </Button>
     </Container>
