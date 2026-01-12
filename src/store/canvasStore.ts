@@ -1,216 +1,138 @@
-import { create } from "zustand";
-import type { Point, Path, Shape, BoundingBox } from "../types";
-import { calculateBoundingBox } from "../utils/geometry.utils";
+// 캔버스 스토어 통합
+// 하위 호환성을 위해 모든 스토어를 통합하여 제공합니다.
 
+import { usePathStore } from "./pathStore";
+import { useShapeStore } from "./shapeStore";
+import { useSelectionStore } from "./selectionStore";
+import { useViewportStore } from "./viewportStore";
+import { useEraserStore } from "./eraserStore";
+import { useResizeStore } from "./resizeStore";
+import type { Point, Path, Shape, BoundingBox } from "../types";
+
+// 캔버스 스토어 인터페이스
+// 모든 하위 스토어를 통합한 인터페이스입니다.
 interface CanvasStore {
+  // ========== 상태 ==========
+
+  // 완성된 경로 목록
   paths: Path[];
+  // 현재 그리는 중인 경로
   currentPath: Path | null;
+
+  // 완성된 도형 목록
   shapes: Shape[];
+  // 현재 그리는 중인 도형
   currentShape: Shape | null;
+
+  // 지울 경로 ID 목록
   pathsToErase: string[];
+  // 지울 도형 ID 목록
   shapesToErase: string[];
+
+  // 선택된 경로 ID 목록
+  selectedPathIds: string[];
+  // 선택된 도형 ID 목록
+  selectedShapeIds: string[];
+
+  // 줌 레벨
   zoom: number;
+  // 팬(이동) 오프셋
   pan: Point;
+
+  // ========== 경로 관리 ==========
 
   setPaths: (paths: Path[]) => void;
   addPath: (path: Path) => void;
   removePaths: (ids: string[]) => void;
-
   setCurrentPath: (path: Path | null) => void;
   addCurrentPathPoint: (point: Point) => void;
+
+  // ========== 도형 관리 ==========
 
   setShapes: (shapes: Shape[]) => void;
   addShape: (shape: Shape) => void;
   removeShapes: (ids: string[]) => void;
-
   setCurrentShape: (shape: Shape | null) => void;
   updateCurrentShape: (endPoint: Point) => void;
 
+  // ========== 지우개 관리 ==========
+
   clearPathsToErase: () => void;
   addPathToErase: (id: string) => void;
-
   clearShapesToErase: () => void;
   addShapeToErase: (id: string) => void;
 
-  selectedPathIds: string[];
-  selectedShapeIds: string[];
+  // ========== 선택 관리 ==========
+
   setSelectedPathIds: (ids: string[]) => void;
   setSelectedShapeIds: (ids: string[]) => void;
   clearSelection: () => void;
 
+  // ========== 뷰포트 관리 ==========
+
   setZoom: (zoom: number) => void;
   setPan: (pan: Point) => void;
+
+  // ========== 리사이즈 관리 ==========
 
   resizeSelectedPaths: (newBoundingBox: BoundingBox) => void;
   resizeSelectedShapes: (newBoundingBox: BoundingBox) => void;
 }
 
-export const useCanvasStore = create<CanvasStore>((set) => ({
-  paths: [],
-  currentPath: null,
-  shapes: [],
-  currentShape: null,
-  pathsToErase: [],
-  shapesToErase: [],
-  selectedPathIds: [],
-  selectedShapeIds: [],
-  zoom: 1,
-  pan: { x: 0, y: 0 },
+// 통합된 캔버스 스토어 훅
+// 모든 하위 스토어를 통합하여 제공합니다.
+export const useCanvasStore = (): CanvasStore => {
+  const pathStore = usePathStore();
+  const shapeStore = useShapeStore();
+  const selectionStore = useSelectionStore();
+  const viewportStore = useViewportStore();
+  const eraserStore = useEraserStore();
+  const resizeStore = useResizeStore();
 
-  setPaths: (paths) => set({ paths }),
-  addPath: (path) => set((state) => ({ paths: [...state.paths, path] })),
-  removePaths: (ids) =>
-    set((state) => ({ paths: state.paths.filter((v) => !ids.includes(v.id)) })),
+  return {
+    // 상태
+    paths: pathStore.paths,
+    currentPath: pathStore.currentPath,
+    shapes: shapeStore.shapes,
+    currentShape: shapeStore.currentShape,
+    pathsToErase: eraserStore.pathsToErase,
+    shapesToErase: eraserStore.shapesToErase,
+    selectedPathIds: selectionStore.selectedPathIds,
+    selectedShapeIds: selectionStore.selectedShapeIds,
+    zoom: viewportStore.zoom,
+    pan: viewportStore.pan,
 
-  setCurrentPath: (currentPath) => set({ currentPath }),
-  addCurrentPathPoint: (point) =>
-    set((state) => {
-      if (!state.currentPath) return state;
+    // 경로 관리
+    setPaths: pathStore.setPaths,
+    addPath: pathStore.addPath,
+    removePaths: pathStore.removePaths,
+    setCurrentPath: pathStore.setCurrentPath,
+    addCurrentPathPoint: pathStore.addCurrentPathPoint,
 
-      return {
-        currentPath: {
-          ...state.currentPath,
-          points: [...state.currentPath.points, point],
-        },
-      };
-    }),
+    // 도형 관리
+    setShapes: shapeStore.setShapes,
+    addShape: shapeStore.addShape,
+    removeShapes: shapeStore.removeShapes,
+    setCurrentShape: shapeStore.setCurrentShape,
+    updateCurrentShape: shapeStore.updateCurrentShape,
 
-  setShapes: (shapes) => set({ shapes }),
-  addShape: (shape) => set((state) => ({ shapes: [...state.shapes, shape] })),
-  removeShapes: (ids) =>
-    set((state) => ({
-      shapes: state.shapes.filter((v) => !ids.includes(v.id)),
-    })),
+    // 지우개 관리
+    clearPathsToErase: eraserStore.clearPathsToErase,
+    addPathToErase: eraserStore.addPathToErase,
+    clearShapesToErase: eraserStore.clearShapesToErase,
+    addShapeToErase: eraserStore.addShapeToErase,
 
-  setCurrentShape: (currentShape) => set({ currentShape }),
-  updateCurrentShape: (endPoint) =>
-    set((state) => {
-      if (!state.currentShape) return state;
+    // 선택 관리
+    setSelectedPathIds: selectionStore.setSelectedPathIds,
+    setSelectedShapeIds: selectionStore.setSelectedShapeIds,
+    clearSelection: selectionStore.clearSelection,
 
-      return {
-        currentShape: {
-          ...state.currentShape,
-          endPoint,
-        },
-      };
-    }),
+    // 뷰포트 관리
+    setZoom: viewportStore.setZoom,
+    setPan: viewportStore.setPan,
 
-  clearPathsToErase: () => set({ pathsToErase: [] }),
-  addPathToErase: (id) =>
-    set((state) => ({ pathsToErase: [...state.pathsToErase, id] })),
-
-  clearShapesToErase: () => set({ shapesToErase: [] }),
-  addShapeToErase: (id) =>
-    set((state) => ({ shapesToErase: [...state.shapesToErase, id] })),
-
-  setSelectedPathIds: (ids) => set({ selectedPathIds: ids }),
-  setSelectedShapeIds: (ids) => set({ selectedShapeIds: ids }),
-  clearSelection: () => set({ selectedPathIds: [], selectedShapeIds: [] }),
-
-  setZoom: (zoom) => set({ zoom }),
-  setPan: (pan) => set({ pan }),
-
-  resizeSelectedPaths: (newBoundingBox) =>
-    set((state) => {
-      if (state.selectedPathIds.length === 0) return state;
-
-      const updatedPaths = state.paths.map((path) => {
-        if (!state.selectedPathIds.includes(path.id)) return path;
-
-        const oldBox = path.boundingBox;
-        const oldWidth = oldBox.topRight.x - oldBox.topLeft.x;
-        const oldHeight = oldBox.bottomLeft.y - oldBox.topLeft.y;
-        const newWidth = newBoundingBox.topRight.x - newBoundingBox.topLeft.x;
-        const newHeight =
-          newBoundingBox.bottomLeft.y - newBoundingBox.topLeft.y;
-
-        // 스케일 비율 계산 (0으로 나누기 방지)
-        const scaleX = oldWidth !== 0 ? newWidth / oldWidth : 1;
-        const scaleY = oldHeight !== 0 ? newHeight / oldHeight : 1;
-
-        // 원점 이동 계산
-        const offsetX = newBoundingBox.topLeft.x - oldBox.topLeft.x;
-        const offsetY = newBoundingBox.topLeft.y - oldBox.topLeft.y;
-
-        // 모든 포인트를 스케일링하고 이동
-        const scaledPoints = path.points.map((point) => ({
-          x: (point.x - oldBox.topLeft.x) * scaleX + oldBox.topLeft.x + offsetX,
-          y: (point.y - oldBox.topLeft.y) * scaleY + oldBox.topLeft.y + offsetY,
-        }));
-
-        return {
-          ...path,
-          points: scaledPoints,
-          boundingBox: calculateBoundingBox(scaledPoints),
-        };
-      });
-
-      return { paths: updatedPaths };
-    }),
-
-  resizeSelectedShapes: (newBoundingBox) =>
-    set((state) => {
-      if (state.selectedShapeIds.length === 0) return state;
-
-      const updatedShapes = state.shapes.map((shape) => {
-        if (!state.selectedShapeIds.includes(shape.id)) return shape;
-
-        const oldBox = shape.boundingBox;
-        const oldWidth = oldBox.topRight.x - oldBox.topLeft.x;
-        const oldHeight = oldBox.bottomLeft.y - oldBox.topLeft.y;
-        const newWidth = newBoundingBox.topRight.x - newBoundingBox.topLeft.x;
-        const newHeight =
-          newBoundingBox.bottomLeft.y - newBoundingBox.topLeft.y;
-
-        // 스케일 비율 계산 (0으로 나누기 방지)
-        const scaleX = oldWidth !== 0 ? newWidth / oldWidth : 1;
-        const scaleY = oldHeight !== 0 ? newHeight / oldHeight : 1;
-
-        // 원점 이동 계산
-        const offsetX = newBoundingBox.topLeft.x - oldBox.topLeft.x;
-        const offsetY = newBoundingBox.topLeft.y - oldBox.topLeft.y;
-
-        // startPoint와 endPoint를 스케일링하고 이동
-        const newStartPoint = {
-          x:
-            (shape.startPoint.x - oldBox.topLeft.x) * scaleX +
-            oldBox.topLeft.x +
-            offsetX,
-          y:
-            (shape.startPoint.y - oldBox.topLeft.y) * scaleY +
-            oldBox.topLeft.y +
-            offsetY,
-        };
-
-        const newEndPoint = {
-          x:
-            (shape.endPoint.x - oldBox.topLeft.x) * scaleX +
-            oldBox.topLeft.x +
-            offsetX,
-          y:
-            (shape.endPoint.y - oldBox.topLeft.y) * scaleY +
-            oldBox.topLeft.y +
-            offsetY,
-        };
-
-        const minX = Math.min(newStartPoint.x, newEndPoint.x);
-        const maxX = Math.max(newStartPoint.x, newEndPoint.x);
-        const minY = Math.min(newStartPoint.y, newEndPoint.y);
-        const maxY = Math.max(newStartPoint.y, newEndPoint.y);
-
-        return {
-          ...shape,
-          startPoint: newStartPoint,
-          endPoint: newEndPoint,
-          boundingBox: {
-            topLeft: { x: minX, y: minY },
-            topRight: { x: maxX, y: minY },
-            bottomLeft: { x: minX, y: maxY },
-            bottomRight: { x: maxX, y: maxY },
-          },
-        };
-      });
-
-      return { shapes: updatedShapes };
-    }),
-}));
+    // 리사이즈 관리
+    resizeSelectedPaths: resizeStore.resizeSelectedPaths,
+    resizeSelectedShapes: resizeStore.resizeSelectedShapes,
+  };
+};

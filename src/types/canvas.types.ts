@@ -1,65 +1,14 @@
-export type Point = {
-  x: number;
-  y: number;
-};
+// 캔버스 관련 타입 통합
+// 하위 호환성을 위해 모든 타입을 re-export합니다.
 
-export type BoundingBox = {
-  topLeft: Point;
-  topRight: Point;
-  bottomLeft: Point;
-  bottomRight: Point;
-};
+export * from "./common.types";
+export * from "./path.types";
+export * from "./shape.types";
+export * from "./history.types";
 
-export type Path = {
-  id: string;
-  points: Point[];
-  color: string;
-  width: number;
-  boundingBox: BoundingBox;
-};
+import type { DrawAction } from "./path.types";
+import type { ShapeAction } from "./shape.types";
+import type { EraseAction, PanAction } from "./history.types";
 
-export type DrawAction = {
-  type: "draw";
-  path: Path;
-};
-
-export type EraseAction = {
-  type: "erase";
-  paths: Path[];
-  shapes: Shape[];
-};
-
-export type PanAction = {
-  type: "pan";
-  previousPan: Point;
-  newPan: Point;
-};
-
-export type ShapeType = "rectangle" | "diamond" | "circle";
-
-export type Shape = {
-  id: string;
-  type: ShapeType;
-  startPoint: Point;
-  endPoint: Point;
-  color: string;
-  width: number;
-  boundingBox: BoundingBox;
-};
-
-export type ShapeAction = {
-  type: "shape";
-  shape: Shape;
-};
-
+// 모든 히스토리 액션의 유니온 타입
 export type HistoryAction = DrawAction | EraseAction | PanAction | ShapeAction;
-
-export type ResizeHandleType =
-  | "topLeft"
-  | "topRight"
-  | "bottomLeft"
-  | "bottomRight"
-  | "top"
-  | "bottom"
-  | "left"
-  | "right";

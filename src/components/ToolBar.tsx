@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
 import { useCanvasStore } from "../store/canvasStore";
+import type { Tool } from "../types";
 
 const Container = styled.div`
   position: fixed;
@@ -31,11 +32,15 @@ const Button = styled.button<{ $selected?: boolean }>`
   cursor: pointer;
 `;
 
+// 툴바 컴포넌트
+// 그리기 도구를 선택할 수 있는 UI를 제공합니다.
 const ToolBar = () => {
   const { tool, setTool } = useToolStore();
   const { clearSelection } = useCanvasStore();
 
-  const handleToolChange = (newTool: typeof tool) => {
+  // 툴을 변경합니다.
+  // 툴 변경 시 선택된 요소를 해제합니다.
+  const handleToolChange = (newTool: Tool) => {
     clearSelection();
     setTool(newTool);
   };

@@ -1,12 +1,12 @@
 import type { Point } from "../types";
-import {
-  isInEraserRange,
-  isPointInBoundingBox,
-  isPointOnShape,
-} from "../utils/geometry.utils";
+import { isInEraserRange } from "../utils/distance.utils";
+import { isPointInBoundingBox } from "../utils/boundingBox.utils";
+import { isPointOnShape } from "../utils/shapeLineDetection.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
+// 요소 선택 훅
+// 클릭한 위치의 요소를 선택하는 기능을 제공합니다.
 export const useSelect = () => {
   const {
     paths,
@@ -16,18 +16,19 @@ export const useSelect = () => {
     clearSelection,
   } = useCanvasStore();
 
+  // 주어진 점에서 요소를 선택합니다.
+  // 경로는 선에 가까운지 확인하고, 도형은 선에 가까운지 확인합니다.
   const selectAtPoint = (point: Point) => {
     let isSelected = false;
 
-    paths.forEach((path) => {
-      const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
-
+    // 경로 선택: 경로의 선에 가까운지 확인
+    for (const path of paths) {
       if (!isPointInBoundingBox(point, path.boundingBox)) {
-        return;
+        continue;
       }
 
-      const pathRadius = 2 / 2;
-      const totalRadius = eraserRadius + pathRadius;
+      const pathRadius = 2 / 2; // 경로 선의 반지름
+      const totalRadius = CANVAS_CONFIG.ERASER_RADIUS + pathRadius;
 
       const hasCollision = path.points.some((pathPoint) =>
         isInEraserRange(pathPoint, point, totalRadius)
@@ -39,17 +40,19 @@ export const useSelect = () => {
         isSelected = true;
         return;
       }
-    });
+    }
 
-    shapes.forEach((shape) => {
+    // 도형 선택: 도형의 선에 가까운지 확인
+    for (const shape of shapes) {
       if (isPointOnShape(point, shape)) {
         clearSelection();
         setSelectedShapeIds([shape.id]);
         isSelected = true;
         return;
       }
-    });
+    }
 
+    // 아무것도 선택되지 않으면 선택 해제
     if (!isSelected) {
       clearSelection();
     }

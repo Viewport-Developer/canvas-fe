@@ -11,6 +11,8 @@ import {
 } from "../utils/canvas.utils";
 import { useCanvasStore } from "../store/canvasStore";
 
+// 캔버스 렌더링 훅
+// 백그라운드와 포그라운드 캔버스를 관리하고 렌더링합니다.
 export const useCanvas = (
   backgroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
@@ -29,6 +31,8 @@ export const useCanvas = (
     pan,
   } = useCanvasStore();
 
+  // 백그라운드 캔버스를 다시 그립니다.
+  // 완성된 경로, 도형, 선택 박스를 그립니다.
   const redrawBackground = () => {
     const canvas = backgroundCanvasRef.current;
     if (!canvas) return;
@@ -59,6 +63,8 @@ export const useCanvas = (
     restoreCanvas(ctx);
   };
 
+  // 포그라운드 캔버스를 다시 그립니다.
+  // 현재 그리는 중인 경로나 도형을 그립니다.
   const redrawForeground = () => {
     const canvas = foregroundCanvasRef.current;
     if (!canvas) return;
@@ -80,6 +86,7 @@ export const useCanvas = (
     }
   };
 
+  // 캔버스 크기를 컨테이너에 맞춥니다.
   useEffect(() => {
     const updateSize = () => {
       if (backgroundCanvasRef.current && containerRef.current) {

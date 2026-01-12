@@ -1,9 +1,14 @@
 import { useState } from "react";
 import type { Point, BoundingBox, ResizeHandleType } from "../types";
-import { getResizeHandleAtPoint } from "../utils/geometry.utils";
+import {
+  getResizeHandleAtPoint,
+  getHandlePosition,
+} from "../utils/resize.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
+// 리사이즈 훅
+// 선택된 요소의 크기를 조절하는 기능을 제공합니다.
 export const useResize = () => {
   const {
     paths,
@@ -23,6 +28,7 @@ export const useResize = () => {
   const [initialClickPosition, setInitialClickPosition] =
     useState<Point | null>(null);
 
+  // 선택된 모든 요소의 결합된 바운딩 박스를 계산합니다.
   const getCombinedBoundingBox = (): BoundingBox | null => {
     const selectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
     const selectedShapes = shapes.filter((s) =>
@@ -58,40 +64,8 @@ export const useResize = () => {
     };
   };
 
-  const getHandlePosition = (
-    handle: ResizeHandleType,
-    boundingBox: BoundingBox
-  ): Point => {
-    const { topLeft, topRight, bottomLeft } = boundingBox;
-    const width = topRight.x - topLeft.x;
-    const height = bottomLeft.y - topLeft.y;
-    const padding = Math.max(
-      width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-      height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
-    );
-
-    switch (handle) {
-      case "topLeft":
-        return { x: topLeft.x - padding, y: topLeft.y - padding };
-      case "topRight":
-        return { x: topRight.x + padding, y: topRight.y - padding };
-      case "bottomLeft":
-        return { x: topLeft.x - padding, y: bottomLeft.y + padding };
-      case "bottomRight":
-        return { x: topRight.x + padding, y: bottomLeft.y + padding };
-      case "top":
-        return { x: topLeft.x + width / 2, y: topLeft.y - padding };
-      case "bottom":
-        return { x: topLeft.x + width / 2, y: bottomLeft.y + padding };
-      case "left":
-        return { x: topLeft.x - padding, y: topLeft.y + height / 2 };
-      case "right":
-        return { x: topRight.x + padding, y: topLeft.y + height / 2 };
-      default:
-        return topLeft;
-    }
-  };
-
+  // 새로운 바운딩 박스를 계산합니다.
+  // 마우스 위치와 리사이즈 핸들을 기반으로 새로운 크기를 계산합니다.
   const calculateNewBoundingBox = (
     currentPoint: Point,
     handle: ResizeHandleType,
@@ -193,7 +167,7 @@ export const useResize = () => {
         return initialBox;
     }
 
-    // shape을 만들 때처럼 min/max를 계산해서 boundingBox 생성
+    // 도형을 만들 때처럼 min/max를 계산해서 바운딩 박스 생성
     let minX = Math.min(point1.x, point2.x);
     let maxX = Math.max(point1.x, point2.x);
     let minY = Math.min(point1.y, point2.y);
@@ -225,6 +199,8 @@ export const useResize = () => {
     };
   };
 
+  // 리사이즈를 시작합니다.
+  // @returns 리사이즈 핸들이 감지되면 true, 아니면 false
   const startResizing = (point: Point): boolean => {
     const boundingBox = getCombinedBoundingBox();
     if (!boundingBox) return false;
@@ -240,6 +216,7 @@ export const useResize = () => {
     return true;
   };
 
+  // 리사이즈를 계속합니다.
   const resize = (point: Point) => {
     if (
       !isResizing ||
@@ -257,6 +234,7 @@ export const useResize = () => {
       initialClickPosition
     );
 
+    // 선택된 경로와 도형을 각각 리사이즈
     if (selectedPathIds.length > 0) {
       resizeSelectedPaths(newBoundingBox);
     }
@@ -265,6 +243,7 @@ export const useResize = () => {
     }
   };
 
+  // 리사이즈를 종료합니다.
   const stopResizing = () => {
     setIsResizing(false);
     setResizeHandle(null);

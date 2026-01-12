@@ -1,14 +1,14 @@
+import { useState } from "react";
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import {
-  isInEraserRange,
-  isPointInBoundingBox,
-  isPointOnShape,
-} from "../utils/geometry.utils";
+import { isInEraserRange } from "../utils/distance.utils";
+import { isPointInBoundingBox } from "../utils/boundingBox.utils";
+import { isPointOnShape } from "../utils/shapeLineDetection.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
-import { useState } from "react";
 
+// 지우개 훅
+// 마우스 드래그로 경로와 도형을 지우는 기능을 제공합니다.
 export const useEraser = () => {
   const {
     paths,
@@ -26,18 +26,19 @@ export const useEraser = () => {
 
   const [isErasing, setIsErasing] = useState(false);
 
+  // 주어진 점에서 지울 요소를 찾습니다.
   const eraseAtPoint = (point: Point) => {
     const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
 
-    // Path 지우기
-    paths.forEach((path) => {
-      if (pathsToErase.includes(path.id)) return;
+    // 경로 지우기: 경로의 선에 가까운지 확인
+    for (const path of paths) {
+      if (pathsToErase.includes(path.id)) continue;
 
       if (!isPointInBoundingBox(point, path.boundingBox)) {
-        return;
+        continue;
       }
 
-      const pathRadius = 2 / 2;
+      const pathRadius = 2 / 2; // 경로 선의 반지름
       const totalRadius = eraserRadius + pathRadius;
 
       const hasCollision = path.points.some((pathPoint) =>
@@ -47,31 +48,36 @@ export const useEraser = () => {
       if (hasCollision) {
         addPathToErase(path.id);
       }
-    });
+    }
 
-    // Shape 지우기: 지우개 중심이 도형의 선에 가까운지 확인
-    shapes.forEach((shape) => {
-      if (shapesToErase.includes(shape.id)) return;
+    // 도형 지우기: 도형의 선에 가까운지 확인
+    for (const shape of shapes) {
+      if (shapesToErase.includes(shape.id)) continue;
 
       if (isPointOnShape(point, shape)) {
         addShapeToErase(shape.id);
       }
-    });
+    }
   };
 
+  // 지우기를 시작합니다.
   const startErasing = (point: Point) => {
     setIsErasing(true);
     eraseAtPoint(point);
   };
 
+  // 지우기를 계속합니다.
   const erase = (point: Point) => {
     if (!isErasing) return;
     eraseAtPoint(point);
   };
 
+  // 지우기를 종료하고 요소를 삭제합니다.
   const stopErasing = () => {
     setIsErasing(false);
+
     if (pathsToErase.length > 0 || shapesToErase.length > 0) {
+      // 삭제할 데이터 백업 (히스토리용)
       const pathsToEraseData = paths.filter((path) =>
         pathsToErase.includes(path.id)
       );
@@ -79,9 +85,14 @@ export const useEraser = () => {
         shapesToErase.includes(shape.id)
       );
 
+      // 요소 삭제
       removePaths(pathsToErase);
       removeShapes(shapesToErase);
+
+      // 히스토리에 저장
       saveEraseAction(pathsToEraseData, shapesToEraseData);
+
+      // 지울 목록 초기화
       clearPathsToErase();
       clearShapesToErase();
     }

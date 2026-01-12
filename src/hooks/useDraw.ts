@@ -1,13 +1,13 @@
 import { useState } from "react";
 import type { Point, Path } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import {
-  calculateDistance,
-  calculateBoundingBox,
-} from "../utils/geometry.utils";
+import { calculateDistance } from "../utils/distance.utils";
+import { calculateBoundingBox } from "../utils/boundingBox.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 
+// 자유 곡선 그리기 훅
+// 마우스 드래그로 자유 곡선을 그리는 기능을 제공합니다.
 export const useDraw = () => {
   const { addPath, currentPath, setCurrentPath, addCurrentPathPoint } =
     useCanvasStore();
@@ -16,6 +16,7 @@ export const useDraw = () => {
   const [lastPoint, setLastPoint] = useState<Point | null>(null);
   const [lastTime, setLastTime] = useState(0);
 
+  // 그리기를 시작합니다.
   const startDrawing = (point: Point) => {
     const newPath: Path = {
       id: `path-${Date.now()}`,
@@ -35,12 +36,16 @@ export const useDraw = () => {
     setLastTime(Date.now());
   };
 
+  // 그리기를 계속합니다.
+  // 스로틀링과 최소 거리 체크를 통해 성능을 최적화합니다.
   const draw = (point: Point) => {
     if (!currentPath) return;
 
     const now = Date.now();
+    // 스로틀링: 너무 빠른 업데이트 방지
     if (now - lastTime < CANVAS_CONFIG.DRAW_THROTTLE_MS) return;
 
+    // 최소 거리 체크: 너무 가까운 포인트는 무시
     if (lastPoint) {
       const distance = calculateDistance(point, lastPoint);
       if (distance < CANVAS_CONFIG.MIN_POINT_DISTANCE) return;
@@ -51,10 +56,11 @@ export const useDraw = () => {
     addCurrentPathPoint(point);
   };
 
+  // 그리기를 종료하고 경로를 저장합니다.
   const stopDrawing = () => {
     if (!currentPath) return;
 
-    // 최종 경계 박스 계산
+    // 최종 바운딩 박스 계산
     const finalPath: Path = {
       ...currentPath,
       boundingBox: calculateBoundingBox(currentPath.points),
