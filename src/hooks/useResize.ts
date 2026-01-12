@@ -1,10 +1,17 @@
 import { useState } from "react";
-import type { Point, BoundingBox, ResizeHandleType } from "../types";
+import type {
+  Point,
+  BoundingBox,
+  ResizeHandleType,
+  Path,
+  Shape,
+} from "../types";
 import {
   getResizeHandleAtPoint,
   getHandlePosition,
 } from "../utils/resize.utils";
 import { useCanvasStore } from "../store/canvasStore";
+import { useHistoryStore } from "../store/historyStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 // 리사이즈 훅
@@ -27,6 +34,11 @@ export const useResize = () => {
     useState<BoundingBox | null>(null);
   const [initialClickPosition, setInitialClickPosition] =
     useState<Point | null>(null);
+  // 리사이즈 시작 시의 초기 상태 저장 (히스토리용)
+  const [initialPaths, setInitialPaths] = useState<Path[]>([]);
+  const [initialShapes, setInitialShapes] = useState<Shape[]>([]);
+
+  const { saveResizeAction } = useHistoryStore();
 
   // 선택된 모든 요소의 결합된 바운딩 박스를 계산합니다.
   const getCombinedBoundingBox = (): BoundingBox | null => {
@@ -208,6 +220,14 @@ export const useResize = () => {
     const handle = getResizeHandleAtPoint(point, boundingBox);
     if (!handle) return false;
 
+    // 리사이즈 시작 시 초기 상태 저장 (히스토리용)
+    const selectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
+    const selectedShapes = shapes.filter((s) =>
+      selectedShapeIds.includes(s.id)
+    );
+    setInitialPaths(selectedPaths.map((path) => ({ ...path })));
+    setInitialShapes(selectedShapes.map((shape) => ({ ...shape })));
+
     setIsResizing(true);
     setResizeHandle(handle);
     setInitialBoundingBox(boundingBox);
@@ -245,10 +265,50 @@ export const useResize = () => {
 
   // 리사이즈를 종료합니다.
   const stopResizing = () => {
+    if (!isResizing || !initialBoundingBox) {
+      setIsResizing(false);
+      setResizeHandle(null);
+      setInitialBoundingBox(null);
+      setInitialClickPosition(null);
+      return;
+    }
+
+    // 리사이즈가 실제로 변경되었는지 확인
+    const currentBoundingBox = getCombinedBoundingBox();
+    if (currentBoundingBox) {
+      const currentSelectedPaths = paths.filter((p) =>
+        selectedPathIds.includes(p.id)
+      );
+      const currentSelectedShapes = shapes.filter((s) =>
+        selectedShapeIds.includes(s.id)
+      );
+
+      // 바운딩 박스가 변경되었는지 확인
+      const boundingBoxChanged =
+        currentBoundingBox.topLeft.x !== initialBoundingBox.topLeft.x ||
+        currentBoundingBox.topLeft.y !== initialBoundingBox.topLeft.y ||
+        currentBoundingBox.topRight.x !== initialBoundingBox.topRight.x ||
+        currentBoundingBox.bottomLeft.y !== initialBoundingBox.bottomLeft.y;
+
+      // 변경사항이 있으면 히스토리에 저장
+      if (boundingBoxChanged) {
+        saveResizeAction(
+          initialPaths,
+          initialShapes,
+          initialBoundingBox,
+          currentSelectedPaths,
+          currentSelectedShapes,
+          currentBoundingBox
+        );
+      }
+    }
+
     setIsResizing(false);
     setResizeHandle(null);
     setInitialBoundingBox(null);
     setInitialClickPosition(null);
+    setInitialPaths([]);
+    setInitialShapes([]);
   };
 
   return {

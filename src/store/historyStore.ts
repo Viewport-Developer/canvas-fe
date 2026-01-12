@@ -5,7 +5,11 @@ import type {
   EraseAction,
   PanAction,
   ShapeAction,
+  ResizeAction,
   Point,
+  Path,
+  Shape,
+  BoundingBox,
 } from "../types";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
@@ -31,6 +35,15 @@ interface HistoryStore {
   savePanAction: (previousPan: Point, newPan: Point) => void;
   // 도형 생성 액션 저장
   saveShapeAction: (shape: ShapeAction["shape"]) => void;
+  // 리사이즈 액션 저장
+  saveResizeAction: (
+    previousPaths: Path[],
+    previousShapes: Shape[],
+    previousBoundingBox: BoundingBox,
+    newPaths: Path[],
+    newShapes: Shape[],
+    newBoundingBox: BoundingBox
+  ) => void;
 
   // Undo 실행
   undo: () => void;
@@ -109,6 +122,30 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
+  saveResizeAction: (
+    previousPaths,
+    previousShapes,
+    previousBoundingBox,
+    newPaths,
+    newShapes,
+    newBoundingBox
+  ) => {
+    const action: ResizeAction = {
+      type: "resize",
+      previousPaths: previousPaths.map((path) => ({ ...path })),
+      previousShapes: previousShapes.map((shape) => ({ ...shape })),
+      previousBoundingBox: { ...previousBoundingBox },
+      newPaths: newPaths.map((path) => ({ ...path })),
+      newShapes: newShapes.map((shape) => ({ ...shape })),
+      newBoundingBox: { ...newBoundingBox },
+    };
+
+    set((prevState) => ({
+      undoStack: addActionToStack(action, prevState.undoStack),
+      redoStack: [],
+    }));
+  },
+
   undo: () => {
     const state = get();
     if (state.undoStack.length === 0) return;
@@ -138,6 +175,31 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "shape":
         shapeStore.removeShapes([lastAction.shape.id]);
         break;
+      case "resize": {
+        // 리사이즈 전 상태로 복원 (선택된 요소만 업데이트)
+        const currentPaths = pathStore.paths;
+        const currentShapes = shapeStore.shapes;
+
+        // 이전 경로로 교체
+        const updatedPaths = currentPaths.map((path) => {
+          const previousPath = lastAction.previousPaths.find(
+            (p) => p.id === path.id
+          );
+          return previousPath || path;
+        });
+
+        // 이전 도형으로 교체
+        const updatedShapes = currentShapes.map((shape) => {
+          const previousShape = lastAction.previousShapes.find(
+            (s) => s.id === shape.id
+          );
+          return previousShape || shape;
+        });
+
+        pathStore.setPaths(updatedPaths);
+        shapeStore.setShapes(updatedShapes);
+        break;
+      }
     }
 
     // 스택 업데이트
@@ -175,6 +237,27 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "shape":
         shapeStore.addShape(nextAction.shape);
         break;
+      case "resize": {
+        // 리사이즈 후 상태로 복원 (선택된 요소만 업데이트)
+        const currentPaths = pathStore.paths;
+        const currentShapes = shapeStore.shapes;
+
+        // 새 경로로 교체
+        const updatedPaths = currentPaths.map((path) => {
+          const newPath = nextAction.newPaths.find((p) => p.id === path.id);
+          return newPath || path;
+        });
+
+        // 새 도형으로 교체
+        const updatedShapes = currentShapes.map((shape) => {
+          const newShape = nextAction.newShapes.find((s) => s.id === shape.id);
+          return newShape || shape;
+        });
+
+        pathStore.setPaths(updatedPaths);
+        shapeStore.setShapes(updatedShapes);
+        break;
+      }
     }
 
     // 스택 업데이트

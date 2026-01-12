@@ -8,7 +8,12 @@ export * from "./history.types";
 
 import type { DrawAction } from "./path.types";
 import type { ShapeAction } from "./shape.types";
-import type { EraseAction, PanAction } from "./history.types";
+import type { EraseAction, PanAction, ResizeAction } from "./history.types";
 
 // 모든 히스토리 액션의 유니온 타입
-export type HistoryAction = DrawAction | EraseAction | PanAction | ShapeAction;
+export type HistoryAction =
+  | DrawAction
+  | EraseAction
+  | PanAction
+  | ShapeAction
+  | ResizeAction;
