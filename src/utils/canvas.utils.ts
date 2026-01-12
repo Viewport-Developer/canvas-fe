@@ -1,4 +1,5 @@
 import type { Path, Shape, BoundingBox } from "../types";
+import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 export const clearCanvas = (
   ctx: CanvasRenderingContext2D,
@@ -82,17 +83,21 @@ export const drawShape = (
     case "circle":
       ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
       break;
-    case "triangle": {
+    case "diamond": {
+      // 마름모: 중심에서 상하좌우 4개 점
       const topX = centerX;
       const topY = startPoint.y;
-      const bottomLeftX = startPoint.x;
-      const bottomLeftY = endPoint.y;
-      const bottomRightX = endPoint.x;
-      const bottomRightY = endPoint.y;
+      const rightX = endPoint.x;
+      const rightY = centerY;
+      const bottomX = centerX;
+      const bottomY = endPoint.y;
+      const leftX = startPoint.x;
+      const leftY = centerY;
 
       ctx.moveTo(topX, topY);
-      ctx.lineTo(bottomLeftX, bottomLeftY);
-      ctx.lineTo(bottomRightX, bottomRightY);
+      ctx.lineTo(rightX, rightY);
+      ctx.lineTo(bottomX, bottomY);
+      ctx.lineTo(leftX, leftY);
       ctx.closePath();
       break;
     }
@@ -125,8 +130,12 @@ export const drawSelectionBox = (
   const width = topRight.x - topLeft.x;
   const height = bottomLeft.y - topLeft.y;
 
-  const padding = 10;
-  const cornerRadius = 5;
+  // padding을 width와 height의 비율로 계산
+  const padding = Math.max(
+    width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
+    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
+  );
+  const cornerRadius = CANVAS_CONFIG.RESIZE_HANDLE_RADIUS;
 
   // 테두리 그리기
   ctx.strokeRect(
