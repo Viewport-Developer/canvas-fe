@@ -165,11 +165,24 @@ export const useResize = () => {
     const newBoundingBox = calculateNewBoundingBox(point, resizeHandle, initialBoundingBox, initialClickPosition);
 
     // 선택된 경로와 도형을 각각 리사이즈
-    if (selectedPathIds.length > 0) {
-      resizeSelectedPaths(newBoundingBox);
-    }
-    if (selectedShapeIds.length > 0) {
-      resizeSelectedShapes(newBoundingBox);
+    // 결합된 바운딩 박스를 리사이징하는 경우 초기 상태 전달
+    const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length;
+    if (totalSelectedCount > 1) {
+      // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
+      if (selectedPathIds.length > 0) {
+        resizeSelectedPaths(newBoundingBox, initialBoundingBox, initialPaths);
+      }
+      if (selectedShapeIds.length > 0) {
+        resizeSelectedShapes(newBoundingBox, initialBoundingBox, initialShapes);
+      }
+    } else {
+      // 단일 요소 리사이징
+      if (selectedPathIds.length > 0) {
+        resizeSelectedPaths(newBoundingBox);
+      }
+      if (selectedShapeIds.length > 0) {
+        resizeSelectedShapes(newBoundingBox);
+      }
     }
   };
 
