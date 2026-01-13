@@ -38,3 +38,12 @@ export type ResizeAction = {
   newShapes: Shape[];
   newBoundingBox: BoundingBox;
 };
+
+// 이동 액션
+export type MoveAction = {
+  type: "move";
+  previousPaths: Path[];
+  previousShapes: Shape[];
+  newPaths: Path[];
+  newShapes: Shape[];
+};

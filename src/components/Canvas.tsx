@@ -7,6 +7,7 @@ import { usePan } from "../hooks/usePan";
 import { useShape } from "../hooks/useShape";
 import { useSelect } from "../hooks/useSelect";
 import { useResize } from "../hooks/useResize";
+import { useMove } from "../hooks/useMove";
 import type { Point, Tool } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -20,6 +21,7 @@ type CanvasProps = {
 type ContainerProps = {
   $tool: Tool;
   $isPanning: boolean;
+  $isMoving: boolean;
 };
 
 const CanvasContainer = styled.div`
@@ -42,7 +44,7 @@ const CanvasLayer = styled.canvas<ContainerProps>`
       return "cell";
     }
     if (props.$tool === "select") {
-      return "pointer";
+      return props.$isMoving ? "grabbing" : "pointer";
     }
     return "crosshair";
   }};
@@ -72,6 +74,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const { startShapeDrawing, drawShape, stopShapeDrawing } = useShape();
   const { selectAtPoint } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
+  const { isMoving, startMoving, move, stopMoving } = useMove();
 
   // 캔버스 레이어 참조
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -122,8 +125,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
       case "select":
         // 먼저 리사이즈 핸들을 확인
         if (!startResizing(point)) {
-          // 리사이즈 핸들이 아니면 선택 시도
-          selectAtPoint(point);
+          // 리사이즈 핸들이 아니면 이동 시도
+          if (!startMoving(point)) {
+            // 이동도 아니면 선택 시도
+            selectAtPoint(point);
+          }
         }
         break;
     }
@@ -151,6 +157,8 @@ const Canvas = ({ containerRef }: CanvasProps) => {
       case "select":
         if (isResizing) {
           resize(point);
+        } else if (isMoving) {
+          move(point);
         }
         break;
     }
@@ -176,6 +184,8 @@ const Canvas = ({ containerRef }: CanvasProps) => {
       case "select":
         if (isResizing) {
           stopResizing();
+        } else if (isMoving) {
+          stopMoving();
         }
         break;
     }
@@ -254,6 +264,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseUp={handleMouseUp}
         $tool={tool}
         $isPanning={isPanning}
+        $isMoving={isMoving}
       />
       <CanvasLayer
         ref={foregroundCanvasRef}
@@ -262,6 +273,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseUp={handleMouseUp}
         $tool={tool}
         $isPanning={isPanning}
+        $isMoving={isMoving}
         style={currentPath || currentShape ? { display: "block" } : { display: "none" }}
       />
     </CanvasContainer>

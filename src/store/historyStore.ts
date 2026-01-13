@@ -6,6 +6,7 @@ import type {
   PanAction,
   ShapeAction,
   ResizeAction,
+  MoveAction,
   Point,
   Path,
   Shape,
@@ -39,6 +40,8 @@ interface HistoryStore {
     newShapes: Shape[],
     newBoundingBox: BoundingBox
   ) => void;
+  // 이동 액션 저장
+  saveMoveAction: (previousPaths: Path[], previousShapes: Shape[], newPaths: Path[], newShapes: Shape[]) => void;
 
   // Undo 실행
   undo: () => void;
@@ -129,6 +132,21 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
+  saveMoveAction: (previousPaths, previousShapes, newPaths, newShapes) => {
+    const action: MoveAction = {
+      type: "move",
+      previousPaths: previousPaths.map((path) => ({ ...path })),
+      previousShapes: previousShapes.map((shape) => ({ ...shape })),
+      newPaths: newPaths.map((path) => ({ ...path })),
+      newShapes: newShapes.map((shape) => ({ ...shape })),
+    };
+
+    set((prevState) => ({
+      undoStack: addActionToStack(action, prevState.undoStack),
+      redoStack: [],
+    }));
+  },
+
   undo: () => {
     const state = get();
     if (state.undoStack.length === 0) return;
@@ -158,6 +176,26 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         shapeStore.removeShapes([lastAction.shape.id]);
         break;
       case "resize": {
+        const currentPaths = pathStore.paths;
+        const currentShapes = shapeStore.shapes;
+
+        // 이전 경로로 교체
+        const updatedPaths = currentPaths.map((path) => {
+          const previousPath = lastAction.previousPaths.find((p) => p.id === path.id);
+          return previousPath || path;
+        });
+
+        // 이전 도형으로 교체
+        const updatedShapes = currentShapes.map((shape) => {
+          const previousShape = lastAction.previousShapes.find((s) => s.id === shape.id);
+          return previousShape || shape;
+        });
+
+        pathStore.setPaths(updatedPaths);
+        shapeStore.setShapes(updatedShapes);
+        break;
+      }
+      case "move": {
         const currentPaths = pathStore.paths;
         const currentShapes = shapeStore.shapes;
 
@@ -213,6 +251,26 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         shapeStore.addShape(nextAction.shape);
         break;
       case "resize": {
+        const currentPaths = pathStore.paths;
+        const currentShapes = shapeStore.shapes;
+
+        // 새 경로로 교체
+        const updatedPaths = currentPaths.map((path) => {
+          const newPath = nextAction.newPaths.find((p) => p.id === path.id);
+          return newPath || path;
+        });
+
+        // 새 도형으로 교체
+        const updatedShapes = currentShapes.map((shape) => {
+          const newShape = nextAction.newShapes.find((s) => s.id === shape.id);
+          return newShape || shape;
+        });
+
+        pathStore.setPaths(updatedPaths);
+        shapeStore.setShapes(updatedShapes);
+        break;
+      }
+      case "move": {
         const currentPaths = pathStore.paths;
         const currentShapes = shapeStore.shapes;
 
