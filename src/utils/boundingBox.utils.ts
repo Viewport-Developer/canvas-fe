@@ -69,3 +69,19 @@ export const getCombinedBoundingBox = (paths: Path[], shapes: Shape[]): Bounding
     bottomRight: { x: maxX, y: maxY },
   };
 };
+
+// 두 바운딩 박스가 교차하는지 확인합니다 (일부라도 겹치면 true).
+export const doBoundingBoxesIntersect = (box1: BoundingBox, box2: BoundingBox): boolean => {
+  const box1MinX = box1.topLeft.x;
+  const box1MaxX = box1.topRight.x;
+  const box1MinY = box1.topLeft.y;
+  const box1MaxY = box1.bottomLeft.y;
+
+  const box2MinX = box2.topLeft.x;
+  const box2MaxX = box2.topRight.x;
+  const box2MinY = box2.topLeft.y;
+  const box2MaxY = box2.bottomLeft.y;
+
+  // 교차 조건: 박스들이 겹치지 않는 경우를 제외
+  return !(box1MaxX < box2MinX || box1MinX > box2MaxX || box1MaxY < box2MinY || box1MinY > box2MaxY);
+};

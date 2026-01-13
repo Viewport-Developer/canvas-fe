@@ -1,12 +1,28 @@
-import type { Point } from "../types";
+import type { Point, BoundingBox } from "../types";
 import { isInEraserRange } from "../utils/distance.utils";
-import { isPointInBoundingBox } from "../utils/boundingBox.utils";
+import { isPointInBoundingBox, doBoundingBoxesIntersect, calculateBoundingBox } from "../utils/boundingBox.utils";
 import { isPointOnShape } from "../utils/shapeLineDetection.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 export const useSelect = () => {
-  const { paths, shapes, setSelectedPathIds, setSelectedShapeIds, clearSelection } = useCanvasStore();
+  const {
+    paths,
+    shapes,
+    selectedPathIds,
+    selectedShapeIds,
+    setSelectedPathIds,
+    setSelectedShapeIds,
+    addSelectedPathId,
+    addSelectedShapeId,
+    clearSelection,
+    isDragSelecting,
+    dragStartPoint,
+    dragEndPoint,
+    setIsDragSelecting,
+    setDragStartPoint,
+    setDragEndPoint,
+  } = useCanvasStore();
 
   // 주어진 점에서 요소를 선택합니다.
   const selectAtPoint = (point: Point) => {
@@ -51,7 +67,67 @@ export const useSelect = () => {
     }
   };
 
+  // 드래그 선택을 시작합니다.
+  const startDragSelect = (point: Point) => {
+    selectAtPoint(point);
+
+    setIsDragSelecting(true);
+    setDragStartPoint(point);
+    setDragEndPoint(point);
+  };
+
+  // 드래그 선택을 업데이트합니다.
+  const updateDragSelect = (point: Point) => {
+    if (!isDragSelecting || !dragStartPoint) {
+      return;
+    }
+
+    setDragEndPoint(point);
+
+    // 드래그 선택 박스 생성
+    const selectionBox: BoundingBox = calculateBoundingBox([dragStartPoint, point]);
+
+    // 경로 선택: 바운딩 박스가 교차하는지 확인하고 추가
+    for (const path of paths) {
+      // 이미 선택된 경로는 건너뜀
+      if (selectedPathIds.includes(path.id)) {
+        continue;
+      }
+
+      // 드래그 선택 박스와 교차하면 추가
+      if (doBoundingBoxesIntersect(selectionBox, path.boundingBox)) {
+        addSelectedPathId(path.id);
+      }
+    }
+
+    // 도형 선택: 바운딩 박스가 교차하는지 확인하고 추가
+    for (const shape of shapes) {
+      // 이미 선택된 도형은 건너뜀
+      if (selectedShapeIds.includes(shape.id)) {
+        continue;
+      }
+
+      // 드래그 선택 박스와 교차하면 추가
+      if (doBoundingBoxesIntersect(selectionBox, shape.boundingBox)) {
+        addSelectedShapeId(shape.id);
+      }
+    }
+  };
+
+  // 드래그 선택을 종료합니다.
+  const stopDragSelect = () => {
+    setIsDragSelecting(false);
+    setDragStartPoint(null);
+    setDragEndPoint(null);
+  };
+
   return {
     selectAtPoint,
+    isDragSelecting,
+    dragStartPoint,
+    dragEndPoint,
+    startDragSelect,
+    updateDragSelect,
+    stopDragSelect,
   };
 };

@@ -72,7 +72,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const { startErasing, erase, stopErasing } = useEraser();
   const { startPanning, doPanning, stopPanning } = usePan();
   const { startShapeDrawing, drawShape, stopShapeDrawing } = useShape();
-  const { selectAtPoint } = useSelect();
+  const { isDragSelecting, startDragSelect, updateDragSelect, stopDragSelect } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
   const { isMoving, startMoving, move, stopMoving } = useMove();
 
@@ -127,8 +127,8 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         if (!startResizing(point)) {
           // 리사이즈 핸들이 아니면 이동 시도
           if (!startMoving(point)) {
-            // 이동도 아니면 선택 시도
-            selectAtPoint(point);
+            // 이동도 아니면 드래그 선택 시도
+            startDragSelect(point);
           }
         }
         break;
@@ -159,6 +159,8 @@ const Canvas = ({ containerRef }: CanvasProps) => {
           resize(point);
         } else if (isMoving) {
           move(point);
+        } else if (isDragSelecting) {
+          updateDragSelect(point);
         }
         break;
     }
@@ -186,6 +188,8 @@ const Canvas = ({ containerRef }: CanvasProps) => {
           stopResizing();
         } else if (isMoving) {
           stopMoving();
+        } else if (isDragSelecting) {
+          stopDragSelect();
         }
         break;
     }

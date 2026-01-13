@@ -33,6 +33,11 @@ interface CanvasStore {
   // 선택된 도형 ID 목록
   selectedShapeIds: string[];
 
+  // 드래그 선택 상태
+  isDragSelecting: boolean;
+  dragStartPoint: Point | null;
+  dragEndPoint: Point | null;
+
   // 줌 레벨
   zoom: number;
   // 팬(이동) 오프셋
@@ -65,7 +70,14 @@ interface CanvasStore {
 
   setSelectedPathIds: (ids: string[]) => void;
   setSelectedShapeIds: (ids: string[]) => void;
+  addSelectedPathId: (id: string) => void;
+  addSelectedShapeId: (id: string) => void;
   clearSelection: () => void;
+
+  // 드래그 선택 상태 관리
+  setIsDragSelecting: (isDragSelecting: boolean) => void;
+  setDragStartPoint: (point: Point | null) => void;
+  setDragEndPoint: (point: Point | null) => void;
 
   // ========== 뷰포트 관리 ==========
 
@@ -74,8 +86,12 @@ interface CanvasStore {
 
   // ========== 리사이즈 관리 ==========
 
-  resizeSelectedPaths: (newBoundingBox: BoundingBox) => void;
-  resizeSelectedShapes: (newBoundingBox: BoundingBox) => void;
+  resizeSelectedPaths: (newBoundingBox: BoundingBox, initialBoundingBox?: BoundingBox, initialPaths?: Path[]) => void;
+  resizeSelectedShapes: (
+    newBoundingBox: BoundingBox,
+    initialBoundingBox?: BoundingBox,
+    initialShapes?: Shape[]
+  ) => void;
 
   // ========== 이동 관리 ==========
 
@@ -102,6 +118,9 @@ export const useCanvasStore = (): CanvasStore => {
     shapesToErase: eraserStore.shapesToErase,
     selectedPathIds: selectionStore.selectedPathIds,
     selectedShapeIds: selectionStore.selectedShapeIds,
+    isDragSelecting: selectionStore.isDragSelecting,
+    dragStartPoint: selectionStore.dragStartPoint,
+    dragEndPoint: selectionStore.dragEndPoint,
     zoom: viewportStore.zoom,
     pan: viewportStore.pan,
 
@@ -128,7 +147,14 @@ export const useCanvasStore = (): CanvasStore => {
     // 선택 관리
     setSelectedPathIds: selectionStore.setSelectedPathIds,
     setSelectedShapeIds: selectionStore.setSelectedShapeIds,
+    addSelectedPathId: selectionStore.addSelectedPathId,
+    addSelectedShapeId: selectionStore.addSelectedShapeId,
     clearSelection: selectionStore.clearSelection,
+
+    // 드래그 선택 상태 관리
+    setIsDragSelecting: selectionStore.setIsDragSelecting,
+    setDragStartPoint: selectionStore.setDragStartPoint,
+    setDragEndPoint: selectionStore.setDragEndPoint,
 
     // 뷰포트 관리
     setZoom: viewportStore.setZoom,

@@ -1,4 +1,4 @@
-import type { BoundingBox } from "../types";
+import type { BoundingBox, Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 // 렌더링 관련 유틸리티
@@ -55,6 +55,32 @@ export const drawSelectionBox = (ctx: CanvasRenderingContext2D, boundingBox: Bou
     ctx.arc(corner.x, corner.y, handleRadius, 0, Math.PI * 2);
     ctx.fill();
   });
+
+  ctx.restore();
+};
+
+// 드래그 선택 박스를 그립니다.
+export const drawDragSelectionBox = (ctx: CanvasRenderingContext2D, startPoint: Point, endPoint: Point) => {
+  ctx.save();
+  ctx.strokeStyle = CANVAS_CONFIG.SELECTION_BOX_COLOR;
+  ctx.lineWidth = CANVAS_CONFIG.SELECTION_BOX_LINE_WIDTH;
+  ctx.globalAlpha = 0.5;
+
+  const minX = Math.min(startPoint.x, endPoint.x);
+  const maxX = Math.max(startPoint.x, endPoint.x);
+  const minY = Math.min(startPoint.y, endPoint.y);
+  const maxY = Math.max(startPoint.y, endPoint.y);
+
+  const width = maxX - minX;
+  const height = maxY - minY;
+
+  // 선택 박스 테두리 그리기
+  ctx.strokeRect(minX, minY, width, height);
+
+  // 반투명 배경
+  ctx.fillStyle = CANVAS_CONFIG.SELECTION_BOX_COLOR;
+  ctx.globalAlpha = 0.1;
+  ctx.fillRect(minX, minY, width, height);
 
   ctx.restore();
 };

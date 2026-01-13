@@ -6,9 +6,11 @@ import {
   drawAllShapes,
   drawShape,
   drawSelectionBox,
+  drawDragSelectionBox,
   applyCanvasZoom,
   restoreCanvas,
 } from "../utils/canvas.utils";
+import { getCombinedBoundingBox } from "../utils/boundingBox.utils";
 import { useCanvasStore } from "../store/canvasStore";
 
 export const useCanvas = (
@@ -25,6 +27,9 @@ export const useCanvas = (
     shapesToErase,
     selectedPathIds,
     selectedShapeIds,
+    isDragSelecting,
+    dragStartPoint,
+    dragEndPoint,
     zoom,
     pan,
   } = useCanvasStore();
@@ -45,17 +50,32 @@ export const useCanvas = (
     drawAllShapes(ctx, shapes, shapesToErase);
 
     // 선택된 항목의 바운딩 박스 그리기
-    paths.forEach((path) => {
-      if (selectedPathIds.includes(path.id)) {
-        drawSelectionBox(ctx, path.boundingBox);
-      }
-    });
+    const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
+    const selectedShapes = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
+    const totalSelectedCount = selectedPaths.length + selectedShapes.length;
 
-    shapes.forEach((shape) => {
-      if (selectedShapeIds.includes(shape.id)) {
-        drawSelectionBox(ctx, shape.boundingBox);
+    if (totalSelectedCount > 0) {
+      if (isDragSelecting) {
+        // 드래그 선택 중일 때는 개별 바운딩 박스 그리기
+        selectedPaths.forEach((path) => {
+          drawSelectionBox(ctx, path.boundingBox);
+        });
+        selectedShapes.forEach((shape) => {
+          drawSelectionBox(ctx, shape.boundingBox);
+        });
+      } else {
+        // 드래그 선택이 끝나면 결합된 바운딩 박스 그리기
+        const combinedBoundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes);
+        if (combinedBoundingBox) {
+          drawSelectionBox(ctx, combinedBoundingBox);
+        }
       }
-    });
+    }
+
+    // 드래그 선택 박스 그리기
+    if (isDragSelecting && dragStartPoint && dragEndPoint) {
+      drawDragSelectionBox(ctx, dragStartPoint, dragEndPoint);
+    }
 
     restoreCanvas(ctx);
   };
@@ -110,7 +130,19 @@ export const useCanvas = (
 
   useEffect(() => {
     redrawBackground();
-  }, [paths, shapes, pathsToErase, shapesToErase, selectedPathIds, selectedShapeIds, zoom, pan]);
+  }, [
+    paths,
+    shapes,
+    pathsToErase,
+    shapesToErase,
+    selectedPathIds,
+    selectedShapeIds,
+    zoom,
+    pan,
+    isDragSelecting,
+    dragStartPoint,
+    dragEndPoint,
+  ]);
 
   useEffect(() => {
     redrawForeground();
