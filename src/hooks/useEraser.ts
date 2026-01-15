@@ -19,6 +19,11 @@ export const useEraser = () => {
     shapesToErase,
     clearShapesToErase,
     addShapeToErase,
+    texts,
+    removeTexts,
+    textsToErase,
+    clearTextsToErase,
+    addTextToErase,
   } = useCanvasStore();
   const { saveEraseAction } = useHistoryStore();
 
@@ -54,6 +59,15 @@ export const useEraser = () => {
         addShapeToErase(shape.id);
       }
     }
+
+    // 텍스트 지우기: 바운딩 박스 내부에 커서가 있는지 확인
+    for (const text of texts) {
+      if (textsToErase.includes(text.id)) continue;
+
+      if (isPointInBoundingBox(point, text.boundingBox)) {
+        addTextToErase(text.id);
+      }
+    }
   };
 
   // 지우기를 시작합니다.
@@ -72,20 +86,23 @@ export const useEraser = () => {
   const stopErasing = () => {
     setIsErasing(false);
 
-    if (pathsToErase.length > 0 || shapesToErase.length > 0) {
+    if (pathsToErase.length > 0 || shapesToErase.length > 0 || textsToErase.length > 0) {
       const pathsToEraseData = paths.filter((path) => pathsToErase.includes(path.id));
       const shapesToEraseData = shapes.filter((shape) => shapesToErase.includes(shape.id));
+      const textsToEraseData = texts.filter((text) => textsToErase.includes(text.id));
 
       // 요소 삭제
       removePaths(pathsToErase);
       removeShapes(shapesToErase);
+      removeTexts(textsToErase);
 
       // 히스토리에 저장
-      saveEraseAction(pathsToEraseData, shapesToEraseData);
+      saveEraseAction(pathsToEraseData, shapesToEraseData, textsToEraseData);
 
       // 지울 목록 초기화
       clearPathsToErase();
       clearShapesToErase();
+      clearTextsToErase();
     }
   };
 

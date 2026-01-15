@@ -31,6 +31,8 @@ interface CanvasStore {
   pathsToErase: string[];
   // 지울 도형 ID 목록
   shapesToErase: string[];
+  // 지울 텍스트 ID 목록
+  textsToErase: string[];
 
   // 선택된 경로 ID 목록
   selectedPathIds: string[];
@@ -79,6 +81,8 @@ interface CanvasStore {
   addPathToErase: (id: string) => void;
   clearShapesToErase: () => void;
   addShapeToErase: (id: string) => void;
+  clearTextsToErase: () => void;
+  addTextToErase: (id: string) => void;
 
   // ========== 선택 관리 ==========
 
@@ -141,6 +145,7 @@ export const useCanvasStore = (): CanvasStore => {
     texts: textStore.texts,
     pathsToErase: eraserStore.pathsToErase,
     shapesToErase: eraserStore.shapesToErase,
+    textsToErase: eraserStore.textsToErase,
     selectedPathIds: selectionStore.selectedPathIds,
     selectedShapeIds: selectionStore.selectedShapeIds,
     selectedTextIds: selectionStore.selectedTextIds,
@@ -176,6 +181,8 @@ export const useCanvasStore = (): CanvasStore => {
     addPathToErase: eraserStore.addPathToErase,
     clearShapesToErase: eraserStore.clearShapesToErase,
     addShapeToErase: eraserStore.addShapeToErase,
+    clearTextsToErase: eraserStore.clearTextsToErase,
+    addTextToErase: eraserStore.addTextToErase,
 
     // 선택 관리
     setSelectedPathIds: selectionStore.setSelectedPathIds,

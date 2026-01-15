@@ -5,16 +5,21 @@ interface EraserStore {
   pathsToErase: string[];
   // 지울 도형 ID 목록
   shapesToErase: string[];
+  // 지울 텍스트 ID 목록
+  textsToErase: string[];
 
   clearPathsToErase: () => void;
   addPathToErase: (id: string) => void;
   clearShapesToErase: () => void;
   addShapeToErase: (id: string) => void;
+  clearTextsToErase: () => void;
+  addTextToErase: (id: string) => void;
 }
 
 export const useEraserStore = create<EraserStore>((set) => ({
   pathsToErase: [],
   shapesToErase: [],
+  textsToErase: [],
 
   clearPathsToErase: () => set({ pathsToErase: [] }),
 
@@ -30,5 +35,13 @@ export const useEraserStore = create<EraserStore>((set) => ({
     set((state) => {
       if (state.shapesToErase.includes(id)) return state;
       return { shapesToErase: [...state.shapesToErase, id] };
+    }),
+
+  clearTextsToErase: () => set({ textsToErase: [] }),
+
+  addTextToErase: (id) =>
+    set((state) => {
+      if (state.textsToErase.includes(id)) return state;
+      return { textsToErase: [...state.textsToErase, id] };
     }),
 }));

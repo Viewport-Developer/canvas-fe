@@ -27,6 +27,7 @@ export const useCanvas = (
     texts,
     pathsToErase,
     shapesToErase,
+    textsToErase,
     selectedPathIds,
     selectedShapeIds,
     selectedTextIds,
@@ -51,7 +52,7 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
     drawAllShapes(ctx, shapes, shapesToErase);
-    drawAllTexts(ctx, texts);
+    drawAllTexts(ctx, texts, textsToErase);
 
     // 선택된 항목의 바운딩 박스 그리기
     const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
@@ -144,6 +145,7 @@ export const useCanvas = (
     texts,
     pathsToErase,
     shapesToErase,
+    textsToErase,
     selectedPathIds,
     selectedShapeIds,
     selectedTextIds,

@@ -82,13 +82,14 @@ export const drawAllShapes = (ctx: CanvasRenderingContext2D, shapes: Shape[], sh
 };
 
 // 단일 텍스트를 그립니다 (여러 줄 지원).
-export const drawText = (ctx: CanvasRenderingContext2D, text: Text) => {
+export const drawText = (ctx: CanvasRenderingContext2D, text: Text, isInTextsToErase: boolean = false) => {
   if (!text.content) return;
 
   ctx.save();
   ctx.fillStyle = text.color;
   ctx.font = `${text.fontSize}px sans-serif`;
   ctx.textBaseline = "top"; // 상단 기준으로 정렬
+  ctx.globalAlpha = isInTextsToErase ? CANVAS_CONFIG.ERASE_PREVIEW_ALPHA : 1;
 
   const lines = text.content.split("\n");
   const lineHeight = text.fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET; // 줄 간격
@@ -101,8 +102,9 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text) => {
 };
 
 // 모든 텍스트를 그립니다.
-export const drawAllTexts = (ctx: CanvasRenderingContext2D, texts: Text[]) => {
+export const drawAllTexts = (ctx: CanvasRenderingContext2D, texts: Text[], textsToErase: string[] = []) => {
   texts.forEach((text) => {
-    drawText(ctx, text);
+    const willBeErased = textsToErase.includes(text.id);
+    drawText(ctx, text, willBeErased);
   });
 };
