@@ -258,13 +258,20 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "text": {
         const currentTexts = textStore.texts;
 
-        // 이전 텍스트로 교체
-        const updatedTexts = currentTexts.map((text) => {
+        // 새로 생성된 텍스트 제거 (newTexts에만 있는 텍스트)
+        const newTextIds = lastAction.newTexts.map((text) => text.id);
+        const previousTextIds = lastAction.previousTexts.map((text) => text.id);
+        const textsToKeep = currentTexts.filter(
+          (text) => !newTextIds.includes(text.id) || previousTextIds.includes(text.id)
+        );
+
+        // 이전 텍스트로 교체 (수정된 텍스트)
+        const updatedTexts = textsToKeep.map((text) => {
           const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
           return previousText || text;
         });
 
-        // 삭제된 텍스트 복원
+        // 삭제된 텍스트 복원 (previousTexts에만 있는 텍스트)
         const deletedTexts = lastAction.previousTexts.filter(
           (prevText) => !currentTexts.some((text) => text.id === prevText.id)
         );
