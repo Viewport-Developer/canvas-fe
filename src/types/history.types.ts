@@ -46,8 +46,10 @@ export type MoveAction = {
   type: "move";
   previousPaths: Path[];
   previousShapes: Shape[];
+  previousTexts: Text[];
   newPaths: Path[];
   newShapes: Shape[];
+  newTexts: Text[];
 };
 
 // 텍스트 액션

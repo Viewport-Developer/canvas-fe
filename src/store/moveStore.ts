@@ -1,13 +1,15 @@
 import { create } from "zustand";
 import type { Point } from "../types";
-import { movePath, moveShape } from "../utils/move.utils";
+import { movePath, moveShape, moveText } from "../utils/move.utils";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
+import { useTextStore } from "./textStore";
 import { useSelectionStore } from "./selectionStore";
 
 interface MoveStore {
   moveSelectedPaths: (offset: Point) => void;
   moveSelectedShapes: (offset: Point) => void;
+  moveSelectedTexts: (offset: Point) => void;
 }
 
 export const useMoveStore = create<MoveStore>(() => ({
@@ -37,5 +39,19 @@ export const useMoveStore = create<MoveStore>(() => ({
     });
 
     useShapeStore.setState({ shapes: updatedShapes });
+  },
+
+  moveSelectedTexts: (offset) => {
+    const textStore = useTextStore.getState();
+    const selectionStore = useSelectionStore.getState();
+
+    if (selectionStore.selectedTextIds.length === 0) return;
+
+    const updatedTexts = textStore.texts.map((text) => {
+      if (!selectionStore.selectedTextIds.includes(text.id)) return text;
+      return moveText(text, offset);
+    });
+
+    useTextStore.setState({ texts: updatedTexts });
   },
 }));

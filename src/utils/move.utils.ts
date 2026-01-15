@@ -1,5 +1,5 @@
-import type { Path, Shape, Point } from "../types";
-import { calculateBoundingBox } from "./boundingBox.utils";
+import type { Path, Shape, Text, Point } from "../types";
+import { calculateBoundingBox, calculateTextBoundingBox } from "./boundingBox.utils";
 
 // 경로를 지정된 오프셋만큼 이동합니다.
 export const movePath = (path: Path, offset: Point): Path => {
@@ -42,5 +42,19 @@ export const moveShape = (shape: Shape, offset: Point): Shape => {
       bottomLeft: { x: minX, y: maxY },
       bottomRight: { x: maxX, y: maxY },
     },
+  };
+};
+
+// 텍스트를 지정된 오프셋만큼 이동합니다.
+export const moveText = (text: Text, offset: Point): Text => {
+  const newPosition = {
+    x: text.position.x + offset.x,
+    y: text.position.y + offset.y,
+  };
+
+  return {
+    ...text,
+    position: newPosition,
+    boundingBox: calculateTextBoundingBox(text.content, newPosition, text.fontSize),
   };
 };

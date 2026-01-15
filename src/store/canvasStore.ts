@@ -113,6 +113,7 @@ interface CanvasStore {
 
   moveSelectedPaths: (offset: Point) => void;
   moveSelectedShapes: (offset: Point) => void;
+  moveSelectedTexts: (offset: Point) => void;
 }
 
 export const useCanvasStore = (): CanvasStore => {
@@ -195,5 +196,6 @@ export const useCanvasStore = (): CanvasStore => {
     // 이동 관리
     moveSelectedPaths: moveStore.moveSelectedPaths,
     moveSelectedShapes: moveStore.moveSelectedShapes,
+    moveSelectedTexts: moveStore.moveSelectedTexts,
   };
 };
