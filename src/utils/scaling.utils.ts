@@ -1,5 +1,5 @@
-import type { Path, Shape, BoundingBox } from "../types";
-import { calculateBoundingBox, calculateBoundingBoxSize } from "./boundingBox.utils";
+import type { Path, Shape, Text, BoundingBox, ResizeHandleType } from "../types";
+import { calculateBoundingBox, calculateBoundingBoxSize, calculateTextBoundingBox } from "./boundingBox.utils";
 
 // 경로를 새로운 바운딩 박스에 맞게 스케일링합니다.
 export const scalePathToBoundingBox = (path: Path, oldBox: BoundingBox, newBox: BoundingBox): Path => {
@@ -204,5 +204,146 @@ export const scaleShapeByCombinedBoundingBox = (
       bottomLeft: { x: minX, y: maxY },
       bottomRight: { x: maxX, y: maxY },
     },
+  };
+};
+
+// 텍스트를 새로운 바운딩 박스 너비에 맞게 스케일링합니다 (폰트 사이즈만 조정).
+// 위아래 핸들을 잡았을 때는 높이 비율을 사용하고, 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용합니다.
+export const scaleTextToBoundingBox = (
+  text: Text,
+  oldBox: BoundingBox,
+  newBox: BoundingBox,
+  resizeHandle?: ResizeHandleType
+): Text => {
+  const oldWidth = oldBox.topRight.x - oldBox.topLeft.x;
+  const newWidth = newBox.topRight.x - newBox.topLeft.x;
+  const oldHeight = oldBox.bottomLeft.y - oldBox.topLeft.y;
+  const newHeight = newBox.bottomLeft.y - newBox.topLeft.y;
+
+  // 너비가 0이면 변경하지 않음
+  if (oldWidth === 0) return text;
+
+  // 너비 비율 계산
+  const widthRatio = newWidth / oldWidth;
+
+  // 높이 비율 계산
+  const heightRatio = oldHeight !== 0 ? newHeight / oldHeight : 1;
+
+  // 위아래 핸들을 잡았을 때는 높이 비율을 사용 (높이 변화를 너비 변화로 변환했으므로)
+  // 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용
+  let scaleRatio: number;
+  if (resizeHandle === "top" || resizeHandle === "bottom") {
+    // 위아래 핸들: 높이 비율 사용
+    scaleRatio = heightRatio;
+  } else {
+    // 좌우/모서리 핸들: 너비 비율 사용
+    scaleRatio = widthRatio;
+  }
+
+  const newFontSize = text.fontSize * scaleRatio;
+
+  // 최소 폰트 사이즈 보장 (1px 이상)
+  const finalFontSize = Math.max(1, newFontSize);
+
+  // 위치는 topLeft 기준으로 유지
+  const newPosition = {
+    x: newBox.topLeft.x,
+    y: newBox.topLeft.y,
+  };
+
+  // 새로운 바운딩 박스 계산
+  const newBoundingBox = calculateTextBoundingBox(text.content, newPosition, finalFontSize);
+
+  return {
+    ...text,
+    position: newPosition,
+    fontSize: finalFontSize,
+    boundingBox: newBoundingBox,
+  };
+};
+
+// 결합된 바운딩 박스의 비율에 맞게 텍스트를 스케일링합니다.
+// 위아래 핸들을 잡았을 때는 높이 비율을 사용하고, 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용합니다.
+export const scaleTextByCombinedBoundingBox = (
+  text: Text,
+  initialTextBox: BoundingBox,
+  initialCombinedBox: BoundingBox,
+  newCombinedBox: BoundingBox,
+  resizeHandle?: ResizeHandleType
+): Text => {
+  const initialCombinedWidth = initialCombinedBox.topRight.x - initialCombinedBox.topLeft.x;
+  const newCombinedWidth = newCombinedBox.topRight.x - newCombinedBox.topLeft.x;
+  const initialCombinedHeight = initialCombinedBox.bottomLeft.y - initialCombinedBox.topLeft.y;
+  const newCombinedHeight = newCombinedBox.bottomLeft.y - newCombinedBox.topLeft.y;
+
+  // 결합된 바운딩 박스의 너비 스케일 비율 계산
+  const widthRatio = initialCombinedWidth !== 0 ? newCombinedWidth / initialCombinedWidth : 1;
+
+  // 결합된 바운딩 박스의 높이 스케일 비율 계산
+  const heightRatio = initialCombinedHeight !== 0 ? newCombinedHeight / initialCombinedHeight : 1;
+
+  // 위아래 핸들을 잡았을 때는 높이 비율을 사용 (높이 변화를 너비 변화로 변환했으므로)
+  // 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용
+  let scaleRatio: number;
+  if (resizeHandle === "top" || resizeHandle === "bottom") {
+    // 위아래 핸들: 높이 비율 사용
+    scaleRatio = heightRatio;
+  } else {
+    // 좌우/모서리 핸들: 너비 비율 사용
+    scaleRatio = widthRatio;
+  }
+
+  // 폰트 사이즈를 스케일 비율에 맞게 조정
+  const newFontSize = text.fontSize * scaleRatio;
+
+  // 최소 폰트 사이즈 보장 (1px 이상)
+  const finalFontSize = Math.max(1, newFontSize);
+
+  // 초기 결합된 바운딩 박스의 중심점
+  const initialCombinedCenter = {
+    x: (initialCombinedBox.topLeft.x + initialCombinedBox.topRight.x) / 2,
+    y: (initialCombinedBox.topLeft.y + initialCombinedBox.bottomLeft.y) / 2,
+  };
+
+  // 새로운 결합된 바운딩 박스의 중심점
+  const newCombinedCenter = {
+    x: (newCombinedBox.topLeft.x + newCombinedBox.topRight.x) / 2,
+    y: (newCombinedBox.topLeft.y + newCombinedBox.bottomLeft.y) / 2,
+  };
+
+  // 초기 텍스트 바운딩 박스의 중심점
+  const initialTextCenter = {
+    x: (initialTextBox.topLeft.x + initialTextBox.topRight.x) / 2,
+    y: (initialTextBox.topLeft.y + initialTextBox.bottomLeft.y) / 2,
+  };
+
+  // 결합된 바운딩 박스 중심점 기준 상대 위치
+  const relativeX = initialTextCenter.x - initialCombinedCenter.x;
+  const relativeY = initialTextCenter.y - initialCombinedCenter.y;
+
+  // 새로운 결합된 바운딩 박스 중심점 기준 새 위치
+  const newTextCenter = {
+    x: newCombinedCenter.x + relativeX * scaleRatio,
+    y: newCombinedCenter.y + relativeY * scaleRatio, // 높이도 스케일링 적용
+  };
+
+  // 초기 텍스트의 너비 계산
+  const initialTextWidth = initialTextBox.topRight.x - initialTextBox.topLeft.x;
+  const newTextWidth = initialTextWidth * scaleRatio;
+
+  // 새로운 위치 계산 (중심점 기준)
+  const newPosition = {
+    x: newTextCenter.x - newTextWidth / 2,
+    y: newTextCenter.y - ((initialTextBox.bottomLeft.y - initialTextBox.topLeft.y) * scaleRatio) / 2,
+  };
+
+  // 새로운 바운딩 박스 계산
+  const newBoundingBox = calculateTextBoundingBox(text.content, newPosition, finalFontSize);
+
+  return {
+    ...text,
+    position: newPosition,
+    fontSize: finalFontSize,
+    boundingBox: newBoundingBox,
   };
 };

@@ -1,13 +1,16 @@
 import { create } from "zustand";
-import type { BoundingBox, Path, Shape } from "../types";
+import type { BoundingBox, Path, Shape, Text, ResizeHandleType } from "../types";
 import {
   scalePathToBoundingBox,
   scaleShapeToBoundingBox,
   scalePathByCombinedBoundingBox,
   scaleShapeByCombinedBoundingBox,
+  scaleTextToBoundingBox,
+  scaleTextByCombinedBoundingBox,
 } from "../utils/scaling.utils";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
+import { useTextStore } from "./textStore";
 import { useSelectionStore } from "./selectionStore";
 
 interface ResizeStore {
@@ -16,6 +19,12 @@ interface ResizeStore {
     newBoundingBox: BoundingBox,
     initialBoundingBox?: BoundingBox,
     initialShapes?: Shape[]
+  ) => void;
+  resizeSelectedTexts: (
+    newBoundingBox: BoundingBox,
+    initialBoundingBox?: BoundingBox,
+    initialTexts?: Text[],
+    resizeHandle?: ResizeHandleType
   ) => void;
 }
 
@@ -88,6 +97,45 @@ export const useResizeStore = create<ResizeStore>(() => ({
       });
 
       useShapeStore.setState({ shapes: updatedShapes });
+    }
+  },
+
+  resizeSelectedTexts: (newBoundingBox, initialBoundingBox, initialTexts, resizeHandle) => {
+    const textStore = useTextStore.getState();
+    const selectionStore = useSelectionStore.getState();
+
+    if (selectionStore.selectedTextIds.length === 0) return;
+
+    // 전체 선택된 텍스트 개수 확인
+    const totalSelectedTextCount = selectionStore.selectedTextIds.length;
+
+    // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 텍스트가 2개 이상일 때)
+    if (initialBoundingBox && initialTexts && totalSelectedTextCount > 1) {
+      const updatedTexts = textStore.texts.map((text) => {
+        if (!selectionStore.selectedTextIds.includes(text.id)) return text;
+
+        // 초기 상태에서 해당 텍스트 찾기
+        const initialText = initialTexts.find((t) => t.id === text.id);
+        if (!initialText) return text;
+
+        return scaleTextByCombinedBoundingBox(
+          initialText,
+          initialText.boundingBox,
+          initialBoundingBox,
+          newBoundingBox,
+          resizeHandle
+        );
+      });
+
+      useTextStore.setState({ texts: updatedTexts });
+    } else {
+      // 단일 요소 리사이징 또는 결합된 바운딩 박스 정보가 없는 경우
+      const updatedTexts = textStore.texts.map((text) => {
+        if (!selectionStore.selectedTextIds.includes(text.id)) return text;
+        return scaleTextToBoundingBox(text, text.boundingBox, newBoundingBox, resizeHandle);
+      });
+
+      useTextStore.setState({ texts: updatedTexts });
     }
   },
 }));

@@ -9,7 +9,7 @@ import { useViewportStore } from "./viewportStore";
 import { useEraserStore } from "./eraserStore";
 import { useResizeStore } from "./resizeStore";
 import { useMoveStore } from "./moveStore";
-import type { Point, Path, Shape, Text, BoundingBox } from "../types";
+import type { Point, Path, Shape, Text, BoundingBox, ResizeHandleType } from "../types";
 
 interface CanvasStore {
   // ========== 상태 ==========
@@ -108,6 +108,12 @@ interface CanvasStore {
     initialBoundingBox?: BoundingBox,
     initialShapes?: Shape[]
   ) => void;
+  resizeSelectedTexts: (
+    newBoundingBox: BoundingBox,
+    initialBoundingBox?: BoundingBox,
+    initialTexts?: Text[],
+    resizeHandle?: ResizeHandleType
+  ) => void;
 
   // ========== 이동 관리 ==========
 
@@ -192,6 +198,7 @@ export const useCanvasStore = (): CanvasStore => {
     // 리사이즈 관리
     resizeSelectedPaths: resizeStore.resizeSelectedPaths,
     resizeSelectedShapes: resizeStore.resizeSelectedShapes,
+    resizeSelectedTexts: resizeStore.resizeSelectedTexts,
 
     // 이동 관리
     moveSelectedPaths: moveStore.moveSelectedPaths,
