@@ -35,8 +35,11 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
     if (selectionStore.selectedPathIds.length === 0) return;
 
-    // 전체 선택된 요소 개수 확인 (path + shape)
-    const totalSelectedCount = selectionStore.selectedPathIds.length + selectionStore.selectedShapeIds.length;
+    // 전체 선택된 요소 개수 확인 (path + shape + text)
+    const totalSelectedCount =
+      selectionStore.selectedPathIds.length +
+      selectionStore.selectedShapeIds.length +
+      selectionStore.selectedTextIds.length;
 
     // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 요소가 2개 이상일 때)
     if (initialBoundingBox && initialPaths && totalSelectedCount > 1) {
@@ -68,8 +71,11 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
     if (selectionStore.selectedShapeIds.length === 0) return;
 
-    // 전체 선택된 요소 개수 확인 (path + shape)
-    const totalSelectedCount = selectionStore.selectedPathIds.length + selectionStore.selectedShapeIds.length;
+    // 전체 선택된 요소 개수 확인 (path + shape + text)
+    const totalSelectedCount =
+      selectionStore.selectedPathIds.length +
+      selectionStore.selectedShapeIds.length +
+      selectionStore.selectedTextIds.length;
 
     // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 요소가 2개 이상일 때)
     if (initialBoundingBox && initialShapes && totalSelectedCount > 1) {
@@ -106,11 +112,15 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
     if (selectionStore.selectedTextIds.length === 0) return;
 
-    // 전체 선택된 텍스트 개수 확인
-    const totalSelectedTextCount = selectionStore.selectedTextIds.length;
+    // 전체 선택된 요소 개수 확인 (경로 + 도형 + 텍스트)
+    const totalSelectedCount =
+      selectionStore.selectedPathIds.length +
+      selectionStore.selectedShapeIds.length +
+      selectionStore.selectedTextIds.length;
 
-    // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 텍스트가 2개 이상일 때)
-    if (initialBoundingBox && initialTexts && totalSelectedTextCount > 1) {
+    // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 요소가 2개 이상일 때)
+    // 텍스트만 선택된 경우뿐만 아니라 텍스트와 다른 요소가 함께 선택된 경우도 포함
+    if (initialBoundingBox && initialTexts && totalSelectedCount > 1) {
       const updatedTexts = textStore.texts.map((text) => {
         if (!selectionStore.selectedTextIds.includes(text.id)) return text;
 

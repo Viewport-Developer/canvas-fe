@@ -255,11 +255,13 @@ export const useResize = () => {
         isTextOnly
       );
 
+      // 전체 선택된 요소 개수 계산 (경로 + 도형 + 텍스트)
+      const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length + selectedTextIds.length;
+
       // 텍스트 리사이징
       if (selectedTextIds.length > 0) {
-        const totalSelectedTextCount = selectedTextIds.length;
-        // 여러 텍스트가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
-        if (totalSelectedTextCount > 1) {
+        // 여러 요소가 선택된 경우(텍스트 포함) 결합된 바운딩 박스 기준으로 스케일링
+        if (totalSelectedCount > 1) {
           resizeSelectedTexts(newBoundingBox, initialBoundingBox, initialTexts, resizeHandle);
         } else {
           // 단일 텍스트 리사이징
@@ -269,7 +271,7 @@ export const useResize = () => {
 
       // 선택된 경로와 도형을 각각 리사이즈
       // 결합된 바운딩 박스를 리사이징하는 경우 초기 상태 전달
-      const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length;
+      // 전체 선택된 요소가 2개 이상이면 결합된 바운딩 박스 로직 사용
       if (totalSelectedCount > 1) {
         // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
         if (selectedPathIds.length > 0) {

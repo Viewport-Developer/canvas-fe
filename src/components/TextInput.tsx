@@ -17,7 +17,7 @@ const StyledTextInput = styled.textarea<{ $x: number; $y: number; $fontSize: num
   position: absolute;
   top: ${(props) => props.$y}px;
   left: ${(props) => props.$x}px;
-  border: 1px solid #5b57d1;
+  border: none;
   outline: none;
   background: transparent;
   color: ${CANVAS_CONFIG.DEFAULT_TEXT_COLOR};
@@ -51,8 +51,8 @@ const TextInput = ({
   // 편집 모드일 때는 기존 텍스트 위치에 맞춰야 하므로 오프셋 조정
   const inputPosition = useMemo(() => {
     // 실제 텍스트 시작 위치 계산 (textarea의 border와 padding 고려)
-    const paddingTop = 9;
-    const paddingLeft = 0.5;
+    const paddingTop = 8;
+    const paddingLeft = -0.5;
 
     const paddingOffsetX = paddingLeft / zoom;
     const paddingOffsetY = paddingTop / zoom;
@@ -63,8 +63,8 @@ const TextInput = ({
     if (editingTextId) {
       // 편집 모드: 기존 텍스트의 position은 이미 오프셋이 적용된 상태이므로
       // 입력 필드를 배치할 때는 오프셋을 빼서 textarea의 실제 위치에 맞춤
-      adjustedX = createPosition.x - 0.5;
-      adjustedY = createPosition.y - 4;
+      adjustedX = createPosition.x;
+      adjustedY = createPosition.y - 3;
     } else {
       // 생성 모드: 클릭한 위치 그대로 사용
       adjustedX = createPosition.x - paddingOffsetX;
