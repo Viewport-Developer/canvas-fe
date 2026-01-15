@@ -102,8 +102,16 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text, isInTextsToE
 };
 
 // 모든 텍스트를 그립니다.
-export const drawAllTexts = (ctx: CanvasRenderingContext2D, texts: Text[], textsToErase: string[] = []) => {
+export const drawAllTexts = (
+  ctx: CanvasRenderingContext2D,
+  texts: Text[],
+  textsToErase: string[] = [],
+  excludeTextIds: string[] = []
+) => {
   texts.forEach((text) => {
+    // 편집 중인 텍스트는 제외
+    if (excludeTextIds.includes(text.id)) return;
+
     const willBeErased = textsToErase.includes(text.id);
     drawText(ctx, text, willBeErased);
   });

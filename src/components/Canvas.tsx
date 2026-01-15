@@ -75,14 +75,14 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const { isDragSelecting, startDragSelect, updateDragSelect, stopDragSelect } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
   const { isMoving, startMoving, move, stopMoving } = useMove();
-  const { createPosition, startCreating, finishCreating } = useText();
+  const { createPosition, editingTextId, startCreating, finishCreating } = useText();
 
   // 캔버스 레이어 참조
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 캔버스 렌더링 및 줌 설정
-  useCanvas(backgroundCanvasRef, foregroundCanvasRef, containerRef);
+  useCanvas(backgroundCanvasRef, foregroundCanvasRef, containerRef, editingTextId);
   useZoom(backgroundCanvasRef);
 
   // 마우스 이벤트의 캔버스 좌표 계산
@@ -297,7 +297,18 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         $isMoving={isMoving}
         style={currentPath || currentShape ? { display: "block" } : { display: "none" }}
       />
-      {createPosition && <TextInput createPosition={createPosition} zoom={zoom} pan={pan} onFinish={finishCreating} />}
+      {createPosition && (
+        <TextInput
+          key={editingTextId || "new"} // key를 사용하여 편집 모드 변경 시 재마운트
+          createPosition={createPosition}
+          editingTextId={editingTextId}
+          initialContent={editingTextId ? texts.find((t) => t.id === editingTextId)?.content || "" : ""}
+          fontSize={editingTextId ? texts.find((t) => t.id === editingTextId)?.fontSize : undefined}
+          zoom={zoom}
+          pan={pan}
+          onFinish={finishCreating}
+        />
+      )}
     </CanvasContainer>
   );
 };

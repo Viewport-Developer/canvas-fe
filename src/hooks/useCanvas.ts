@@ -17,7 +17,8 @@ import { useCanvasStore } from "../store/canvasStore";
 export const useCanvas = (
   backgroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
-  containerRef: RefObject<HTMLDivElement | null>
+  containerRef: RefObject<HTMLDivElement | null>,
+  editingTextId?: string | null
 ) => {
   const {
     paths,
@@ -52,7 +53,8 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
     drawAllShapes(ctx, shapes, shapesToErase);
-    drawAllTexts(ctx, texts, textsToErase);
+    // 편집 중인 텍스트는 제외하여 렌더링
+    drawAllTexts(ctx, texts, textsToErase, editingTextId ? [editingTextId] : []);
 
     // 선택된 항목의 바운딩 박스 그리기
     const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
@@ -154,6 +156,7 @@ export const useCanvas = (
     isDragSelecting,
     dragStartPoint,
     dragEndPoint,
+    editingTextId,
   ]);
 
   useEffect(() => {
