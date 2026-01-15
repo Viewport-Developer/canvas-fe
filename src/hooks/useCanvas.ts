@@ -5,6 +5,7 @@ import {
   drawPath,
   drawAllShapes,
   drawShape,
+  drawAllTexts,
   drawSelectionBox,
   drawDragSelectionBox,
   applyCanvasZoom,
@@ -23,10 +24,12 @@ export const useCanvas = (
     currentPath,
     shapes,
     currentShape,
+    texts,
     pathsToErase,
     shapesToErase,
     selectedPathIds,
     selectedShapeIds,
+    selectedTextIds,
     isDragSelecting,
     dragStartPoint,
     dragEndPoint,
@@ -48,11 +51,13 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
     drawAllShapes(ctx, shapes, shapesToErase);
+    drawAllTexts(ctx, texts);
 
     // 선택된 항목의 바운딩 박스 그리기
     const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
     const selectedShapes = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
-    const totalSelectedCount = selectedPaths.length + selectedShapes.length;
+    const selectedTexts = texts.filter((text) => selectedTextIds.includes(text.id));
+    const totalSelectedCount = selectedPaths.length + selectedShapes.length + selectedTexts.length;
 
     if (totalSelectedCount > 0) {
       if (isDragSelecting) {
@@ -63,9 +68,12 @@ export const useCanvas = (
         selectedShapes.forEach((shape) => {
           drawSelectionBox(ctx, shape.boundingBox);
         });
+        selectedTexts.forEach((text) => {
+          drawSelectionBox(ctx, text.boundingBox);
+        });
       } else {
         // 드래그 선택이 끝나면 결합된 바운딩 박스 그리기
-        const combinedBoundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes);
+        const combinedBoundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes, selectedTexts);
         if (combinedBoundingBox) {
           drawSelectionBox(ctx, combinedBoundingBox);
         }
@@ -133,10 +141,12 @@ export const useCanvas = (
   }, [
     paths,
     shapes,
+    texts,
     pathsToErase,
     shapesToErase,
     selectedPathIds,
     selectedShapeIds,
+    selectedTextIds,
     zoom,
     pan,
     isDragSelecting,

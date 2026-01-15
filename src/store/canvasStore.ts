@@ -3,12 +3,13 @@
 
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
+import { useTextStore } from "./textStore";
 import { useSelectionStore } from "./selectionStore";
 import { useViewportStore } from "./viewportStore";
 import { useEraserStore } from "./eraserStore";
 import { useResizeStore } from "./resizeStore";
 import { useMoveStore } from "./moveStore";
-import type { Point, Path, Shape, BoundingBox } from "../types";
+import type { Point, Path, Shape, Text, BoundingBox } from "../types";
 
 interface CanvasStore {
   // ========== 상태 ==========
@@ -23,6 +24,9 @@ interface CanvasStore {
   // 현재 그리는 중인 도형
   currentShape: Shape | null;
 
+  // 완성된 텍스트 목록
+  texts: Text[];
+
   // 지울 경로 ID 목록
   pathsToErase: string[];
   // 지울 도형 ID 목록
@@ -32,6 +36,8 @@ interface CanvasStore {
   selectedPathIds: string[];
   // 선택된 도형 ID 목록
   selectedShapeIds: string[];
+  // 선택된 텍스트 ID 목록
+  selectedTextIds: string[];
 
   // 드래그 선택 상태
   isDragSelecting: boolean;
@@ -59,6 +65,14 @@ interface CanvasStore {
   setCurrentShape: (shape: Shape | null) => void;
   updateCurrentShape: (endPoint: Point) => void;
 
+  // ========== 텍스트 관리 ==========
+
+  setTexts: (texts: Text[]) => void;
+  addText: (text: Text) => void;
+  removeTexts: (ids: string[]) => void;
+  updateText: (id: string, content: string) => void;
+  updateTextWithBoundingBox: (id: string, content: string, boundingBox: Text["boundingBox"]) => void;
+
   // ========== 지우개 관리 ==========
 
   clearPathsToErase: () => void;
@@ -70,8 +84,10 @@ interface CanvasStore {
 
   setSelectedPathIds: (ids: string[]) => void;
   setSelectedShapeIds: (ids: string[]) => void;
+  setSelectedTextIds: (ids: string[]) => void;
   addSelectedPathId: (id: string) => void;
   addSelectedShapeId: (id: string) => void;
+  addSelectedTextId: (id: string) => void;
   clearSelection: () => void;
 
   // 드래그 선택 상태 관리
@@ -102,6 +118,7 @@ interface CanvasStore {
 export const useCanvasStore = (): CanvasStore => {
   const pathStore = usePathStore();
   const shapeStore = useShapeStore();
+  const textStore = useTextStore();
   const selectionStore = useSelectionStore();
   const viewportStore = useViewportStore();
   const eraserStore = useEraserStore();
@@ -114,10 +131,12 @@ export const useCanvasStore = (): CanvasStore => {
     currentPath: pathStore.currentPath,
     shapes: shapeStore.shapes,
     currentShape: shapeStore.currentShape,
+    texts: textStore.texts,
     pathsToErase: eraserStore.pathsToErase,
     shapesToErase: eraserStore.shapesToErase,
     selectedPathIds: selectionStore.selectedPathIds,
     selectedShapeIds: selectionStore.selectedShapeIds,
+    selectedTextIds: selectionStore.selectedTextIds,
     isDragSelecting: selectionStore.isDragSelecting,
     dragStartPoint: selectionStore.dragStartPoint,
     dragEndPoint: selectionStore.dragEndPoint,
@@ -138,6 +157,13 @@ export const useCanvasStore = (): CanvasStore => {
     setCurrentShape: shapeStore.setCurrentShape,
     updateCurrentShape: shapeStore.updateCurrentShape,
 
+    // 텍스트 관리
+    setTexts: textStore.setTexts,
+    addText: textStore.addText,
+    removeTexts: textStore.removeTexts,
+    updateText: textStore.updateText,
+    updateTextWithBoundingBox: textStore.updateTextWithBoundingBox,
+
     // 지우개 관리
     clearPathsToErase: eraserStore.clearPathsToErase,
     addPathToErase: eraserStore.addPathToErase,
@@ -147,8 +173,10 @@ export const useCanvasStore = (): CanvasStore => {
     // 선택 관리
     setSelectedPathIds: selectionStore.setSelectedPathIds,
     setSelectedShapeIds: selectionStore.setSelectedShapeIds,
+    setSelectedTextIds: selectionStore.setSelectedTextIds,
     addSelectedPathId: selectionStore.addSelectedPathId,
     addSelectedShapeId: selectionStore.addSelectedShapeId,
+    addSelectedTextId: selectionStore.addSelectedTextId,
     clearSelection: selectionStore.clearSelection,
 
     // 드래그 선택 상태 관리

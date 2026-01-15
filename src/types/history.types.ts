@@ -1,5 +1,6 @@
 import type { Path } from "./path.types";
 import type { Shape } from "./shape.types";
+import type { Text } from "./text.types";
 import type { Point, BoundingBox } from "./common.types";
 
 // 그리기 액션
@@ -13,6 +14,7 @@ export type EraseAction = {
   type: "erase";
   paths: Path[];
   shapes: Shape[];
+  texts: Text[];
 };
 
 // 팬(이동) 액션
@@ -46,4 +48,11 @@ export type MoveAction = {
   previousShapes: Shape[];
   newPaths: Path[];
   newShapes: Shape[];
+};
+
+// 텍스트 액션
+export type TextAction = {
+  type: "text";
+  previousTexts: Text[];
+  newTexts: Text[];
 };

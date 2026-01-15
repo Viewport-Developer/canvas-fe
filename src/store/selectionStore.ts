@@ -6,6 +6,8 @@ interface SelectionStore {
   selectedPathIds: string[];
   // 선택된 도형 ID 목록
   selectedShapeIds: string[];
+  // 선택된 텍스트 ID 목록
+  selectedTextIds: string[];
 
   // 드래그 선택 상태
   isDragSelecting: boolean;
@@ -14,8 +16,10 @@ interface SelectionStore {
 
   setSelectedPathIds: (ids: string[]) => void;
   setSelectedShapeIds: (ids: string[]) => void;
+  setSelectedTextIds: (ids: string[]) => void;
   addSelectedPathId: (id: string) => void;
   addSelectedShapeId: (id: string) => void;
+  addSelectedTextId: (id: string) => void;
   clearSelection: () => void;
 
   // 드래그 선택 상태 관리
@@ -27,6 +31,7 @@ interface SelectionStore {
 export const useSelectionStore = create<SelectionStore>((set) => ({
   selectedPathIds: [],
   selectedShapeIds: [],
+  selectedTextIds: [],
 
   isDragSelecting: false,
   dragStartPoint: null,
@@ -36,11 +41,24 @@ export const useSelectionStore = create<SelectionStore>((set) => ({
 
   setSelectedShapeIds: (ids) => set({ selectedShapeIds: ids }),
 
-  addSelectedPathId: (id) => set((state) => ({ selectedPathIds: [...state.selectedPathIds, id] })),
+  setSelectedTextIds: (ids) => set({ selectedTextIds: ids }),
 
-  addSelectedShapeId: (id) => set((state) => ({ selectedShapeIds: [...state.selectedShapeIds, id] })),
+  addSelectedPathId: (id) =>
+    set((state) => ({
+      selectedPathIds: state.selectedPathIds.includes(id) ? state.selectedPathIds : [...state.selectedPathIds, id],
+    })),
 
-  clearSelection: () => set({ selectedPathIds: [], selectedShapeIds: [] }),
+  addSelectedShapeId: (id) =>
+    set((state) => ({
+      selectedShapeIds: state.selectedShapeIds.includes(id) ? state.selectedShapeIds : [...state.selectedShapeIds, id],
+    })),
+
+  addSelectedTextId: (id) =>
+    set((state) => ({
+      selectedTextIds: state.selectedTextIds.includes(id) ? state.selectedTextIds : [...state.selectedTextIds, id],
+    })),
+
+  clearSelection: () => set({ selectedPathIds: [], selectedShapeIds: [], selectedTextIds: [] }),
 
   setIsDragSelecting: (isDragSelecting) => set({ isDragSelecting }),
   setDragStartPoint: (dragStartPoint) => set({ dragStartPoint }),

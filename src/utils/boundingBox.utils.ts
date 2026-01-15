@@ -1,4 +1,5 @@
-import type { Point, BoundingBox, Path, Shape } from "../types";
+import type { Point, BoundingBox, Path, Shape, Text } from "../types";
+import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 // 포인트 배열로부터 바운딩 박스를 계산합니다.
 export const calculateBoundingBox = (points: Point[]): BoundingBox => {
@@ -42,13 +43,17 @@ export const calculateBoundingBoxSize = (box: BoundingBox) => ({
   height: box.bottomLeft.y - box.topLeft.y,
 });
 
-// 선택된 경로와 도형의 결합된 바운딩 박스를 계산합니다.
-export const getCombinedBoundingBox = (paths: Path[], shapes: Shape[]): BoundingBox | null => {
-  if (paths.length === 0 && shapes.length === 0) {
+// 선택된 경로, 도형, 텍스트의 결합된 바운딩 박스를 계산합니다.
+export const getCombinedBoundingBox = (paths: Path[], shapes: Shape[], texts: Text[] = []): BoundingBox | null => {
+  if (paths.length === 0 && shapes.length === 0 && texts.length === 0) {
     return null;
   }
 
-  const allBoxes = [...paths.map((p) => p.boundingBox), ...shapes.map((s) => s.boundingBox)];
+  const allBoxes = [
+    ...paths.map((p) => p.boundingBox),
+    ...shapes.map((s) => s.boundingBox),
+    ...texts.map((t) => t.boundingBox),
+  ];
 
   let minX = allBoxes[0].topLeft.x;
   let maxX = allBoxes[0].topRight.x;
@@ -84,4 +89,49 @@ export const doBoundingBoxesIntersect = (box1: BoundingBox, box2: BoundingBox): 
 
   // 교차 조건: 박스들이 겹치지 않는 경우를 제외
   return !(box1MaxX < box2MinX || box1MinX > box2MaxX || box1MaxY < box2MinY || box1MinY > box2MaxY);
+};
+
+// 텍스트의 바운딩 박스를 계산합니다 (여러 줄 지원).
+export const calculateTextBoundingBox = (content: string, position: Point, fontSize: number): BoundingBox => {
+  if (!content) {
+    return {
+      topLeft: { x: position.x, y: position.y },
+      topRight: { x: position.x, y: position.y },
+      bottomLeft: { x: position.x, y: position.y + fontSize },
+      bottomRight: { x: position.x, y: position.y + fontSize },
+    };
+  }
+
+  // 임시 캔버스 생성하여 텍스트 크기 측정
+  const tempCanvas = document.createElement("canvas");
+  const tempCtx = tempCanvas.getContext("2d");
+  if (!tempCtx) {
+    return {
+      topLeft: { x: position.x, y: position.y },
+      topRight: { x: position.x, y: position.y },
+      bottomLeft: { x: position.x, y: position.y + fontSize },
+      bottomRight: { x: position.x, y: position.y + fontSize },
+    };
+  }
+
+  tempCtx.font = `${fontSize}px sans-serif`;
+  tempCtx.textBaseline = "top"; // 상단 기준으로 정렬
+
+  let maxWidth = 0;
+  const lines = content.split("\n");
+  const lineHeight = fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET; // 줄 간격 고려
+
+  lines.forEach((line) => {
+    const metrics = tempCtx.measureText(line);
+    maxWidth = Math.max(maxWidth, metrics.width);
+  });
+
+  const totalHeight = lines.length * lineHeight;
+
+  return {
+    topLeft: { x: position.x, y: position.y },
+    topRight: { x: position.x + maxWidth, y: position.y },
+    bottomLeft: { x: position.x, y: position.y + totalHeight },
+    bottomRight: { x: position.x + maxWidth, y: position.y + totalHeight },
+  };
 };

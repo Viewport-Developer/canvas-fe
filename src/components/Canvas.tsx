@@ -8,29 +8,26 @@ import { useShape } from "../hooks/useShape";
 import { useSelect } from "../hooks/useSelect";
 import { useResize } from "../hooks/useResize";
 import { useMove } from "../hooks/useMove";
+import { useText } from "../hooks/useText";
 import type { Point, Tool } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 import { useCanvas } from "../hooks/useCanvas";
 import { useZoom } from "../hooks/useZoom";
+import TextInput from "./TextInput";
 
 type CanvasProps = {
   containerRef: RefObject<HTMLDivElement | null>;
-};
-
-type ContainerProps = {
-  $tool: Tool;
-  $isPanning: boolean;
-  $isMoving: boolean;
 };
 
 const CanvasContainer = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 `;
 
-const CanvasLayer = styled.canvas<ContainerProps>`
+const CanvasLayer = styled.canvas<{ $tool: Tool; $isPanning: boolean; $isMoving: boolean }>`
   position: absolute;
   top: 0;
   left: 0;
@@ -59,10 +56,13 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     currentShape,
     paths,
     shapes,
+    texts,
     selectedPathIds,
     selectedShapeIds,
+    selectedTextIds,
     removePaths,
     removeShapes,
+    removeTexts,
     clearSelection,
   } = useCanvasStore();
   const { canUndo, undo, canRedo, redo, saveEraseAction } = useHistoryStore();
@@ -75,6 +75,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const { isDragSelecting, startDragSelect, updateDragSelect, stopDragSelect } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
   const { isMoving, startMoving, move, stopMoving } = useMove();
+  const { createPosition, startCreating, finishCreating } = useText();
 
   // 캔버스 레이어 참조
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -130,6 +131,12 @@ const Canvas = ({ containerRef }: CanvasProps) => {
             // 이동도 아니면 드래그 선택 시도
             startDragSelect(point);
           }
+        }
+        break;
+      case "text":
+        // 이미 텍스트 입력 중이면 새로운 텍스트 생성하지 않음
+        if (!createPosition) {
+          startCreating(point);
         }
         break;
     }
@@ -215,12 +222,16 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         return;
       }
       // Backspace 키로 선택된 요소 삭제
-      if (e.key === "Backspace" && (selectedPathIds.length > 0 || selectedShapeIds.length > 0)) {
+      if (
+        e.key === "Backspace" &&
+        (selectedPathIds.length > 0 || selectedShapeIds.length > 0 || selectedTextIds.length > 0)
+      ) {
         e.preventDefault();
 
         // 삭제할 데이터 백업 (히스토리용)
         const pathsToDelete = paths.filter((path) => selectedPathIds.includes(path.id));
         const shapesToDelete = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
+        const textsToDelete = texts.filter((text) => selectedTextIds.includes(text.id));
 
         // 요소 삭제
         if (selectedPathIds.length > 0) {
@@ -229,10 +240,13 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         if (selectedShapeIds.length > 0) {
           removeShapes(selectedShapeIds);
         }
+        if (selectedTextIds.length > 0) {
+          removeTexts(selectedTextIds);
+        }
 
         // 히스토리에 저장
-        if (pathsToDelete.length > 0 || shapesToDelete.length > 0) {
-          saveEraseAction(pathsToDelete, shapesToDelete);
+        if (pathsToDelete.length > 0 || shapesToDelete.length > 0 || textsToDelete.length > 0) {
+          saveEraseAction(pathsToDelete, shapesToDelete, textsToDelete);
         }
 
         // 선택 해제
@@ -251,10 +265,13 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     redo,
     selectedPathIds,
     selectedShapeIds,
+    selectedTextIds,
     paths,
     shapes,
+    texts,
     removePaths,
     removeShapes,
+    removeTexts,
     clearSelection,
     saveEraseAction,
   ]);
@@ -280,6 +297,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         $isMoving={isMoving}
         style={currentPath || currentShape ? { display: "block" } : { display: "none" }}
       />
+      {createPosition && <TextInput createPosition={createPosition} zoom={zoom} pan={pan} onFinish={finishCreating} />}
     </CanvasContainer>
   );
 };

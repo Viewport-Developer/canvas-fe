@@ -65,6 +65,9 @@ const ToolBar = () => {
       <Button onClick={() => handleToolChange("select")} $selected={tool === "select"}>
         👆
       </Button>
+      <Button onClick={() => handleToolChange("text")} $selected={tool === "text"}>
+        📝
+      </Button>
     </Container>
   );
 };

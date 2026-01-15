@@ -7,13 +7,16 @@ import type {
   ShapeAction,
   ResizeAction,
   MoveAction,
+  TextAction,
   Point,
   Path,
   Shape,
+  Text,
   BoundingBox,
 } from "../types";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
+import { useTextStore } from "./textStore";
 import { useViewportStore } from "./viewportStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
@@ -26,7 +29,7 @@ interface HistoryStore {
   // 그리기 액션 저장
   saveDrawAction: (path: DrawAction["path"]) => void;
   // 지우기 액션 저장
-  saveEraseAction: (paths: EraseAction["paths"], shapes: EraseAction["shapes"]) => void;
+  saveEraseAction: (paths: EraseAction["paths"], shapes: EraseAction["shapes"], texts: EraseAction["texts"]) => void;
   // 팬 액션 저장
   savePanAction: (previousPan: Point, newPan: Point) => void;
   // 도형 액션 저장
@@ -42,6 +45,8 @@ interface HistoryStore {
   ) => void;
   // 이동 액션 저장
   saveMoveAction: (previousPaths: Path[], previousShapes: Shape[], newPaths: Path[], newShapes: Shape[]) => void;
+  // 텍스트 액션 저장
+  saveTextAction: (previousTexts: Text[], newTexts: Text[]) => void;
 
   // Undo 실행
   undo: () => void;
@@ -77,11 +82,12 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
-  saveEraseAction: (paths, shapes) => {
+  saveEraseAction: (paths, shapes, texts = []) => {
     const action: EraseAction = {
       type: "erase",
       paths: paths.map((path) => ({ ...path })),
       shapes: shapes.map((shape) => ({ ...shape })),
+      texts: texts.map((text) => ({ ...text })),
     };
 
     set((prevState) => ({
@@ -147,6 +153,19 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
+  saveTextAction: (previousTexts, newTexts) => {
+    const action: TextAction = {
+      type: "text",
+      previousTexts: previousTexts.map((text) => ({ ...text })),
+      newTexts: newTexts.map((text) => ({ ...text })),
+    };
+
+    set((prevState) => ({
+      undoStack: addActionToStack(action, prevState.undoStack),
+      redoStack: [],
+    }));
+  },
+
   undo: () => {
     const state = get();
     if (state.undoStack.length === 0) return;
@@ -154,6 +173,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     const lastAction = state.undoStack[state.undoStack.length - 1];
     const pathStore = usePathStore.getState();
     const shapeStore = useShapeStore.getState();
+    const textStore = useTextStore.getState();
     const viewportStore = useViewportStore.getState();
 
     // 액션 타입에 따라 Undo 실행
@@ -167,6 +187,9 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         });
         lastAction.shapes.forEach((shape) => {
           shapeStore.addShape(shape);
+        });
+        lastAction.texts.forEach((text) => {
+          textStore.addText(text);
         });
         break;
       case "pan":
@@ -215,6 +238,23 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         shapeStore.setShapes(updatedShapes);
         break;
       }
+      case "text": {
+        const currentTexts = textStore.texts;
+
+        // 이전 텍스트로 교체
+        const updatedTexts = currentTexts.map((text) => {
+          const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
+          return previousText || text;
+        });
+
+        // 삭제된 텍스트 복원
+        const deletedTexts = lastAction.previousTexts.filter(
+          (prevText) => !currentTexts.some((text) => text.id === prevText.id)
+        );
+
+        textStore.setTexts([...updatedTexts, ...deletedTexts]);
+        break;
+      }
     }
 
     set({
@@ -230,6 +270,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     const nextAction = state.redoStack[state.redoStack.length - 1];
     const pathStore = usePathStore.getState();
     const shapeStore = useShapeStore.getState();
+    const textStore = useTextStore.getState();
     const viewportStore = useViewportStore.getState();
 
     // 액션 타입에 따라 Redo 실행
@@ -240,8 +281,10 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "erase": {
         const pathIds = nextAction.paths.map((path) => path.id);
         const shapeIds = nextAction.shapes.map((shape) => shape.id);
+        const textIds = nextAction.texts.map((text) => text.id);
         pathStore.removePaths(pathIds);
         shapeStore.removeShapes(shapeIds);
+        textStore.removeTexts(textIds);
         break;
       }
       case "pan":
@@ -288,6 +331,30 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
 
         pathStore.setPaths(updatedPaths);
         shapeStore.setShapes(updatedShapes);
+        break;
+      }
+      case "text": {
+        const currentTexts = textStore.texts;
+
+        // 새 텍스트로 교체
+        const updatedTexts = currentTexts.map((text) => {
+          const newText = nextAction.newTexts.find((t) => t.id === text.id);
+          return newText || text;
+        });
+
+        // 새로 추가된 텍스트 추가
+        const addedTexts = nextAction.newTexts.filter(
+          (newText) => !currentTexts.some((text) => text.id === newText.id)
+        );
+
+        // 삭제된 텍스트 제거
+        const finalTexts = [...updatedTexts, ...addedTexts].filter(
+          (text) =>
+            nextAction.newTexts.some((newText) => newText.id === text.id) ||
+            !nextAction.previousTexts.some((prevText) => prevText.id === text.id)
+        );
+
+        textStore.setTexts(finalTexts);
         break;
       }
     }

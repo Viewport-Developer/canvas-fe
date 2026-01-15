@@ -1,4 +1,4 @@
-import type { Path, Shape } from "../types";
+import type { Path, Shape, Text } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 // 단일 경로를 그립니다.
@@ -78,5 +78,31 @@ export const drawAllShapes = (ctx: CanvasRenderingContext2D, shapes: Shape[], sh
   shapes.forEach((shape) => {
     const willBeErased = shapesToErase.includes(shape.id);
     drawShape(ctx, shape, willBeErased);
+  });
+};
+
+// 단일 텍스트를 그립니다 (여러 줄 지원).
+export const drawText = (ctx: CanvasRenderingContext2D, text: Text) => {
+  if (!text.content) return;
+
+  ctx.save();
+  ctx.fillStyle = text.color;
+  ctx.font = `${text.fontSize}px sans-serif`;
+  ctx.textBaseline = "top"; // 상단 기준으로 정렬
+
+  const lines = text.content.split("\n");
+  const lineHeight = text.fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET; // 줄 간격
+
+  lines.forEach((line, index) => {
+    ctx.fillText(line, text.position.x, text.position.y + index * lineHeight);
+  });
+
+  ctx.restore();
+};
+
+// 모든 텍스트를 그립니다.
+export const drawAllTexts = (ctx: CanvasRenderingContext2D, texts: Text[]) => {
+  texts.forEach((text) => {
+    drawText(ctx, text);
   });
 };

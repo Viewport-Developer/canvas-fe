@@ -9,12 +9,16 @@ export const useSelect = () => {
   const {
     paths,
     shapes,
+    texts,
     selectedPathIds,
     selectedShapeIds,
+    selectedTextIds,
     setSelectedPathIds,
     setSelectedShapeIds,
+    setSelectedTextIds,
     addSelectedPathId,
     addSelectedShapeId,
+    addSelectedTextId,
     clearSelection,
     isDragSelecting,
     dragStartPoint,
@@ -56,6 +60,16 @@ export const useSelect = () => {
       if (isPointOnShape(point, shape)) {
         clearSelection();
         setSelectedShapeIds([shape.id]);
+        isSelected = true;
+        return;
+      }
+    }
+
+    // 텍스트 선택: 텍스트의 바운딩 박스 내부인지 확인
+    for (const text of texts) {
+      if (isPointInBoundingBox(point, text.boundingBox)) {
+        clearSelection();
+        setSelectedTextIds([text.id]);
         isSelected = true;
         return;
       }
@@ -110,6 +124,19 @@ export const useSelect = () => {
       // 드래그 선택 박스와 교차하면 추가
       if (doBoundingBoxesIntersect(selectionBox, shape.boundingBox)) {
         addSelectedShapeId(shape.id);
+      }
+    }
+
+    // 텍스트 선택: 바운딩 박스가 교차하는지 확인하고 추가
+    for (const text of texts) {
+      // 이미 선택된 텍스트는 건너뜀
+      if (selectedTextIds.includes(text.id)) {
+        continue;
+      }
+
+      // 드래그 선택 박스와 교차하면 추가
+      if (doBoundingBoxesIntersect(selectionBox, text.boundingBox)) {
+        addSelectedTextId(text.id);
       }
     }
   };

@@ -41,4 +41,11 @@ export const CANVAS_CONFIG = {
 
   // 지워질 요소 표시용 투명도
   ERASE_PREVIEW_ALPHA: 0.3,
+
+  // 텍스트 기본 색상
+  DEFAULT_TEXT_COLOR: "#000000",
+  // 텍스트 기본 폰트 사이즈
+  DEFAULT_TEXT_FONT_SIZE: 16,
+  // 텍스트 줄 간격 오프셋
+  DEFAULT_TEXT_LINE_HEIGHT_OFFSET: 4,
 } as const;
