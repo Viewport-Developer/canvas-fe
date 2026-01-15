@@ -9,7 +9,7 @@ const Container = styled.main`
   overflow: hidden;
 `;
 
-function App() {
+const App = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -18,6 +18,6 @@ function App() {
       <Canvas containerRef={containerRef} />
     </Container>
   );
-}
+};
 
 export default App;

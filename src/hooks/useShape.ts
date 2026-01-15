@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import type { Point, Shape, ShapeType } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import { useCanvasStore } from "../store/canvasStore";
@@ -8,33 +9,39 @@ export const useShape = () => {
   const { saveShapeAction } = useHistoryStore();
 
   // 도형 그리기를 시작합니다.
-  const startShapeDrawing = (point: Point, shapeType: ShapeType) => {
-    const newShape: Shape = {
-      id: `shape-${Date.now()}`,
-      type: shapeType,
-      startPoint: point,
-      endPoint: point,
-      color: CANVAS_CONFIG.DEFAULT_STROKE_COLOR,
-      width: CANVAS_CONFIG.DEFAULT_STROKE_WIDTH,
-      boundingBox: {
-        topLeft: { x: 0, y: 0 },
-        topRight: { x: 0, y: 0 },
-        bottomLeft: { x: 0, y: 0 },
-        bottomRight: { x: 0, y: 0 },
-      },
-    };
+  const startShapeDrawing = useCallback(
+    (point: Point, shapeType: ShapeType) => {
+      const newShape: Shape = {
+        id: `shape-${Date.now()}`,
+        type: shapeType,
+        startPoint: point,
+        endPoint: point,
+        color: CANVAS_CONFIG.DEFAULT_STROKE_COLOR,
+        width: CANVAS_CONFIG.DEFAULT_STROKE_WIDTH,
+        boundingBox: {
+          topLeft: { x: 0, y: 0 },
+          topRight: { x: 0, y: 0 },
+          bottomLeft: { x: 0, y: 0 },
+          bottomRight: { x: 0, y: 0 },
+        },
+      };
 
-    setCurrentShape(newShape);
-  };
+      setCurrentShape(newShape);
+    },
+    [setCurrentShape]
+  );
 
   // 도형의 크기를 업데이트합니다.
-  const drawShape = (point: Point) => {
-    if (!currentShape) return;
-    updateCurrentShape(point);
-  };
+  const drawShape = useCallback(
+    (point: Point) => {
+      if (!currentShape) return;
+      updateCurrentShape(point);
+    },
+    [currentShape, updateCurrentShape]
+  );
 
   // 도형 그리기를 종료하고 도형을 저장합니다.
-  const stopShapeDrawing = () => {
+  const stopShapeDrawing = useCallback(() => {
     if (!currentShape) return;
 
     // 최종 바운딩 박스 계산
@@ -56,7 +63,7 @@ export const useShape = () => {
     addShape(finalShape);
     saveShapeAction(finalShape);
     setCurrentShape(null);
-  };
+  }, [currentShape, addShape, saveShapeAction, setCurrentShape]);
 
   return {
     startShapeDrawing,

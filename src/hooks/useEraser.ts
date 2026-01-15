@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import { isInEraserRange } from "../utils/distance.utils";
@@ -30,60 +30,69 @@ export const useEraser = () => {
   const [isErasing, setIsErasing] = useState(false);
 
   // 주어진 점에서 지울 요소를 찾습니다.
-  const eraseAtPoint = (point: Point) => {
-    const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
+  const eraseAtPoint = useCallback(
+    (point: Point) => {
+      const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
 
-    // 경로 지우기: 경로의 선에 가까운지 확인
-    for (const path of paths) {
-      if (pathsToErase.includes(path.id)) continue;
+      // 경로 지우기: 경로의 선에 가까운지 확인
+      for (const path of paths) {
+        if (pathsToErase.includes(path.id)) continue;
 
-      if (!isPointInBoundingBox(point, path.boundingBox)) {
-        continue;
+        if (!isPointInBoundingBox(point, path.boundingBox)) {
+          continue;
+        }
+
+        const pathRadius = path.width / 2; // 경로 선의 반지름
+        const totalRadius = eraserRadius + pathRadius;
+
+        const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
+
+        if (hasCollision) {
+          addPathToErase(path.id);
+        }
       }
 
-      const pathRadius = path.width / 2; // 경로 선의 반지름
-      const totalRadius = eraserRadius + pathRadius;
+      // 도형 지우기: 도형의 선에 가까운지 확인
+      for (const shape of shapes) {
+        if (shapesToErase.includes(shape.id)) continue;
 
-      const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
-
-      if (hasCollision) {
-        addPathToErase(path.id);
+        if (isPointOnShape(point, shape)) {
+          addShapeToErase(shape.id);
+        }
       }
-    }
 
-    // 도형 지우기: 도형의 선에 가까운지 확인
-    for (const shape of shapes) {
-      if (shapesToErase.includes(shape.id)) continue;
+      // 텍스트 지우기: 바운딩 박스 내부에 커서가 있는지 확인
+      for (const text of texts) {
+        if (textsToErase.includes(text.id)) continue;
 
-      if (isPointOnShape(point, shape)) {
-        addShapeToErase(shape.id);
+        if (isPointInBoundingBox(point, text.boundingBox)) {
+          addTextToErase(text.id);
+        }
       }
-    }
-
-    // 텍스트 지우기: 바운딩 박스 내부에 커서가 있는지 확인
-    for (const text of texts) {
-      if (textsToErase.includes(text.id)) continue;
-
-      if (isPointInBoundingBox(point, text.boundingBox)) {
-        addTextToErase(text.id);
-      }
-    }
-  };
+    },
+    [paths, pathsToErase, shapes, shapesToErase, texts, textsToErase, addPathToErase, addShapeToErase, addTextToErase]
+  );
 
   // 지우기를 시작합니다.
-  const startErasing = (point: Point) => {
-    setIsErasing(true);
-    eraseAtPoint(point);
-  };
+  const startErasing = useCallback(
+    (point: Point) => {
+      setIsErasing(true);
+      eraseAtPoint(point);
+    },
+    [eraseAtPoint]
+  );
 
   // 지우기를 계속합니다.
-  const erase = (point: Point) => {
-    if (!isErasing) return;
-    eraseAtPoint(point);
-  };
+  const erase = useCallback(
+    (point: Point) => {
+      if (!isErasing) return;
+      eraseAtPoint(point);
+    },
+    [isErasing, eraseAtPoint]
+  );
 
   // 지우기를 종료하고 요소를 삭제합니다.
-  const stopErasing = () => {
+  const stopErasing = useCallback(() => {
     setIsErasing(false);
 
     if (pathsToErase.length > 0 || shapesToErase.length > 0 || textsToErase.length > 0) {
@@ -104,7 +113,21 @@ export const useEraser = () => {
       clearShapesToErase();
       clearTextsToErase();
     }
-  };
+  }, [
+    pathsToErase,
+    shapesToErase,
+    textsToErase,
+    paths,
+    shapes,
+    texts,
+    removePaths,
+    removeShapes,
+    removeTexts,
+    saveEraseAction,
+    clearPathsToErase,
+    clearShapesToErase,
+    clearTextsToErase,
+  ]);
 
   return {
     startErasing,

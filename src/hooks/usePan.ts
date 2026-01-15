@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Point } from "../types";
 import { useCanvasStore } from "../store/canvasStore";
 import { useToolStore } from "../store/toolStore";
@@ -13,33 +13,39 @@ export const usePan = () => {
   const [initialPan, setInitialPan] = useState<Point | null>(null);
 
   // 팬을 시작합니다.
-  const startPanning = (e: React.MouseEvent) => {
-    setPanStart({ x: e.clientX, y: e.clientY });
-    setInitialPan({ ...pan });
-    setIsPanning(true);
-  };
+  const startPanning = useCallback(
+    (e: React.MouseEvent) => {
+      setPanStart({ x: e.clientX, y: e.clientY });
+      setInitialPan({ ...pan });
+      setIsPanning(true);
+    },
+    [pan, setIsPanning]
+  );
 
   // 팬을 계속합니다.
-  const doPanning = (e: React.MouseEvent) => {
-    if (!panStart) return;
+  const doPanning = useCallback(
+    (e: React.MouseEvent) => {
+      if (!panStart) return;
 
-    const dx = e.clientX - panStart.x;
-    const dy = e.clientY - panStart.y;
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
 
-    // 화면 좌표를 캔버스 좌표로 변환 (줌 고려)
-    const canvasDx = dx / zoom;
-    const canvasDy = dy / zoom;
+      // 화면 좌표를 캔버스 좌표로 변환 (줌 고려)
+      const canvasDx = dx / zoom;
+      const canvasDy = dy / zoom;
 
-    setPan({
-      x: pan.x - canvasDx,
-      y: pan.y - canvasDy,
-    });
+      setPan({
+        x: pan.x - canvasDx,
+        y: pan.y - canvasDy,
+      });
 
-    setPanStart({ x: e.clientX, y: e.clientY });
-  };
+      setPanStart({ x: e.clientX, y: e.clientY });
+    },
+    [panStart, zoom, pan, setPan]
+  );
 
   // 팬을 종료합니다.
-  const stopPanning = () => {
+  const stopPanning = useCallback(() => {
     if (initialPan !== null) {
       savePanAction(initialPan, pan);
     }
@@ -47,7 +53,7 @@ export const usePan = () => {
     setPanStart(null);
     setInitialPan(null);
     setIsPanning(false);
-  };
+  }, [initialPan, pan, savePanAction, setIsPanning]);
 
   return {
     startPanning,

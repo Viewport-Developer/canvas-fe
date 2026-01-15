@@ -1,4 +1,4 @@
-import { useRef, useEffect, type RefObject } from "react";
+import { useRef, useEffect, useCallback, useMemo, type RefObject } from "react";
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
 import { useDraw } from "../hooks/useDraw";
@@ -86,95 +86,129 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   useZoom(backgroundCanvasRef);
 
   // 마우스 이벤트의 캔버스 좌표 계산
-  const getMousePos = (e: React.MouseEvent): Point => {
-    // 현재 그리는 중인 요소가 있으면 포그라운드 캔버스 사용
-    const canvas = currentPath || currentShape ? foregroundCanvasRef.current : backgroundCanvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  const getMousePos = useCallback(
+    (e: React.MouseEvent): Point => {
+      // 현재 그리는 중인 요소가 있으면 포그라운드 캔버스 사용
+      const canvas = currentPath || currentShape ? foregroundCanvasRef.current : backgroundCanvasRef.current;
+      if (!canvas) return { x: 0, y: 0 };
 
-    const rect = canvas.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
 
-    // 화면 좌표를 캔버스 좌표로 변환 (줌과 팬 고려)
-    const x = (e.clientX - rect.left) / zoom + pan.x;
-    const y = (e.clientY - rect.top) / zoom + pan.y;
+      // 화면 좌표를 캔버스 좌표로 변환 (줌과 팬 고려)
+      const x = (e.clientX - rect.left) / zoom + pan.x;
+      const y = (e.clientY - rect.top) / zoom + pan.y;
 
-    return { x, y };
-  };
+      return { x, y };
+    },
+    [currentPath, currentShape, zoom, pan]
+  );
 
   // 마우스 다운 이벤트 핸들러
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const point = getMousePos(e);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      const point = getMousePos(e);
 
-    switch (tool) {
-      case "draw":
-        startDrawing(point);
-        break;
-      case "pan":
-        startPanning(e);
-        break;
-      case "eraser":
-        startErasing(point);
-        break;
-      case "rectangle":
-        startShapeDrawing(point, "rectangle");
-        break;
-      case "diamond":
-        startShapeDrawing(point, "diamond");
-        break;
-      case "circle":
-        startShapeDrawing(point, "circle");
-        break;
-      case "select":
-        // 먼저 리사이즈 핸들을 확인
-        if (!startResizing(point)) {
-          // 리사이즈 핸들이 아니면 이동 시도
-          if (!startMoving(point)) {
-            // 이동도 아니면 드래그 선택 시도
-            startDragSelect(point);
+      switch (tool) {
+        case "draw":
+          startDrawing(point);
+          break;
+        case "pan":
+          startPanning(e);
+          break;
+        case "eraser":
+          startErasing(point);
+          break;
+        case "rectangle":
+          startShapeDrawing(point, "rectangle");
+          break;
+        case "diamond":
+          startShapeDrawing(point, "diamond");
+          break;
+        case "circle":
+          startShapeDrawing(point, "circle");
+          break;
+        case "select":
+          // 먼저 리사이즈 핸들을 확인
+          if (!startResizing(point)) {
+            // 리사이즈 핸들이 아니면 이동 시도
+            if (!startMoving(point)) {
+              // 이동도 아니면 드래그 선택 시도
+              startDragSelect(point);
+            }
           }
-        }
-        break;
-      case "text":
-        // 이미 텍스트 입력 중이면 새로운 텍스트 생성하지 않음
-        if (!createPosition) {
-          startCreating(point);
-        }
-        break;
-    }
-  };
+          break;
+        case "text":
+          // 이미 텍스트 입력 중이면 새로운 텍스트 생성하지 않음
+          if (!createPosition) {
+            startCreating(point);
+          }
+          break;
+      }
+    },
+    [
+      tool,
+      getMousePos,
+      startDrawing,
+      startPanning,
+      startErasing,
+      startShapeDrawing,
+      startResizing,
+      startMoving,
+      startDragSelect,
+      createPosition,
+      startCreating,
+    ]
+  );
 
   // 마우스 이동 이벤트 핸들러
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const point = getMousePos(e);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const point = getMousePos(e);
 
-    switch (tool) {
-      case "draw":
-        draw(point);
-        break;
-      case "pan":
-        doPanning(e);
-        break;
-      case "eraser":
-        erase(point);
-        break;
-      case "rectangle":
-      case "diamond":
-      case "circle":
-        drawShape(point);
-        break;
-      case "select":
-        if (isResizing) {
-          resize(point);
-        } else if (isMoving) {
-          move(point);
-        } else if (isDragSelecting) {
-          updateDragSelect(point);
-        }
-        break;
-    }
-  };
+      switch (tool) {
+        case "draw":
+          draw(point);
+          break;
+        case "pan":
+          doPanning(e);
+          break;
+        case "eraser":
+          erase(point);
+          break;
+        case "rectangle":
+        case "diamond":
+        case "circle":
+          drawShape(point);
+          break;
+        case "select":
+          if (isResizing) {
+            resize(point);
+          } else if (isMoving) {
+            move(point);
+          } else if (isDragSelecting) {
+            updateDragSelect(point);
+          }
+          break;
+      }
+    },
+    [
+      tool,
+      getMousePos,
+      draw,
+      doPanning,
+      erase,
+      drawShape,
+      isResizing,
+      resize,
+      isMoving,
+      move,
+      isDragSelecting,
+      updateDragSelect,
+    ]
+  );
 
   // 마우스 업 이벤트 핸들러
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     switch (tool) {
       case "draw":
         stopDrawing();
@@ -200,7 +234,19 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         }
         break;
     }
-  };
+  }, [
+    tool,
+    stopDrawing,
+    stopPanning,
+    stopErasing,
+    stopShapeDrawing,
+    isResizing,
+    stopResizing,
+    isMoving,
+    stopMoving,
+    isDragSelecting,
+    stopDragSelect,
+  ]);
 
   // 키보드 단축키 처리 (Undo/Redo, Delete)
   useEffect(() => {
@@ -276,6 +322,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     saveEraseAction,
   ]);
 
+  // 편집 중인 텍스트 정보 메모이제이션
+  const editingText = useMemo(() => {
+    return editingTextId ? texts.find((t) => t.id === editingTextId) : null;
+  }, [editingTextId, texts]);
+
   return (
     <CanvasContainer>
       <CanvasLayer
@@ -302,8 +353,8 @@ const Canvas = ({ containerRef }: CanvasProps) => {
           key={editingTextId || "new"} // key를 사용하여 편집 모드 변경 시 재마운트
           createPosition={createPosition}
           editingTextId={editingTextId}
-          initialContent={editingTextId ? texts.find((t) => t.id === editingTextId)?.content || "" : ""}
-          fontSize={editingTextId ? texts.find((t) => t.id === editingTextId)?.fontSize : undefined}
+          initialContent={editingText?.content || ""}
+          fontSize={editingText?.fontSize}
           zoom={zoom}
           pan={pan}
           onFinish={finishCreating}

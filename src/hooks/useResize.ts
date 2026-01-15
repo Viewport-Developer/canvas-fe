@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Point, BoundingBox, ResizeHandleType, Path, Shape, Text } from "../types";
 import { getResizeHandleAtPoint, getHandlePosition } from "../utils/resize.utils";
 import { getCombinedBoundingBox } from "../utils/boundingBox.utils";
@@ -210,83 +210,103 @@ export const useResize = () => {
   };
 
   // 리사이즈를 시작합니다.
-  const startResizing = (point: Point): boolean => {
-    const selectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
-    const selectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
-    const selectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
-    const boundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes, selectedTexts);
-    if (!boundingBox) return false;
+  const startResizing = useCallback(
+    (point: Point): boolean => {
+      const selectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
+      const selectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
+      const selectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
+      const boundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes, selectedTexts);
+      if (!boundingBox) return false;
 
-    const handle = getResizeHandleAtPoint(point, boundingBox);
-    if (!handle) return false;
+      const handle = getResizeHandleAtPoint(point, boundingBox);
+      if (!handle) return false;
 
-    // 텍스트만 선택된 경우 위아래 핸들도 허용 (높이 비율을 너비 비율로 변환하여 처리)
-    // 이제 위아래 핸들도 처리하므로 제한 없음
+      // 텍스트만 선택된 경우 위아래 핸들도 허용 (높이 비율을 너비 비율로 변환하여 처리)
+      // 이제 위아래 핸들도 처리하므로 제한 없음
 
-    // 리사이즈 시작 시 초기 상태 저장 (히스토리용)
-    setInitialPaths(selectedPaths.map((path) => ({ ...path })));
-    setInitialShapes(selectedShapes.map((shape) => ({ ...shape })));
-    setInitialTexts(selectedTexts.map((text) => ({ ...text })));
+      // 리사이즈 시작 시 초기 상태 저장 (히스토리용)
+      setInitialPaths(selectedPaths.map((path) => ({ ...path })));
+      setInitialShapes(selectedShapes.map((shape) => ({ ...shape })));
+      setInitialTexts(selectedTexts.map((text) => ({ ...text })));
 
-    setIsResizing(true);
-    setResizeHandle(handle);
-    setInitialBoundingBox(boundingBox);
-    setInitialClickPosition(point);
-    return true;
-  };
+      setIsResizing(true);
+      setResizeHandle(handle);
+      setInitialBoundingBox(boundingBox);
+      setInitialClickPosition(point);
+      return true;
+    },
+    [paths, shapes, texts, selectedPathIds, selectedShapeIds, selectedTextIds]
+  );
 
   // 리사이즈를 계속합니다.
-  const resize = (point: Point) => {
-    if (!isResizing || !resizeHandle || !initialBoundingBox || !initialClickPosition) {
-      return;
-    }
+  const resize = useCallback(
+    (point: Point) => {
+      if (!isResizing || !resizeHandle || !initialBoundingBox || !initialClickPosition) {
+        return;
+      }
 
-    // 텍스트만 선택된 경우인지 확인
-    const isTextOnly = selectedTextIds.length > 0 && selectedPathIds.length === 0 && selectedShapeIds.length === 0;
-    const newBoundingBox = calculateNewBoundingBox(
-      point,
+      // 텍스트만 선택된 경우인지 확인
+      const isTextOnly = selectedTextIds.length > 0 && selectedPathIds.length === 0 && selectedShapeIds.length === 0;
+      const newBoundingBox = calculateNewBoundingBox(
+        point,
+        resizeHandle,
+        initialBoundingBox,
+        initialClickPosition,
+        isTextOnly
+      );
+
+      // 텍스트 리사이징
+      if (selectedTextIds.length > 0) {
+        const totalSelectedTextCount = selectedTextIds.length;
+        // 여러 텍스트가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
+        if (totalSelectedTextCount > 1) {
+          resizeSelectedTexts(newBoundingBox, initialBoundingBox, initialTexts, resizeHandle);
+        } else {
+          // 단일 텍스트 리사이징
+          resizeSelectedTexts(newBoundingBox, undefined, undefined, resizeHandle);
+        }
+      }
+
+      // 선택된 경로와 도형을 각각 리사이즈
+      // 결합된 바운딩 박스를 리사이징하는 경우 초기 상태 전달
+      const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length;
+      if (totalSelectedCount > 1) {
+        // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
+        if (selectedPathIds.length > 0) {
+          resizeSelectedPaths(newBoundingBox, initialBoundingBox, initialPaths);
+        }
+        if (selectedShapeIds.length > 0) {
+          resizeSelectedShapes(newBoundingBox, initialBoundingBox, initialShapes);
+        }
+      } else {
+        // 단일 요소 리사이징
+        if (selectedPathIds.length > 0) {
+          resizeSelectedPaths(newBoundingBox);
+        }
+        if (selectedShapeIds.length > 0) {
+          resizeSelectedShapes(newBoundingBox);
+        }
+      }
+    },
+    [
+      isResizing,
       resizeHandle,
       initialBoundingBox,
       initialClickPosition,
-      isTextOnly
-    );
-
-    // 텍스트 리사이징
-    if (selectedTextIds.length > 0) {
-      const totalSelectedTextCount = selectedTextIds.length;
-      // 여러 텍스트가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
-      if (totalSelectedTextCount > 1) {
-        resizeSelectedTexts(newBoundingBox, initialBoundingBox, initialTexts, resizeHandle);
-      } else {
-        // 단일 텍스트 리사이징
-        resizeSelectedTexts(newBoundingBox, undefined, undefined, resizeHandle);
-      }
-    }
-
-    // 선택된 경로와 도형을 각각 리사이즈
-    // 결합된 바운딩 박스를 리사이징하는 경우 초기 상태 전달
-    const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length;
-    if (totalSelectedCount > 1) {
-      // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
-      if (selectedPathIds.length > 0) {
-        resizeSelectedPaths(newBoundingBox, initialBoundingBox, initialPaths);
-      }
-      if (selectedShapeIds.length > 0) {
-        resizeSelectedShapes(newBoundingBox, initialBoundingBox, initialShapes);
-      }
-    } else {
-      // 단일 요소 리사이징
-      if (selectedPathIds.length > 0) {
-        resizeSelectedPaths(newBoundingBox);
-      }
-      if (selectedShapeIds.length > 0) {
-        resizeSelectedShapes(newBoundingBox);
-      }
-    }
-  };
+      selectedPathIds,
+      selectedShapeIds,
+      selectedTextIds,
+      initialPaths,
+      initialShapes,
+      initialTexts,
+      resizeSelectedPaths,
+      resizeSelectedShapes,
+      resizeSelectedTexts,
+    ]
+  );
 
   // 리사이즈를 종료합니다.
-  const stopResizing = () => {
+  const stopResizing = useCallback(() => {
     if (!isResizing || !initialBoundingBox) {
       setIsResizing(false);
       setResizeHandle(null);
@@ -329,7 +349,20 @@ export const useResize = () => {
     setInitialPaths([]);
     setInitialShapes([]);
     setInitialTexts([]);
-  };
+  }, [
+    isResizing,
+    initialBoundingBox,
+    paths,
+    shapes,
+    texts,
+    selectedPathIds,
+    selectedShapeIds,
+    selectedTextIds,
+    initialPaths,
+    initialShapes,
+    initialTexts,
+    saveResizeAction,
+  ]);
 
   return {
     isResizing,

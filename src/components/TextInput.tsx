@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import styled from "styled-components";
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
@@ -78,7 +78,7 @@ const TextInput = ({
   }, [createPosition, zoom, pan, editingTextId]);
 
   // textarea 크기 조절 함수
-  const adjustSize = () => {
+  const adjustSize = useCallback(() => {
     if (textInputRef.current) {
       // 너비 조절 (가로로만 확장)
       textInputRef.current.style.width = "auto";
@@ -90,7 +90,7 @@ const TextInput = ({
       const scrollHeight = textInputRef.current.scrollHeight;
       textInputRef.current.style.height = `${scrollHeight}px`;
     }
-  };
+  }, []);
 
   // 포커스 설정 및 초기 크기 조절 (DOM 업데이트 후)
   useEffect(() => {
@@ -102,15 +102,15 @@ const TextInput = ({
         adjustSize();
       }
     }, 0);
-  }, [inputPosition]);
+  }, [inputPosition, adjustSize]);
 
   // inputValue 변경 시 크기 조절
   useEffect(() => {
     adjustSize();
-  }, [inputValue]);
+  }, [inputValue, adjustSize]);
 
   // 실제 텍스트 시작 위치 계산 및 finish 처리
-  const handleFinish = () => {
+  const handleFinish = useCallback(() => {
     // 실제 텍스트 시작 위치 계산 (textarea의 border와 padding 고려)
     const paddingTop = -5;
     const paddingLeft = 0.5;
@@ -125,7 +125,7 @@ const TextInput = ({
 
     onFinish(inputValue, actualPosition, zoom);
     setInputValue("");
-  };
+  }, [inputValue, createPosition, zoom, onFinish]);
 
   // 폰트 사이즈가 없으면 기본값 사용
   const displayFontSize = fontSize || CANVAS_CONFIG.DEFAULT_TEXT_FONT_SIZE / zoom;

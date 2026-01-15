@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Point, Text } from "../types";
 import { useTextStore } from "../store/textStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -14,7 +14,8 @@ export const useText = () => {
 
   // 텍스트 생성을 시작합니다 (클릭 위치 저장)
   // 기존 텍스트의 바운딩 박스 안을 클릭했는지 확인하여 편집 모드로 전환
-  const startCreating = (point: Point): boolean => {
+  const startCreating = useCallback(
+    (point: Point): boolean => {
     // 기존 텍스트 중 클릭한 위치가 바운딩 박스 안에 있는지 확인
     const clickedText = texts.find((text) => isPointInBoundingBox(point, text.boundingBox));
 
@@ -29,10 +30,13 @@ export const useText = () => {
       setCreatePosition(point);
       return true;
     }
-  };
+  },
+    [texts]
+  );
 
   // 텍스트 편집을 종료하고 store에 저장합니다
-  const finishCreating = (content: string, actualPosition: Point, zoom: number = 1) => {
+  const finishCreating = useCallback(
+    (content: string, actualPosition: Point, zoom: number = 1) => {
     if (!createPosition) {
       setCreatePosition(null);
       setEditingTextId(null);
@@ -101,7 +105,9 @@ export const useText = () => {
       // 상태 정리
       setCreatePosition(null);
     }
-  };
+  },
+    [createPosition, editingTextId, texts, updateTextWithBoundingBox, saveTextAction, addText]
+  );
 
   return {
     createPosition,

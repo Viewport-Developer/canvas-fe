@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
 import { useCanvasStore } from "../store/canvasStore";
@@ -20,54 +21,58 @@ const Container = styled.div`
 `;
 
 const Button = styled.button<{ $selected?: boolean }>`
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: ${(props) => (props.$selected ? "#e0dfff" : "transparent")};
   border: none;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 18px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${(props) => (props.$selected ? "#d0cfff" : "#f5f5f5")};
+  }
 `;
+
+const TOOLS: Array<{ tool: Tool; icon: string }> = [
+  { tool: "draw", icon: "✏️" },
+  { tool: "eraser", icon: "🧹" },
+  { tool: "pan", icon: "✋" },
+  { tool: "rectangle", icon: "⬜" },
+  { tool: "diamond", icon: "💎" },
+  { tool: "circle", icon: "⭕" },
+  { tool: "select", icon: "👆" },
+  { tool: "text", icon: "📝" },
+] as const;
 
 const ToolBar = () => {
   const { tool, setTool } = useToolStore();
   const { clearSelection } = useCanvasStore();
 
-  // 툴 변경 시 선택된 요소 해제
-  const handleToolChange = (newTool: Tool) => {
-    setTool(newTool);
-    clearSelection();
-  };
+  const handleToolChange = useCallback(
+    (newTool: Tool) => {
+      setTool(newTool);
+      clearSelection();
+    },
+    [setTool, clearSelection]
+  );
 
   return (
     <Container>
-      <Button onClick={() => handleToolChange("draw")} $selected={tool === "draw"}>
-        ✏️
-      </Button>
-      <Button onClick={() => handleToolChange("eraser")} $selected={tool === "eraser"}>
-        🧹
-      </Button>
-      <Button onClick={() => handleToolChange("pan")} $selected={tool === "pan"}>
-        ✋
-      </Button>
-      <Button onClick={() => handleToolChange("rectangle")} $selected={tool === "rectangle"}>
-        ⬜
-      </Button>
-      <Button onClick={() => handleToolChange("diamond")} $selected={tool === "diamond"}>
-        💎
-      </Button>
-      <Button onClick={() => handleToolChange("circle")} $selected={tool === "circle"}>
-        ⭕
-      </Button>
-      <Button onClick={() => handleToolChange("select")} $selected={tool === "select"}>
-        👆
-      </Button>
-      <Button onClick={() => handleToolChange("text")} $selected={tool === "text"}>
-        📝
-      </Button>
+      {TOOLS.map(({ tool: toolType, icon }) => (
+        <Button
+          key={toolType}
+          onClick={() => handleToolChange(toolType)}
+          $selected={tool === toolType}
+          aria-label={toolType}
+        >
+          {icon}
+        </Button>
+      ))}
     </Container>
   );
 };
