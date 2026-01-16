@@ -51,7 +51,7 @@ const TextInput = ({
   // 편집 모드일 때는 기존 텍스트 위치에 맞춰야 하므로 오프셋 조정
   const inputPosition = useMemo(() => {
     // 실제 텍스트 시작 위치 계산 (textarea의 border와 padding 고려)
-    const paddingTop = 8;
+    const paddingTop = 11;
     const paddingLeft = -0.5;
 
     const paddingOffsetX = paddingLeft / zoom;
@@ -112,7 +112,7 @@ const TextInput = ({
   // 실제 텍스트 시작 위치 계산 및 finish 처리
   const handleFinish = useCallback(() => {
     // 실제 텍스트 시작 위치 계산 (textarea의 border와 padding 고려)
-    const paddingTop = -5;
+    const paddingTop = -8;
     const paddingLeft = 0.5;
 
     const paddingOffsetX = paddingLeft / zoom;
