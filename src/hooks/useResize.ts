@@ -326,22 +326,18 @@ export const useResize = () => {
       currentSelectedTexts
     );
 
-    // 텍스트 리사이징은 현재 히스토리에 저장하지 않음 (필요시 나중에 추가)
-    // initialTexts는 나중에 히스토리 저장에 사용할 수 있도록 유지
-    if (currentBoundingBox && (currentSelectedPaths.length > 0 || currentSelectedShapes.length > 0)) {
+    // 리사이징 히스토리 저장 (경로, 도형, 텍스트 모두 포함)
+    if (currentBoundingBox && (currentSelectedPaths.length > 0 || currentSelectedShapes.length > 0 || currentSelectedTexts.length > 0)) {
       saveResizeAction(
         initialPaths,
         initialShapes,
+        initialTexts,
         initialBoundingBox,
         currentSelectedPaths,
         currentSelectedShapes,
+        currentSelectedTexts,
         currentBoundingBox
       );
-    }
-
-    // initialTexts 사용 (린터 경고 방지)
-    if (initialTexts.length > 0) {
-      // 텍스트 리사이징 히스토리는 현재 저장하지 않음
     }
 
     setIsResizing(false);

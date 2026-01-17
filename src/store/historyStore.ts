@@ -38,9 +38,11 @@ interface HistoryStore {
   saveResizeAction: (
     previousPaths: Path[],
     previousShapes: Shape[],
+    previousTexts: Text[],
     previousBoundingBox: BoundingBox,
     newPaths: Path[],
     newShapes: Shape[],
+    newTexts: Text[],
     newBoundingBox: BoundingBox
   ) => void;
   // 이동 액션 저장
@@ -128,14 +130,16 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
-  saveResizeAction: (previousPaths, previousShapes, previousBoundingBox, newPaths, newShapes, newBoundingBox) => {
+  saveResizeAction: (previousPaths, previousShapes, previousTexts, previousBoundingBox, newPaths, newShapes, newTexts, newBoundingBox) => {
     const action: ResizeAction = {
       type: "resize",
       previousPaths: previousPaths.map((path) => ({ ...path })),
       previousShapes: previousShapes.map((shape) => ({ ...shape })),
+      previousTexts: previousTexts.map((text) => ({ ...text })),
       previousBoundingBox: { ...previousBoundingBox },
       newPaths: newPaths.map((path) => ({ ...path })),
       newShapes: newShapes.map((shape) => ({ ...shape })),
+      newTexts: newTexts.map((text) => ({ ...text })),
       newBoundingBox: { ...newBoundingBox },
     };
 
@@ -210,6 +214,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "resize": {
         const currentPaths = pathStore.paths;
         const currentShapes = shapeStore.shapes;
+        const currentTexts = textStore.texts;
 
         // 이전 경로로 교체
         const updatedPaths = currentPaths.map((path) => {
@@ -223,8 +228,15 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
           return previousShape || shape;
         });
 
+        // 이전 텍스트로 교체
+        const updatedTexts = currentTexts.map((text) => {
+          const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
+          return previousText || text;
+        });
+
         pathStore.setPaths(updatedPaths);
         shapeStore.setShapes(updatedShapes);
+        textStore.setTexts(updatedTexts);
         break;
       }
       case "move": {
@@ -320,6 +332,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "resize": {
         const currentPaths = pathStore.paths;
         const currentShapes = shapeStore.shapes;
+        const currentTexts = textStore.texts;
 
         // 새 경로로 교체
         const updatedPaths = currentPaths.map((path) => {
@@ -333,8 +346,15 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
           return newShape || shape;
         });
 
+        // 새 텍스트로 교체
+        const updatedTexts = currentTexts.map((text) => {
+          const newText = nextAction.newTexts.find((t) => t.id === text.id);
+          return newText || text;
+        });
+
         pathStore.setPaths(updatedPaths);
         shapeStore.setShapes(updatedShapes);
+        textStore.setTexts(updatedTexts);
         break;
       }
       case "move": {

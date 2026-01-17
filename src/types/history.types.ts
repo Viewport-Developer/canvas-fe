@@ -35,9 +35,11 @@ export type ResizeAction = {
   type: "resize";
   previousPaths: Path[];
   previousShapes: Shape[];
+  previousTexts: Text[];
   previousBoundingBox: BoundingBox;
   newPaths: Path[];
   newShapes: Shape[];
+  newTexts: Text[];
   newBoundingBox: BoundingBox;
 };
 
