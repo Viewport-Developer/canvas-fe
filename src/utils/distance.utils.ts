@@ -1,4 +1,5 @@
-import type { Point } from "../types";
+import type { Path, Point } from "../types";
+import { isPointInBoundingBox } from "./boundingBox.utils";
 
 // 두 점 사이의 거리를 계산합니다.
 export const calculateDistance = (p1: Point, p2: Point): number => {
@@ -11,3 +12,17 @@ export const calculateDistance = (p1: Point, p2: Point): number => {
 export const isInEraserRange = (point: Point, eraserPoint: Point, radius: number): boolean => {
   return calculateDistance(point, eraserPoint) < radius;
 };
+
+// 점이 선에 가까운지 확인합니다.
+export const isPointOnLine = (point: Point, path: Path, eraserRadius: number) => {
+  if (!isPointInBoundingBox(point, path.boundingBox)) {
+    return false;
+  }
+
+  const pathRadius = path.width / 2;
+  const totalRadius = pathRadius + eraserRadius;
+
+  const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
+
+  return hasCollision;
+}

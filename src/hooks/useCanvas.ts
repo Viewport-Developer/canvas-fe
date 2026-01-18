@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, useCallback, type RefObject } from "react";
 import {
   clearCanvas,
   drawAllPaths,
@@ -15,10 +15,9 @@ import { getCombinedBoundingBox } from "../utils/boundingBox.utils";
 import { useCanvasStore } from "../store/canvasStore";
 
 export const useCanvas = (
+  containerRef: RefObject<HTMLDivElement | null>,
   backgroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
-  containerRef: RefObject<HTMLDivElement | null>,
-  editingTextId?: string | null
 ) => {
   const {
     paths,
@@ -40,7 +39,7 @@ export const useCanvas = (
   } = useCanvasStore();
 
   // 백그라운드 캔버스를 다시 그립니다.
-  const redrawBackground = () => {
+  const redrawBackground = useCallback(() => {
     const canvas = backgroundCanvasRef.current;
     if (!canvas) return;
 
@@ -53,8 +52,7 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
     drawAllShapes(ctx, shapes, shapesToErase);
-    // 편집 중인 텍스트는 제외하여 렌더링
-    drawAllTexts(ctx, texts, textsToErase, editingTextId ? [editingTextId] : []);
+    drawAllTexts(ctx, texts, textsToErase);
 
     // 선택된 항목의 바운딩 박스 그리기
     const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
@@ -64,7 +62,7 @@ export const useCanvas = (
 
     if (totalSelectedCount > 0) {
       if (isDragSelecting) {
-        // 드래그 선택 중일 때는 개별 바운딩 박스 그리기
+        // 드래그중일 때는 개별 바운딩 박스 그리기
         selectedPaths.forEach((path) => {
           drawSelectionBox(ctx, path.boundingBox);
         });
@@ -83,16 +81,32 @@ export const useCanvas = (
       }
     }
 
-    // 드래그 선택 박스 그리기
+    // 드래그 박스 그리기
     if (isDragSelecting && dragStartPoint && dragEndPoint) {
       drawDragSelectionBox(ctx, dragStartPoint, dragEndPoint);
     }
 
     restoreCanvas(ctx);
-  };
+  }, [
+    backgroundCanvasRef,
+    paths,
+    shapes,
+    texts,
+    pathsToErase,
+    shapesToErase,
+    textsToErase,
+    selectedPathIds,
+    selectedShapeIds,
+    selectedTextIds,
+    isDragSelecting,
+    dragStartPoint,
+    dragEndPoint,
+    zoom,
+    pan,
+  ]);
 
   // 포그라운드 캔버스를 다시 그립니다.
-  const redrawForeground = () => {
+  const redrawForeground = useCallback(() => {
     const canvas = foregroundCanvasRef.current;
     if (!canvas) return;
 
@@ -103,31 +117,27 @@ export const useCanvas = (
 
     if (currentPath || currentShape) {
       applyCanvasZoom(ctx, zoom, pan.x, pan.y);
-      if (currentPath) {
-        drawPath(ctx, currentPath, false);
-      }
-      if (currentShape) {
-        drawShape(ctx, currentShape, false);
-      }
+
+      void (currentPath && drawPath(ctx, currentPath, false));
+      void (currentShape && drawShape(ctx, currentShape, false));
+      
       restoreCanvas(ctx);
     }
-  };
+  }, [foregroundCanvasRef, currentPath, currentShape, zoom, pan]);
 
   // 캔버스 크기를 컨테이너에 맞춥니다.
   useEffect(() => {
     const updateSize = () => {
-      if (backgroundCanvasRef.current && containerRef.current) {
+      if (backgroundCanvasRef.current && containerRef.current && foregroundCanvasRef.current) {
         const container = containerRef.current;
         const width = container.clientWidth;
         const height = container.clientHeight;
 
         backgroundCanvasRef.current.width = width;
         backgroundCanvasRef.current.height = height;
-
-        if (foregroundCanvasRef.current) {
-          foregroundCanvasRef.current.width = width;
-          foregroundCanvasRef.current.height = height;
-        }
+        
+        foregroundCanvasRef.current.width = width;
+        foregroundCanvasRef.current.height = height;
       }
     };
 
@@ -141,25 +151,9 @@ export const useCanvas = (
 
   useEffect(() => {
     redrawBackground();
-  }, [
-    paths,
-    shapes,
-    texts,
-    pathsToErase,
-    shapesToErase,
-    textsToErase,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
-    zoom,
-    pan,
-    isDragSelecting,
-    dragStartPoint,
-    dragEndPoint,
-    editingTextId,
-  ]);
+  }, [redrawBackground]);
 
   useEffect(() => {
     redrawForeground();
-  }, [currentPath, currentShape]);
+  }, [redrawForeground]);
 };

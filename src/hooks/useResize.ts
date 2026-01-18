@@ -41,15 +41,7 @@ export const useResize = () => {
     // 초기 핸들 위치 계산
     const initialHandlePosition = getHandlePosition(handle, initialBox);
 
-    // 패딩 계산 (초기 박스 기준)
-    const initialWidth = initialBox.topRight.x - initialBox.topLeft.x;
-    const initialHeight = initialBox.bottomLeft.y - initialBox.topLeft.y;
-    const padding = Math.max(
-      initialWidth * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-      initialHeight * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
-    );
-
-    // 마우스 위치는 바운딩 박스의 핸들 위치를 따라가므로 오프셋 고려
+    // 진짜 핸들 위치 계산
     const offsetX = initialClickPosition.x - initialHandlePosition.x;
     const offsetY = initialClickPosition.y - initialHandlePosition.y;
     const newHandlePosition: Point = {
@@ -57,42 +49,34 @@ export const useResize = () => {
       y: currentPoint.y - offsetY,
     };
 
+    // 패딩 계산
+    const initialWidth = initialBox.topRight.x - initialBox.topLeft.x;
+    const initialHeight = initialBox.bottomLeft.y - initialBox.topLeft.y;
+    const padding = Math.max(
+      initialWidth * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
+      initialHeight * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
+    );
+
     let point1: Point;
     let point2: Point;
 
-    // 텍스트 리사이징인 경우 위아래 핸들도 처리 (높이 비율을 너비 비율로 변환)
+    // 텍스트 리사이징인 경우 높이 비율을 너비 비율로 변환
     if (isTextResize) {
       switch (handle) {
         case "left":
+        case "topLeft":
+        case "bottomLeft":
           point1 = { x: newHandlePosition.x + padding, y: initialBox.topLeft.y };
           point2 = { x: initialBox.bottomRight.x, y: initialBox.bottomRight.y };
           break;
         case "right":
-          point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
-          point2 = {
-            x: newHandlePosition.x - padding,
-            y: initialBox.bottomRight.y,
-          };
-          break;
-        case "topLeft":
-        case "bottomLeft":
-          // 좌측 모서리 핸들은 left로 처리
-          point1 = { x: newHandlePosition.x + padding, y: initialBox.topLeft.y };
-          point2 = { x: initialBox.bottomRight.x, y: initialBox.bottomRight.y };
-          break;
         case "topRight":
         case "bottomRight":
-          // 우측 모서리 핸들은 right로 처리
           point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
-          point2 = {
-            x: newHandlePosition.x - padding,
-            y: initialBox.bottomRight.y,
-          };
+          point2 = { x: newHandlePosition.x - padding, y: initialBox.bottomRight.y };
           break;
         case "top":
         case "bottom": {
-          // 위아래 핸들: 높이 변화를 너비 변화로 변환하여 처리
-          // 높이 비율을 계산하고 이를 너비에 적용하여 폰트 사이즈 조절
           const initialHeight = initialBox.bottomLeft.y - initialBox.topLeft.y;
           const newHeight =
             handle === "top"
@@ -102,7 +86,7 @@ export const useResize = () => {
           // 높이 비율 계산
           const heightRatio = initialHeight !== 0 ? newHeight / initialHeight : 1;
 
-          // 높이 비율을 너비에 적용 (높이가 늘어나면 너비도 비례하여 늘어남)
+          // 높이 비율을 너비에 적용
           const initialWidth = initialBox.topRight.x - initialBox.topLeft.x;
           const newWidth = initialWidth * heightRatio;
 
@@ -114,7 +98,7 @@ export const useResize = () => {
           };
           point2 = {
             x: centerX + newWidth / 2,
-            y: handle === "bottom" ? newHandlePosition.y - padding : initialBox.bottomRight.y,
+            y: handle === "top" ? initialBox.bottomRight.y : newHandlePosition.y - padding,
           };
           break;
         }
@@ -124,31 +108,19 @@ export const useResize = () => {
     } else {
       switch (handle) {
         case "topLeft":
-          point1 = {
-            x: newHandlePosition.x + padding,
-            y: newHandlePosition.y + padding,
-          };
+          point1 = { x: newHandlePosition.x + padding, y: newHandlePosition.y + padding };
           point2 = initialBox.bottomRight;
           break;
         case "topRight":
-          point1 = {
-            x: newHandlePosition.x - padding,
-            y: newHandlePosition.y + padding,
-          };
+          point1 = { x: newHandlePosition.x - padding, y: newHandlePosition.y + padding };
           point2 = initialBox.bottomLeft;
           break;
         case "bottomLeft":
-          point1 = {
-            x: newHandlePosition.x + padding,
-            y: newHandlePosition.y - padding,
-          };
+          point1 = { x: newHandlePosition.x + padding, y: newHandlePosition.y - padding };
           point2 = initialBox.topRight;
           break;
         case "bottomRight":
-          point1 = {
-            x: newHandlePosition.x - padding,
-            y: newHandlePosition.y - padding,
-          };
+          point1 = { x: newHandlePosition.x - padding, y: newHandlePosition.y - padding };
           point2 = initialBox.topLeft;
           break;
         case "top":
@@ -157,10 +129,7 @@ export const useResize = () => {
           break;
         case "bottom":
           point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
-          point2 = {
-            x: initialBox.bottomRight.x,
-            y: newHandlePosition.y - padding,
-          };
+          point2 = { x: initialBox.bottomRight.x, y: newHandlePosition.y - padding };
           break;
         case "left":
           point1 = { x: newHandlePosition.x + padding, y: initialBox.topLeft.y };
@@ -168,10 +137,7 @@ export const useResize = () => {
           break;
         case "right":
           point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
-          point2 = {
-            x: newHandlePosition.x - padding,
-            y: initialBox.bottomRight.y,
-          };
+          point2 = { x: newHandlePosition.x - padding, y: initialBox.bottomRight.y };
           break;
         default:
           return initialBox;
@@ -188,7 +154,7 @@ export const useResize = () => {
     const width = maxX - minX;
     const height = maxY - minY;
 
-    // 너무 작아지면 반대편을 넘어가도록 자동 조정
+    // 너무 작아지면 반대편으로 넘어가도록 조정
     if (width < minSize) {
       const centerX = (minX + maxX) / 2;
       minX = centerX - minSize / 2;
@@ -221,9 +187,6 @@ export const useResize = () => {
       const handle = getResizeHandleAtPoint(point, boundingBox);
       if (!handle) return false;
 
-      // 텍스트만 선택된 경우 위아래 핸들도 허용 (높이 비율을 너비 비율로 변환하여 처리)
-      // 이제 위아래 핸들도 처리하므로 제한 없음
-
       // 리사이즈 시작 시 초기 상태 저장 (히스토리용)
       setInitialPaths(selectedPaths.map((path) => ({ ...path })));
       setInitialShapes(selectedShapes.map((shape) => ({ ...shape })));
@@ -255,23 +218,19 @@ export const useResize = () => {
         isTextOnly
       );
 
-      // 전체 선택된 요소 개수 계산 (경로 + 도형 + 텍스트)
       const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length + selectedTextIds.length;
 
       // 텍스트 리사이징
       if (selectedTextIds.length > 0) {
-        // 여러 요소가 선택된 경우(텍스트 포함) 결합된 바운딩 박스 기준으로 스케일링
+        // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
         if (totalSelectedCount > 1) {
           resizeSelectedTexts(newBoundingBox, initialBoundingBox, initialTexts, resizeHandle);
         } else {
-          // 단일 텍스트 리사이징
+          // 단일 요소 리사이징
           resizeSelectedTexts(newBoundingBox, undefined, undefined, resizeHandle);
         }
       }
 
-      // 선택된 경로와 도형을 각각 리사이즈
-      // 결합된 바운딩 박스를 리사이징하는 경우 초기 상태 전달
-      // 전체 선택된 요소가 2개 이상이면 결합된 바운딩 박스 로직 사용
       if (totalSelectedCount > 1) {
         // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
         if (selectedPathIds.length > 0) {

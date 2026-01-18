@@ -2,9 +2,7 @@ import { create } from "zustand";
 import type { Point, Path } from "../types";
 
 interface PathStore {
-  // 완성된 경로 목록
   paths: Path[];
-  // 현재 그리는 중인 경로
   currentPath: Path | null;
 
   setPaths: (paths: Path[]) => void;
@@ -32,6 +30,7 @@ export const usePathStore = create<PathStore>((set) => ({
   addCurrentPathPoint: (point) =>
     set((state) => {
       if (!state.currentPath) return state;
+      
       return {
         currentPath: {
           ...state.currentPath,

@@ -2,9 +2,7 @@ import { create } from "zustand";
 import type { Point } from "../types";
 
 interface ViewportStore {
-  // 줌 레벨
   zoom: number;
-  // 팬(이동) 오프셋
   pan: Point;
 
   setZoom: (zoom: number) => void;

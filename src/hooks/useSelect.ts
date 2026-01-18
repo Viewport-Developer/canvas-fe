@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { Point, BoundingBox } from "../types";
-import { isInEraserRange } from "../utils/distance.utils";
 import { isPointInBoundingBox, doBoundingBoxesIntersect, calculateBoundingBox } from "../utils/boundingBox.utils";
+import { isPointOnLine } from "../utils/distance.utils";
 import { isPointOnShape } from "../utils/shapeLineDetection.utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
@@ -32,48 +32,39 @@ export const useSelect = () => {
   // 주어진 점에서 요소를 선택합니다.
   const selectAtPoint = useCallback(
     (point: Point) => {
+      const eraserRadius = CANVAS_CONFIG.ERASER_RADIUS;
       let isSelected = false;
 
       // 경로 선택: 경로의 선에 가까운지 확인
       for (const path of paths) {
-        if (!isPointInBoundingBox(point, path.boundingBox)) {
-          continue;
-        }
+        if (selectedPathIds.includes(path.id)) continue;
 
-        const pathRadius = path.width / 2; // 경로 선의 반지름
-        const totalRadius = CANVAS_CONFIG.ERASER_RADIUS + pathRadius;
-
-        const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
-
-        if (hasCollision) {
+        if (isPointOnLine(point, path, eraserRadius)) {
           clearSelection();
           setSelectedPathIds([path.id]);
           isSelected = true;
-          return;
         }
       }
 
       // 도형 선택: 도형의 선에 가까운지 확인
       for (const shape of shapes) {
-        if (!isPointInBoundingBox(point, shape.boundingBox)) {
-          continue;
-        }
+        if (selectedShapeIds.includes(shape.id)) continue;
 
-        if (isPointOnShape(point, shape)) {
+        if (isPointOnShape(point, shape, eraserRadius)) {
           clearSelection();
           setSelectedShapeIds([shape.id]);
           isSelected = true;
-          return;
         }
       }
 
       // 텍스트 선택: 텍스트의 바운딩 박스 내부인지 확인
       for (const text of texts) {
+        if (selectedTextIds.includes(text.id)) continue;
+
         if (isPointInBoundingBox(point, text.boundingBox)) {
           clearSelection();
           setSelectedTextIds([text.id]);
           isSelected = true;
-          return;
         }
       }
 
@@ -82,7 +73,7 @@ export const useSelect = () => {
         clearSelection();
       }
     },
-    [paths, shapes, texts, clearSelection, setSelectedPathIds, setSelectedShapeIds, setSelectedTextIds]
+    [paths, shapes, texts,selectedPathIds, selectedShapeIds, selectedTextIds, clearSelection, setSelectedPathIds, setSelectedShapeIds, setSelectedTextIds]
   );
 
   // 드래그 선택을 시작합니다.
@@ -106,43 +97,28 @@ export const useSelect = () => {
 
       setDragEndPoint(point);
 
-      // 드래그 선택 박스 생성
       const selectionBox: BoundingBox = calculateBoundingBox([dragStartPoint, point]);
 
-      // 경로 선택: 바운딩 박스가 교차하는지 확인하고 추가
+      // 바운딩 박스가 교차하는지 확인하고 추가
       for (const path of paths) {
-        // 이미 선택된 경로는 건너뜀
-        if (selectedPathIds.includes(path.id)) {
-          continue;
-        }
+        if (selectedPathIds.includes(path.id)) continue;
 
-        // 드래그 선택 박스와 교차하면 추가
         if (doBoundingBoxesIntersect(selectionBox, path.boundingBox)) {
           addSelectedPathId(path.id);
         }
       }
 
-      // 도형 선택: 바운딩 박스가 교차하는지 확인하고 추가
       for (const shape of shapes) {
-        // 이미 선택된 도형은 건너뜀
-        if (selectedShapeIds.includes(shape.id)) {
-          continue;
-        }
+        if (selectedShapeIds.includes(shape.id)) continue;
 
-        // 드래그 선택 박스와 교차하면 추가
         if (doBoundingBoxesIntersect(selectionBox, shape.boundingBox)) {
           addSelectedShapeId(shape.id);
         }
       }
 
-      // 텍스트 선택: 바운딩 박스가 교차하는지 확인하고 추가
       for (const text of texts) {
-        // 이미 선택된 텍스트는 건너뜀
-        if (selectedTextIds.includes(text.id)) {
-          continue;
-        }
-
-        // 드래그 선택 박스와 교차하면 추가
+        if (selectedTextIds.includes(text.id)) continue;
+        
         if (doBoundingBoxesIntersect(selectionBox, text.boundingBox)) {
           addSelectedTextId(text.id);
         }

@@ -1,6 +1,6 @@
 import type { Point, BoundingBox } from "./common.types";
 
-// 텍스트 요소
+// 텍스트
 export type Text = {
   id: string;
   position: Point;

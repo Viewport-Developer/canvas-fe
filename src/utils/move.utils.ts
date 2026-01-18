@@ -1,7 +1,7 @@
 import type { Path, Shape, Text, Point } from "../types";
 import { calculateBoundingBox, calculateTextBoundingBox } from "./boundingBox.utils";
 
-// 경로를 지정된 오프셋만큼 이동합니다.
+// 곡선을 지정된 오프셋만큼 이동합니다.
 export const movePath = (path: Path, offset: Point): Path => {
   const movedPoints = path.points.map((point) => ({
     x: point.x + offset.x,

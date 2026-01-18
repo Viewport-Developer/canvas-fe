@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import { isInEraserRange } from "../utils/distance.utils";
+import {  isPointOnLine } from "../utils/distance.utils";
 import { isPointInBoundingBox } from "../utils/boundingBox.utils";
 import { isPointOnShape } from "../utils/shapeLineDetection.utils";
 import { useCanvasStore } from "../store/canvasStore";
@@ -38,16 +38,7 @@ export const useEraser = () => {
       for (const path of paths) {
         if (pathsToErase.includes(path.id)) continue;
 
-        if (!isPointInBoundingBox(point, path.boundingBox)) {
-          continue;
-        }
-
-        const pathRadius = path.width / 2; // 경로 선의 반지름
-        const totalRadius = eraserRadius + pathRadius;
-
-        const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
-
-        if (hasCollision) {
+        if (isPointOnLine(point, path, eraserRadius)) {
           addPathToErase(path.id);
         }
       }
@@ -56,7 +47,7 @@ export const useEraser = () => {
       for (const shape of shapes) {
         if (shapesToErase.includes(shape.id)) continue;
 
-        if (isPointOnShape(point, shape)) {
+        if (isPointOnShape(point, shape, eraserRadius)) {
           addShapeToErase(shape.id);
         }
       }
@@ -95,24 +86,22 @@ export const useEraser = () => {
   const stopErasing = useCallback(() => {
     setIsErasing(false);
 
+    const pathsToEraseData = paths.filter((path) => pathsToErase.includes(path.id));
+    const shapesToEraseData = shapes.filter((shape) => shapesToErase.includes(shape.id));
+    const textsToEraseData = texts.filter((text) => textsToErase.includes(text.id));
+
+    removePaths(pathsToErase);
+    removeShapes(shapesToErase);
+    removeTexts(textsToErase);
+
+    // 히스토리 저장
     if (pathsToErase.length > 0 || shapesToErase.length > 0 || textsToErase.length > 0) {
-      const pathsToEraseData = paths.filter((path) => pathsToErase.includes(path.id));
-      const shapesToEraseData = shapes.filter((shape) => shapesToErase.includes(shape.id));
-      const textsToEraseData = texts.filter((text) => textsToErase.includes(text.id));
-
-      // 요소 삭제
-      removePaths(pathsToErase);
-      removeShapes(shapesToErase);
-      removeTexts(textsToErase);
-
-      // 히스토리에 저장
       saveEraseAction(pathsToEraseData, shapesToEraseData, textsToEraseData);
-
-      // 지울 목록 초기화
-      clearPathsToErase();
-      clearShapesToErase();
-      clearTextsToErase();
     }
+
+    clearPathsToErase();
+    clearShapesToErase();
+    clearTextsToErase();
   }, [
     pathsToErase,
     shapesToErase,

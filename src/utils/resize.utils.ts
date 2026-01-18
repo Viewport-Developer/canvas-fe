@@ -5,6 +5,7 @@ import { calculateDistance } from "./distance.utils";
 // 리사이즈 핸들의 위치를 계산합니다.
 export const getHandlePosition = (handle: ResizeHandleType, boundingBox: BoundingBox): Point => {
   const { topLeft, topRight, bottomLeft } = boundingBox;
+
   const width = topRight.x - topLeft.x;
   const height = bottomLeft.y - topLeft.y;
   const padding = Math.max(
@@ -37,13 +38,14 @@ export const getHandlePosition = (handle: ResizeHandleType, boundingBox: Boundin
 // 주어진 점에서 리사이즈 핸들을 감지합니다.
 export const getResizeHandleAtPoint = (point: Point, boundingBox: BoundingBox): ResizeHandleType | null => {
   const { topLeft, topRight, bottomLeft } = boundingBox;
+
   const width = topRight.x - topLeft.x;
   const height = bottomLeft.y - topLeft.y;
-
   const padding = Math.max(
     width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
     height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
   );
+  
   const handleRadius = CANVAS_CONFIG.RESIZE_HANDLE_RADIUS;
 
   // 모서리 핸들 위치

@@ -2,9 +2,7 @@ import { create } from "zustand";
 import type { Point, Shape } from "../types";
 
 interface ShapeStore {
-  // 완성된 도형 목록
   shapes: Shape[];
-  // 현재 그리는 중인 도형
   currentShape: Shape | null;
 
   setShapes: (shapes: Shape[]) => void;
@@ -32,6 +30,7 @@ export const useShapeStore = create<ShapeStore>((set) => ({
   updateCurrentShape: (endPoint) =>
     set((state) => {
       if (!state.currentShape) return state;
+      
       return {
         currentShape: {
           ...state.currentShape,

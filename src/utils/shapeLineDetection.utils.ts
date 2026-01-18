@@ -9,7 +9,6 @@ const isPointNearLineSegment = (point: Point, p1: Point, p2: Point, threshold: n
   const lengthSquared = dx * dx + dy * dy;
 
   if (lengthSquared === 0) {
-    // 선분이 점인 경우
     return calculateDistance(point, p1) <= threshold;
   }
 
@@ -30,7 +29,6 @@ const isPointOnRectangle = (point: Point, startPoint: Point, endPoint: Point, th
   const minY = Math.min(startPoint.y, endPoint.y);
   const maxY = Math.max(startPoint.y, endPoint.y);
 
-  // 4개의 변 체크
   const topLeft = { x: minX, y: minY };
   const topRight = { x: maxX, y: minY };
   const bottomLeft = { x: minX, y: maxY };
@@ -58,7 +56,7 @@ const isPointOnCircle = (point: Point, startPoint: Point, endPoint: Point, thres
   const dy = (point.y - centerY) / radiusY;
   const distanceFromCenter = Math.sqrt(dx * dx + dy * dy);
 
-  // 타원의 둘레에 가까운지 확인 (1에 가까운지)
+  // 타원의 둘레에 가까운지 확인
   return Math.abs(distanceFromCenter - 1) * Math.min(radiusX, radiusY) <= threshold;
 };
 
@@ -69,13 +67,11 @@ const isPointOnDiamond = (point: Point, startPoint: Point, endPoint: Point, thre
   const centerX = startPoint.x + width / 2;
   const centerY = startPoint.y + height / 2;
 
-  // 마름모의 4개 꼭짓점
   const top = { x: centerX, y: startPoint.y };
   const right = { x: endPoint.x, y: centerY };
   const bottom = { x: centerX, y: endPoint.y };
   const left = { x: startPoint.x, y: centerY };
 
-  // 4개의 변 체크
   return (
     isPointNearLineSegment(point, top, right, threshold) ||
     isPointNearLineSegment(point, right, bottom, threshold) ||
@@ -85,22 +81,22 @@ const isPointOnDiamond = (point: Point, startPoint: Point, endPoint: Point, thre
 };
 
 // 점이 도형의 선에 가까운지 확인합니다 (선 클릭 선택용).
-export const isPointOnShape = (point: Point, shape: Shape): boolean => {
+export const isPointOnShape = (point: Point, shape: Shape, eraserRadius: number): boolean => {
   if (!isPointInBoundingBox(point, shape.boundingBox)) {
     return false;
   }
 
-  // 선의 두께를 고려한 임계값 (선의 반 두께 + 여유 공간)
-  const threshold = shape.width / 2 + 5;
+  const shapeRadius = shape.width / 2;
+  const totalRadius = shapeRadius + eraserRadius;
 
   // 도형 타입별로 선에 가까운지 확인
   switch (shape.type) {
     case "rectangle":
-      return isPointOnRectangle(point, shape.startPoint, shape.endPoint, threshold);
+      return isPointOnRectangle(point, shape.startPoint, shape.endPoint, totalRadius);
     case "circle":
-      return isPointOnCircle(point, shape.startPoint, shape.endPoint, threshold);
+      return isPointOnCircle(point, shape.startPoint, shape.endPoint, totalRadius);
     case "diamond":
-      return isPointOnDiamond(point, shape.startPoint, shape.endPoint, threshold);
+      return isPointOnDiamond(point, shape.startPoint, shape.endPoint, totalRadius);
     default:
       return false;
   }

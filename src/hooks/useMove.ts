@@ -16,13 +16,10 @@ export const useMove = () => {
     moveSelectedPaths,
     moveSelectedShapes,
     moveSelectedTexts,
-    setPaths,
-    setShapes,
-    setTexts,
   } = useCanvasStore();
 
   const [isMoving, setIsMoving] = useState(false);
-  const [initialClickPosition, setInitialClickPosition] = useState<Point | null>(null);
+  const [prevPosition, setPrevPosition] = useState<Point | null>(null);
   const [initialPaths, setInitialPaths] = useState<Path[]>([]);
   const [initialShapes, setInitialShapes] = useState<Shape[]>([]);
   const [initialTexts, setInitialTexts] = useState<Text[]>([]);
@@ -39,8 +36,8 @@ export const useMove = () => {
       if (!boundingBox) return false;
 
       // 리사이즈 핸들을 클릭한 경우는 이동하지 않음
-      const resizeHandle = getResizeHandleAtPoint(point, boundingBox);
-      if (resizeHandle) return false;
+      const isResizeHandle = getResizeHandleAtPoint(point, boundingBox);
+      if (isResizeHandle) return false;
 
       // 바운딩박스 내부를 클릭했는지 확인
       if (!isPointInBoundingBox(point, boundingBox)) return false;
@@ -51,7 +48,7 @@ export const useMove = () => {
       setInitialTexts(selectedTexts.map((text) => ({ ...text })));
 
       setIsMoving(true);
-      setInitialClickPosition(point);
+      setPrevPosition(point);
       return true;
     },
     [paths, shapes, texts, selectedPathIds, selectedShapeIds, selectedTextIds]
@@ -60,70 +57,33 @@ export const useMove = () => {
   // 이동을 계속합니다.
   const move = useCallback(
     (point: Point) => {
-      if (!isMoving || !initialClickPosition) {
+      if (!isMoving || !prevPosition) {
         return;
       }
 
-      // 초기 위치에서 현재 마우스 위치까지의 총 오프셋 계산
-      const totalOffset: Point = {
-        x: point.x - initialClickPosition.x,
-        y: point.y - initialClickPosition.y,
+      const offset: Point = {
+        x: point.x - prevPosition.x,
+        y: point.y - prevPosition.y,
       };
 
-      // 초기 상태를 기준으로 새 위치 계산
-      // 먼저 초기 상태로 되돌린 후 새 위치로 이동
       if (selectedPathIds.length > 0) {
-        // 현재 경로를 초기 상태로 복원
-        const restoredPaths = paths.map((path) => {
-          if (!selectedPathIds.includes(path.id)) return path;
-          const initialPath = initialPaths.find((p) => p.id === path.id);
-          return initialPath || path;
-        });
-        setPaths(restoredPaths);
-
-        // 새 위치로 이동
-        moveSelectedPaths(totalOffset);
+        moveSelectedPaths(offset);
       }
       if (selectedShapeIds.length > 0) {
-        // 현재 도형을 초기 상태로 복원
-        const restoredShapes = shapes.map((shape) => {
-          if (!selectedShapeIds.includes(shape.id)) return shape;
-          const initialShape = initialShapes.find((s) => s.id === shape.id);
-          return initialShape || shape;
-        });
-        setShapes(restoredShapes);
-
-        // 새 위치로 이동
-        moveSelectedShapes(totalOffset);
+        moveSelectedShapes(offset);
       }
       if (selectedTextIds.length > 0) {
-        // 현재 텍스트를 초기 상태로 복원
-        const restoredTexts = texts.map((text) => {
-          if (!selectedTextIds.includes(text.id)) return text;
-          const initialText = initialTexts.find((t) => t.id === text.id);
-          return initialText || text;
-        });
-        setTexts(restoredTexts);
-
-        // 새 위치로 이동
-        moveSelectedTexts(totalOffset);
+        moveSelectedTexts(offset);
       }
+
+      setPrevPosition(point);
     },
     [
       isMoving,
-      initialClickPosition,
+      prevPosition,
       selectedPathIds,
       selectedShapeIds,
       selectedTextIds,
-      paths,
-      shapes,
-      texts,
-      initialPaths,
-      initialShapes,
-      initialTexts,
-      setPaths,
-      setShapes,
-      setTexts,
       moveSelectedPaths,
       moveSelectedShapes,
       moveSelectedTexts,
@@ -132,27 +92,16 @@ export const useMove = () => {
 
   // 이동을 종료합니다.
   const stopMoving = useCallback(() => {
-    if (!isMoving) {
-      setIsMoving(false);
-      setInitialClickPosition(null);
-      return;
-    }
-
-    // 이동이 실제로 발생했는지 확인하고 히스토리에 저장
-    const currentSelectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
-    const currentSelectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
-    const currentSelectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
-
-    // 초기 상태와 현재 상태가 다르면 히스토리에 저장
     const hasChanged =
       initialPaths.length > 0 ||
       initialShapes.length > 0 ||
-      initialTexts.length > 0 ||
-      currentSelectedPaths.length > 0 ||
-      currentSelectedShapes.length > 0 ||
-      currentSelectedTexts.length > 0;
+      initialTexts.length > 0
 
     if (hasChanged) {
+      const currentSelectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
+      const currentSelectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
+      const currentSelectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
+
       saveMoveAction(
         initialPaths,
         initialShapes,
@@ -164,12 +113,11 @@ export const useMove = () => {
     }
 
     setIsMoving(false);
-    setInitialClickPosition(null);
+    setPrevPosition(null);
     setInitialPaths([]);
     setInitialShapes([]);
     setInitialTexts([]);
   }, [
-    isMoving,
     paths,
     shapes,
     texts,

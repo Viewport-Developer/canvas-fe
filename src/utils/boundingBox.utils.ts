@@ -87,11 +87,10 @@ export const doBoundingBoxesIntersect = (box1: BoundingBox, box2: BoundingBox): 
   const box2MinY = box2.topLeft.y;
   const box2MaxY = box2.bottomLeft.y;
 
-  // 교차 조건: 박스들이 겹치지 않는 경우를 제외
   return !(box1MaxX < box2MinX || box1MinX > box2MaxX || box1MaxY < box2MinY || box1MinY > box2MaxY);
 };
 
-// 텍스트의 바운딩 박스를 계산합니다 (여러 줄 지원).
+// 텍스트의 바운딩 박스를 계산합니다.
 export const calculateTextBoundingBox = (content: string, position: Point, fontSize: number): BoundingBox => {
   if (!content) {
     return {
@@ -115,11 +114,11 @@ export const calculateTextBoundingBox = (content: string, position: Point, fontS
   }
 
   tempCtx.font = `${fontSize}px sans-serif`;
-  tempCtx.textBaseline = "top"; // 상단 기준으로 정렬
+  tempCtx.textBaseline = "top";
 
   let maxWidth = 0;
   const lines = content.split("\n");
-  const lineHeight = fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET; // 줄 간격 고려
+  const lineHeight = fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET;
 
   lines.forEach((line) => {
     const metrics = tempCtx.measureText(line);

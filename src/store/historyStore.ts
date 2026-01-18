@@ -21,9 +21,7 @@ import { useViewportStore } from "./viewportStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 interface HistoryStore {
-  // Undo 스택
   undoStack: HistoryAction[];
-  // Redo 스택
   redoStack: HistoryAction[];
 
   // 그리기 액션 저장
@@ -57,13 +55,10 @@ interface HistoryStore {
   // 텍스트 액션 저장
   saveTextAction: (previousTexts: Text[], newTexts: Text[]) => void;
 
-  // Undo 실행
   undo: () => void;
-  // Redo 실행
   redo: () => void;
-  // Undo 가능 여부 확인
+
   canUndo: () => boolean;
-  // Redo 가능 여부 확인
   canRedo: () => boolean;
 }
 
@@ -189,7 +184,6 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     const textStore = useTextStore.getState();
     const viewportStore = useViewportStore.getState();
 
-    // 액션 타입에 따라 Undo 실행
     switch (lastAction.type) {
       case "draw":
         pathStore.removePaths([lastAction.path.id]);
@@ -216,19 +210,17 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         const currentShapes = shapeStore.shapes;
         const currentTexts = textStore.texts;
 
-        // 이전 경로로 교체
+        // 이전 상태로 교체
         const updatedPaths = currentPaths.map((path) => {
           const previousPath = lastAction.previousPaths.find((p) => p.id === path.id);
           return previousPath || path;
         });
 
-        // 이전 도형으로 교체
         const updatedShapes = currentShapes.map((shape) => {
           const previousShape = lastAction.previousShapes.find((s) => s.id === shape.id);
           return previousShape || shape;
         });
 
-        // 이전 텍스트로 교체
         const updatedTexts = currentTexts.map((text) => {
           const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
           return previousText || text;
@@ -244,19 +236,17 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         const currentShapes = shapeStore.shapes;
         const currentTexts = textStore.texts;
 
-        // 이전 경로로 교체
+        // 이전 상태로 교체
         const updatedPaths = currentPaths.map((path) => {
           const previousPath = lastAction.previousPaths.find((p) => p.id === path.id);
           return previousPath || path;
         });
 
-        // 이전 도형으로 교체
         const updatedShapes = currentShapes.map((shape) => {
           const previousShape = lastAction.previousShapes.find((s) => s.id === shape.id);
           return previousShape || shape;
         });
 
-        // 이전 텍스트로 교체
         const updatedTexts = currentTexts.map((text) => {
           const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
           return previousText || text;
@@ -270,20 +260,20 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
       case "text": {
         const currentTexts = textStore.texts;
 
-        // 새로 생성된 텍스트 제거 (newTexts에만 있는 텍스트)
+        // 새로 생성된 텍스트 제거
         const newTextIds = lastAction.newTexts.map((text) => text.id);
         const previousTextIds = lastAction.previousTexts.map((text) => text.id);
         const textsToKeep = currentTexts.filter(
           (text) => !newTextIds.includes(text.id) || previousTextIds.includes(text.id)
         );
 
-        // 이전 텍스트로 교체 (수정된 텍스트)
+        // 이전 텍스트로 교체
         const updatedTexts = textsToKeep.map((text) => {
           const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
           return previousText || text;
         });
 
-        // 삭제된 텍스트 복원 (previousTexts에만 있는 텍스트)
+        // 삭제된 텍스트 복원
         const deletedTexts = lastAction.previousTexts.filter(
           (prevText) => !currentTexts.some((text) => text.id === prevText.id)
         );
@@ -309,7 +299,6 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     const textStore = useTextStore.getState();
     const viewportStore = useViewportStore.getState();
 
-    // 액션 타입에 따라 Redo 실행
     switch (nextAction.type) {
       case "draw":
         pathStore.addPath(nextAction.path);
@@ -334,19 +323,19 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         const currentShapes = shapeStore.shapes;
         const currentTexts = textStore.texts;
 
-        // 새 경로로 교체
+        // 새 상태로 교체
         const updatedPaths = currentPaths.map((path) => {
           const newPath = nextAction.newPaths.find((p) => p.id === path.id);
           return newPath || path;
         });
 
-        // 새 도형으로 교체
+        // 새 상태로 교체
         const updatedShapes = currentShapes.map((shape) => {
           const newShape = nextAction.newShapes.find((s) => s.id === shape.id);
           return newShape || shape;
         });
 
-        // 새 텍스트로 교체
+        // 새 상태로 교체
         const updatedTexts = currentTexts.map((text) => {
           const newText = nextAction.newTexts.find((t) => t.id === text.id);
           return newText || text;
@@ -362,19 +351,19 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
         const currentShapes = shapeStore.shapes;
         const currentTexts = textStore.texts;
 
-        // 새 경로로 교체
+       // 새 상태로 교체
         const updatedPaths = currentPaths.map((path) => {
           const newPath = nextAction.newPaths.find((p) => p.id === path.id);
           return newPath || path;
         });
 
-        // 새 도형으로 교체
+        // 새 상태로 교체
         const updatedShapes = currentShapes.map((shape) => {
           const newShape = nextAction.newShapes.find((s) => s.id === shape.id);
           return newShape || shape;
         });
 
-        // 새 텍스트로 교체
+        // 새 상태로 교체
         const updatedTexts = currentTexts.map((text) => {
           const newText = nextAction.newTexts.find((t) => t.id === text.id);
           return newText || text;

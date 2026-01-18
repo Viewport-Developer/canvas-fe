@@ -1,6 +1,3 @@
-// 캔버스 스토어 통합
-// 하위 호환성을 위해 모든 스토어를 통합하여 제공합니다.
-
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
 import { useTextStore } from "./textStore";

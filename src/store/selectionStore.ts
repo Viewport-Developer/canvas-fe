@@ -2,14 +2,11 @@ import { create } from "zustand";
 import type { Point } from "../types";
 
 interface SelectionStore {
-  // 선택된 경로 ID 목록
   selectedPathIds: string[];
-  // 선택된 도형 ID 목록
   selectedShapeIds: string[];
-  // 선택된 텍스트 ID 목록
   selectedTextIds: string[];
 
-  // 드래그 선택 상태
+  // 드래그 상태
   isDragSelecting: boolean;
   dragStartPoint: Point | null;
   dragEndPoint: Point | null;
@@ -22,7 +19,6 @@ interface SelectionStore {
   addSelectedTextId: (id: string) => void;
   clearSelection: () => void;
 
-  // 드래그 선택 상태 관리
   setIsDragSelecting: (isDragSelecting: boolean) => void;
   setDragStartPoint: (point: Point | null) => void;
   setDragEndPoint: (point: Point | null) => void;
@@ -44,19 +40,25 @@ export const useSelectionStore = create<SelectionStore>((set) => ({
   setSelectedTextIds: (ids) => set({ selectedTextIds: ids }),
 
   addSelectedPathId: (id) =>
-    set((state) => ({
-      selectedPathIds: state.selectedPathIds.includes(id) ? state.selectedPathIds : [...state.selectedPathIds, id],
-    })),
+    set((state) => {
+      if (state.selectedPathIds.includes(id)) return state;
+
+      return { selectedPathIds: [...state.selectedPathIds, id] };
+    }),
 
   addSelectedShapeId: (id) =>
-    set((state) => ({
-      selectedShapeIds: state.selectedShapeIds.includes(id) ? state.selectedShapeIds : [...state.selectedShapeIds, id],
-    })),
+    set((state) => {
+      if (state.selectedShapeIds.includes(id)) return state;
+
+      return { selectedShapeIds: [...state.selectedShapeIds, id] };
+    }),
 
   addSelectedTextId: (id) =>
-    set((state) => ({
-      selectedTextIds: state.selectedTextIds.includes(id) ? state.selectedTextIds : [...state.selectedTextIds, id],
-    })),
+    set((state) => {
+      if (state.selectedTextIds.includes(id)) return state;
+
+      return { selectedTextIds: [...state.selectedTextIds, id] };
+    }),
 
   clearSelection: () => set({ selectedPathIds: [], selectedShapeIds: [], selectedTextIds: [] }),
 

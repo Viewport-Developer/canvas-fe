@@ -16,10 +16,6 @@ import { useCanvas } from "../hooks/useCanvas";
 import { useZoom } from "../hooks/useZoom";
 import TextInput from "./TextInput";
 
-type CanvasProps = {
-  containerRef: RefObject<HTMLDivElement | null>;
-};
-
 const CanvasContainer = styled.div`
   position: relative;
   width: 100%;
@@ -34,18 +30,22 @@ const CanvasLayer = styled.canvas<{ $tool: Tool; $isPanning: boolean; $isMoving:
   width: 100%;
   height: 100%;
   cursor: ${(props) => {
-    if (props.$tool === "pan") {
-      return props.$isPanning ? "grabbing" : "grab";
+    switch (props.$tool) {
+      case "pan":
+        return props.$isPanning ? "grabbing" : "grab";
+      case "eraser":
+        return "cell";
+      case "select":
+        return props.$isMoving ? "grabbing" : "pointer";
+      default:
+        return "crosshair";
     }
-    if (props.$tool === "eraser") {
-      return "cell";
-    }
-    if (props.$tool === "select") {
-      return props.$isMoving ? "grabbing" : "pointer";
-    }
-    return "crosshair";
   }};
 `;
+
+type CanvasProps = {
+  containerRef: RefObject<HTMLDivElement | null>;
+};
 
 const Canvas = ({ containerRef }: CanvasProps) => {
   const { tool, isPanning } = useToolStore();
@@ -82,19 +82,17 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 캔버스 렌더링 및 줌 설정
-  useCanvas(backgroundCanvasRef, foregroundCanvasRef, containerRef, editingTextId);
+  useCanvas(containerRef, backgroundCanvasRef, foregroundCanvasRef);
   useZoom(backgroundCanvasRef);
 
-  // 마우스 이벤트의 캔버스 좌표 계산
+  // 마우스 좌표 계산
   const getMousePos = useCallback(
     (e: React.MouseEvent): Point => {
-      // 현재 그리는 중인 요소가 있으면 포그라운드 캔버스 사용
       const canvas = currentPath || currentShape ? foregroundCanvasRef.current : backgroundCanvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
 
       const rect = canvas.getBoundingClientRect();
 
-      // 화면 좌표를 캔버스 좌표로 변환 (줌과 팬 고려)
       const x = (e.clientX - rect.left) / zoom + pan.x;
       const y = (e.clientY - rect.top) / zoom + pan.y;
 
@@ -128,20 +126,10 @@ const Canvas = ({ containerRef }: CanvasProps) => {
           startShapeDrawing(point, "circle");
           break;
         case "select":
-          // 먼저 리사이즈 핸들을 확인
-          if (!startResizing(point)) {
-            // 리사이즈 핸들이 아니면 이동 시도
-            if (!startMoving(point)) {
-              // 이동도 아니면 드래그 선택 시도
-              startDragSelect(point);
-            }
-          }
+          void (startResizing(point) || startMoving(point) || startDragSelect(point));
           break;
         case "text":
-          // 이미 텍스트 입력 중이면 새로운 텍스트 생성하지 않음
-          if (!createPosition) {
-            startCreating(point);
-          }
+          void (!createPosition && startCreating(point));
           break;
       }
     },
@@ -181,13 +169,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
           drawShape(point);
           break;
         case "select":
-          if (isResizing) {
-            resize(point);
-          } else if (isMoving) {
-            move(point);
-          } else if (isDragSelecting) {
-            updateDragSelect(point);
-          }
+          void (isResizing && resize(point) || isMoving && move(point) || isDragSelecting && updateDragSelect(point));
           break;
       }
     },
@@ -225,13 +207,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         stopShapeDrawing();
         break;
       case "select":
-        if (isResizing) {
-          stopResizing();
-        } else if (isMoving) {
-          stopMoving();
-        } else if (isDragSelecting) {
-          stopDragSelect();
-        }
+        void (isResizing && stopResizing() || isMoving && stopMoving() || isDragSelecting && stopDragSelect());
         break;
     }
   }, [
@@ -248,54 +224,37 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     stopDragSelect,
   ]);
 
-  // 키보드 단축키 처리 (Undo/Redo, Delete)
+  // 키보드 단축키 처리 (Ctrl+Z, Ctrl+Y, Backspace)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Undo: Ctrl+Z
       if (e.ctrlKey && e.key === "z") {
         e.preventDefault();
-        if (canUndo()) {
-          undo();
-        }
+        void (canUndo() && undo());
         return;
       }
-      // Redo: Ctrl+Y
+
       if (e.ctrlKey && e.key === "y") {
         e.preventDefault();
-        if (canRedo()) {
-          redo();
-        }
+        void (canRedo() && redo());
         return;
       }
-      // Backspace 키로 선택된 요소 삭제
-      if (
-        e.key === "Backspace" &&
-        (selectedPathIds.length > 0 || selectedShapeIds.length > 0 || selectedTextIds.length > 0)
-      ) {
+
+      if (e.key === "Backspace") {
         e.preventDefault();
 
-        // 삭제할 데이터 백업 (히스토리용)
         const pathsToDelete = paths.filter((path) => selectedPathIds.includes(path.id));
         const shapesToDelete = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
         const textsToDelete = texts.filter((text) => selectedTextIds.includes(text.id));
 
-        // 요소 삭제
-        if (selectedPathIds.length > 0) {
-          removePaths(selectedPathIds);
-        }
-        if (selectedShapeIds.length > 0) {
-          removeShapes(selectedShapeIds);
-        }
-        if (selectedTextIds.length > 0) {
-          removeTexts(selectedTextIds);
-        }
+        removePaths(selectedPathIds);
+        removeShapes(selectedShapeIds);
+        removeTexts(selectedTextIds);
 
-        // 히스토리에 저장
+        // 히스토리 저장
         if (pathsToDelete.length > 0 || shapesToDelete.length > 0 || textsToDelete.length > 0) {
           saveEraseAction(pathsToDelete, shapesToDelete, textsToDelete);
         }
 
-        // 선택 해제
         clearSelection();
       }
     };
@@ -322,7 +281,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     saveEraseAction,
   ]);
 
-  // 편집 중인 텍스트 정보 메모이제이션
+  // 편집 중인 텍스트
   const editingText = useMemo(() => {
     return editingTextId ? texts.find((t) => t.id === editingTextId) : null;
   }, [editingTextId, texts]);
@@ -350,7 +309,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
       />
       {createPosition && (
         <TextInput
-          key={editingTextId || "new"} // key를 사용하여 편집 모드 변경 시 재마운트
+          key={editingTextId || "new"}
           createPosition={createPosition}
           editingTextId={editingTextId}
           initialContent={editingText?.content || ""}

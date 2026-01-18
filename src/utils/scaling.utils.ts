@@ -1,12 +1,12 @@
 import type { Path, Shape, Text, BoundingBox, ResizeHandleType } from "../types";
 import { calculateBoundingBox, calculateBoundingBoxSize, calculateTextBoundingBox } from "./boundingBox.utils";
 
-// 경로를 새로운 바운딩 박스에 맞게 스케일링합니다.
+// 곡선을 새로운 바운딩 박스에 맞게 스케일링합니다.
 export const scalePathToBoundingBox = (path: Path, oldBox: BoundingBox, newBox: BoundingBox): Path => {
   const oldSize = calculateBoundingBoxSize(oldBox);
   const newSize = calculateBoundingBoxSize(newBox);
 
-  // 스케일 비율 계산 (0으로 나누기 방지)
+  // 스케일 비율 계산
   const scaleX = oldSize.width !== 0 ? newSize.width / oldSize.width : 1;
   const scaleY = oldSize.height !== 0 ? newSize.height / oldSize.height : 1;
 
@@ -32,7 +32,7 @@ export const scaleShapeToBoundingBox = (shape: Shape, oldBox: BoundingBox, newBo
   const oldSize = calculateBoundingBoxSize(oldBox);
   const newSize = calculateBoundingBoxSize(newBox);
 
-  // 스케일 비율 계산 (0으로 나누기 방지)
+  // 스케일 비율 계산
   const scaleX = oldSize.width !== 0 ? newSize.width / oldSize.width : 1;
   const scaleY = oldSize.height !== 0 ? newSize.height / oldSize.height : 1;
 
@@ -113,11 +113,9 @@ export const scalePathByCombinedBoundingBox = (
 
   // 각 포인트를 스케일링하고 이동
   const scaledPoints = path.points.map((point) => {
-    // 초기 경로 중심점 기준 상대 위치
     const relativePointX = point.x - initialPathCenter.x;
     const relativePointY = point.y - initialPathCenter.y;
 
-    // 새로운 경로 중심점 기준 새 위치
     return {
       x: newPathCenter.x + relativePointX * scaleX,
       y: newPathCenter.y + relativePointY * scaleY,
@@ -207,8 +205,7 @@ export const scaleShapeByCombinedBoundingBox = (
   };
 };
 
-// 텍스트를 새로운 바운딩 박스 너비에 맞게 스케일링합니다 (폰트 사이즈만 조정).
-// 위아래 핸들을 잡았을 때는 높이 비율을 사용하고, 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용합니다.
+// 텍스트를 새로운 바운딩 박스 너비에 맞게 스케일링합니다.
 export const scaleTextToBoundingBox = (
   text: Text,
   oldBox: BoundingBox,
@@ -220,7 +217,6 @@ export const scaleTextToBoundingBox = (
   const oldHeight = oldBox.bottomLeft.y - oldBox.topLeft.y;
   const newHeight = newBox.bottomLeft.y - newBox.topLeft.y;
 
-  // 너비가 0이면 변경하지 않음
   if (oldWidth === 0) return text;
 
   // 너비 비율 계산
@@ -229,8 +225,6 @@ export const scaleTextToBoundingBox = (
   // 높이 비율 계산
   const heightRatio = oldHeight !== 0 ? newHeight / oldHeight : 1;
 
-  // 위아래 핸들을 잡았을 때는 높이 비율을 사용 (높이 변화를 너비 변화로 변환했으므로)
-  // 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용
   let scaleRatio: number;
   if (resizeHandle === "top" || resizeHandle === "bottom") {
     // 위아래 핸들: 높이 비율 사용
@@ -263,7 +257,6 @@ export const scaleTextToBoundingBox = (
 };
 
 // 결합된 바운딩 박스의 비율에 맞게 텍스트를 스케일링합니다.
-// 위아래 핸들을 잡았을 때는 높이 비율을 사용하고, 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용합니다.
 export const scaleTextByCombinedBoundingBox = (
   text: Text,
   initialTextBox: BoundingBox,
@@ -282,8 +275,6 @@ export const scaleTextByCombinedBoundingBox = (
   // 결합된 바운딩 박스의 높이 스케일 비율 계산
   const heightRatio = initialCombinedHeight !== 0 ? newCombinedHeight / initialCombinedHeight : 1;
 
-  // 위아래 핸들을 잡았을 때는 높이 비율을 사용 (높이 변화를 너비 변화로 변환했으므로)
-  // 좌우/모서리 핸들을 잡았을 때는 너비 비율을 사용
   let scaleRatio: number;
   if (resizeHandle === "top" || resizeHandle === "bottom") {
     // 위아래 핸들: 높이 비율 사용
@@ -324,7 +315,7 @@ export const scaleTextByCombinedBoundingBox = (
   // 새로운 결합된 바운딩 박스 중심점 기준 새 위치
   const newTextCenter = {
     x: newCombinedCenter.x + relativeX * scaleRatio,
-    y: newCombinedCenter.y + relativeY * scaleRatio, // 높이도 스케일링 적용
+    y: newCombinedCenter.y + relativeY * scaleRatio,
   };
 
   // 초기 텍스트의 너비 계산

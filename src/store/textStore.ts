@@ -2,7 +2,6 @@ import { create } from "zustand";
 import type { Text } from "../types";
 
 interface TextStore {
-  // 완성된 텍스트 목록
   texts: Text[];
 
   setTexts: (texts: Text[]) => void;

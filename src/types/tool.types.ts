@@ -1,3 +1,4 @@
+// 도구
 export type Tool =
   | "draw"
   | "eraser"

@@ -4,14 +4,12 @@ import { useToolStore } from "../store/toolStore";
 import { useCanvasStore } from "../store/canvasStore";
 import type { Tool } from "../types";
 
-const Container = styled.div`
+const StyledToolBar = styled.div`
   position: fixed;
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 5px;
   gap: 5px;
   border-radius: 6px;
@@ -23,15 +21,12 @@ const Container = styled.div`
 const Button = styled.button<{ $selected?: boolean }>`
   width: 40px;
   height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   background-color: ${(props) => (props.$selected ? "#e0dfff" : "transparent")};
   border: none;
   border-radius: 6px;
   font-size: 18px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease-in-out;
 
   &:hover {
     background-color: ${(props) => (props.$selected ? "#d0cfff" : "#f5f5f5")};
@@ -62,18 +57,17 @@ const ToolBar = () => {
   );
 
   return (
-    <Container>
+    <StyledToolBar>
       {TOOLS.map(({ tool: toolType, icon }) => (
         <Button
           key={toolType}
           onClick={() => handleToolChange(toolType)}
           $selected={tool === toolType}
-          aria-label={toolType}
         >
           {icon}
         </Button>
       ))}
-    </Container>
+    </StyledToolBar>
   );
 };
 

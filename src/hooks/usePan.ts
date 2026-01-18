@@ -30,7 +30,6 @@ export const usePan = () => {
       const dx = e.clientX - panStart.x;
       const dy = e.clientY - panStart.y;
 
-      // 화면 좌표를 캔버스 좌표로 변환 (줌 고려)
       const canvasDx = dx / zoom;
       const canvasDy = dy / zoom;
 

@@ -35,14 +35,8 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
     if (selectionStore.selectedPathIds.length === 0) return;
 
-    // 전체 선택된 요소 개수 확인 (path + shape + text)
-    const totalSelectedCount =
-      selectionStore.selectedPathIds.length +
-      selectionStore.selectedShapeIds.length +
-      selectionStore.selectedTextIds.length;
-
-    // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 요소가 2개 이상일 때)
-    if (initialBoundingBox && initialPaths && totalSelectedCount > 1) {
+    // 결합된 바운딩 박스를 리사이징하는 경우
+    if (initialBoundingBox && initialPaths) {
       const updatedPaths = pathStore.paths.map((path) => {
         if (!selectionStore.selectedPathIds.includes(path.id)) return path;
 
@@ -55,7 +49,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
       usePathStore.setState({ paths: updatedPaths });
     } else {
-      // 단일 요소 리사이징 또는 결합된 바운딩 박스 정보가 없는 경우
+      // 단일 요소 리사이징
       const updatedPaths = pathStore.paths.map((path) => {
         if (!selectionStore.selectedPathIds.includes(path.id)) return path;
         return scalePathToBoundingBox(path, path.boundingBox, newBoundingBox);
@@ -71,14 +65,8 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
     if (selectionStore.selectedShapeIds.length === 0) return;
 
-    // 전체 선택된 요소 개수 확인 (path + shape + text)
-    const totalSelectedCount =
-      selectionStore.selectedPathIds.length +
-      selectionStore.selectedShapeIds.length +
-      selectionStore.selectedTextIds.length;
-
-    // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 요소가 2개 이상일 때)
-    if (initialBoundingBox && initialShapes && totalSelectedCount > 1) {
+    // 결합된 바운딩 박스를 리사이징하는 경우
+    if (initialBoundingBox && initialShapes) {
       const updatedShapes = shapeStore.shapes.map((shape) => {
         if (!selectionStore.selectedShapeIds.includes(shape.id)) return shape;
 
@@ -96,7 +84,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
       useShapeStore.setState({ shapes: updatedShapes });
     } else {
-      // 단일 요소 리사이징 또는 결합된 바운딩 박스 정보가 없는 경우
+      // 단일 요소 리사이징
       const updatedShapes = shapeStore.shapes.map((shape) => {
         if (!selectionStore.selectedShapeIds.includes(shape.id)) return shape;
         return scaleShapeToBoundingBox(shape, shape.boundingBox, newBoundingBox);
@@ -112,15 +100,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
     if (selectionStore.selectedTextIds.length === 0) return;
 
-    // 전체 선택된 요소 개수 확인 (경로 + 도형 + 텍스트)
-    const totalSelectedCount =
-      selectionStore.selectedPathIds.length +
-      selectionStore.selectedShapeIds.length +
-      selectionStore.selectedTextIds.length;
-
-    // 결합된 바운딩 박스를 리사이징하는 경우 (전체 선택된 요소가 2개 이상일 때)
-    // 텍스트만 선택된 경우뿐만 아니라 텍스트와 다른 요소가 함께 선택된 경우도 포함
-    if (initialBoundingBox && initialTexts && totalSelectedCount > 1) {
+    if (initialBoundingBox && initialTexts) {
       const updatedTexts = textStore.texts.map((text) => {
         if (!selectionStore.selectedTextIds.includes(text.id)) return text;
 
@@ -139,7 +119,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
 
       useTextStore.setState({ texts: updatedTexts });
     } else {
-      // 단일 요소 리사이징 또는 결합된 바운딩 박스 정보가 없는 경우
+      // 단일 요소 리사이징
       const updatedTexts = textStore.texts.map((text) => {
         if (!selectionStore.selectedTextIds.includes(text.id)) return text;
         return scaleTextToBoundingBox(text, text.boundingBox, newBoundingBox, resizeHandle);
