@@ -18,6 +18,7 @@ export const useCanvas = (
   containerRef: RefObject<HTMLDivElement | null>,
   backgroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
+  editingTextId: string | null,
 ) => {
   const {
     paths,
@@ -52,7 +53,7 @@ export const useCanvas = (
 
     drawAllPaths(ctx, paths, pathsToErase);
     drawAllShapes(ctx, shapes, shapesToErase);
-    drawAllTexts(ctx, texts, textsToErase);
+    drawAllTexts(ctx, texts, textsToErase, editingTextId);
 
     // 선택된 항목의 바운딩 박스 그리기
     const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
@@ -103,6 +104,7 @@ export const useCanvas = (
     dragEndPoint,
     zoom,
     pan,
+    editingTextId,
   ]);
 
   // 포그라운드 캔버스를 다시 그립니다.

@@ -106,8 +106,12 @@ export const drawAllTexts = (
   ctx: CanvasRenderingContext2D,
   texts: Text[],
   textsToErase: string[] = [],
+  editingTextId: string | null,
 ) => {
   texts.forEach((text) => {
+    // 편집 중인 텍스트는 렌더링하지 않음
+    if (editingTextId && text.id === editingTextId) return;
+    
     const willBeErased = textsToErase.includes(text.id);
     drawText(ctx, text, willBeErased);
   });

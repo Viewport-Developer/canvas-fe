@@ -82,7 +82,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const foregroundCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 캔버스 렌더링 및 줌 설정
-  useCanvas(containerRef, backgroundCanvasRef, foregroundCanvasRef);
+  useCanvas(containerRef, backgroundCanvasRef, foregroundCanvasRef, editingTextId);
   useZoom(backgroundCanvasRef);
 
   // 마우스 좌표 계산
@@ -240,6 +240,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
       }
 
       if (e.key === "Backspace") {
+        // 텍스트 입력 중이면 Backspace는 텍스트 입력 필드에서 처리되도록 함
+        if (editingTextId) {
+          return;
+        }
+
         e.preventDefault();
 
         const pathsToDelete = paths.filter((path) => selectedPathIds.includes(path.id));
@@ -279,6 +284,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     removeTexts,
     clearSelection,
     saveEraseAction,
+    editingTextId,
   ]);
 
   // 편집 중인 텍스트
