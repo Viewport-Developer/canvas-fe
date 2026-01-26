@@ -17,7 +17,7 @@ export const useDraw = () => {
   const startDrawing = useCallback(
     (point: Point) => {
       const newPath: Path = {
-        id: `path-${Date.now()}`,
+        id: `path-${crypto.randomUUID()}`,
         points: [point],
         color: CANVAS_CONFIG.DEFAULT_STROKE_COLOR,
         width: CANVAS_CONFIG.DEFAULT_STROKE_WIDTH,

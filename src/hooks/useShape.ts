@@ -12,7 +12,7 @@ export const useShape = () => {
   const startShapeDrawing = useCallback(
     (point: Point, shapeType: ShapeType) => {
       const newShape: Shape = {
-        id: `shape-${Date.now()}`,
+        id: `shape-${crypto.randomUUID()}`,
         type: shapeType,
         startPoint: point,
         endPoint: point,

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import ToolBar from "./components/ToolBar";
 import Canvas from "./components/Canvas";
@@ -16,7 +16,9 @@ const App = () => {
 
   // 환경변수에서 설정 가져오기
   const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:1234";
-  const canvasId = import.meta.env.VITE_CANVAS_ID || "default-canvas";
+
+  // 컴포넌트 마운트 시 한 번만 캔버스 ID 생성
+  const canvasId = useMemo(() => `canvas-${crypto.randomUUID()}`, []);
 
   // y.js 연결 설정
   const { yjsData, connectionState } = useYjsConnection(canvasId, wsUrl);

@@ -78,7 +78,7 @@ export const useText = () => {
       const boundingBox = calculateTextBoundingBox(content, actualPosition, fontSize);
 
       const newText: Text = {
-        id: `text-${Date.now()}`,
+        id: `text-${crypto.randomUUID()}`,
         position: actualPosition,
         content,
         color: CANVAS_CONFIG.DEFAULT_TEXT_COLOR,
