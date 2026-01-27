@@ -47,7 +47,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
         return scalePathByCombinedBoundingBox(initialPath, initialPath.boundingBox, initialBoundingBox, newBoundingBox);
       });
 
-      usePathStore.setState({ paths: updatedPaths });
+      pathStore.setPaths(updatedPaths);
     } else {
       // 단일 요소 리사이징
       const updatedPaths = pathStore.paths.map((path) => {
@@ -55,7 +55,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
         return scalePathToBoundingBox(path, path.boundingBox, newBoundingBox);
       });
 
-      usePathStore.setState({ paths: updatedPaths });
+      pathStore.setPaths(updatedPaths);
     }
   },
 
@@ -82,7 +82,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
         );
       });
 
-      useShapeStore.setState({ shapes: updatedShapes });
+      shapeStore.setShapes(updatedShapes);
     } else {
       // 단일 요소 리사이징
       const updatedShapes = shapeStore.shapes.map((shape) => {
@@ -90,7 +90,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
         return scaleShapeToBoundingBox(shape, shape.boundingBox, newBoundingBox);
       });
 
-      useShapeStore.setState({ shapes: updatedShapes });
+      shapeStore.setShapes(updatedShapes);
     }
   },
 
@@ -117,7 +117,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
         );
       });
 
-      useTextStore.setState({ texts: updatedTexts });
+      textStore.setTexts(updatedTexts);
     } else {
       // 단일 요소 리사이징
       const updatedTexts = textStore.texts.map((text) => {
@@ -125,7 +125,7 @@ export const useResizeStore = create<ResizeStore>(() => ({
         return scaleTextToBoundingBox(text, text.boundingBox, newBoundingBox, resizeHandle);
       });
 
-      useTextStore.setState({ texts: updatedTexts });
+      textStore.setTexts(updatedTexts);
     }
   },
 }));

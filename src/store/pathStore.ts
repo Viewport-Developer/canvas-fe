@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Point, Path } from "../types";
-import { getGlobalYjsData } from "./yjsStore";
+import { getGlobalYjsData, getGlobalClientId, type CurrentPath } from "./yjsStore";
 
 interface PathStore {
   paths: Path[];
@@ -51,17 +51,54 @@ export const usePathStore = create<PathStore>((set) => ({
       return { paths: newPaths };
     }),
 
-  setCurrentPath: (currentPath) => set({ currentPath }),
+  setCurrentPath: (currentPath) => {
+    const yjsData = getGlobalYjsData();
+    const clientId = getGlobalClientId();
+    
+    if (yjsData?.currentPaths && clientId !== null) {
+      // 기존 currentPath 제거
+      const currentPaths = yjsData.currentPaths.toArray();
+      const existingIndex = currentPaths.findIndex((cp) => cp.clientId === clientId);
+      if (existingIndex !== -1) {
+        yjsData.currentPaths.delete(existingIndex, 1);
+      }
+      
+      // 새 currentPath 추가
+      if (currentPath) {
+        yjsData.currentPaths.push([{ clientId, path: currentPath }]);
+      }
+    }
+    
+    set({ currentPath });
+  },
 
   addCurrentPathPoint: (point) =>
     set((state) => {
       if (!state.currentPath) return state;
       
-      return {
-        currentPath: {
-          ...state.currentPath,
-          points: [...state.currentPath.points, point],
-        },
+      const updatedPath = {
+        ...state.currentPath,
+        points: [...state.currentPath.points, point],
       };
+      
+      // y.js에 실시간 동기화
+      const yjsData = getGlobalYjsData();
+      const clientId = getGlobalClientId();
+      
+      if (yjsData?.currentPaths && clientId !== null) {
+        const currentPaths = yjsData.currentPaths.toArray();
+        const existingIndex = currentPaths.findIndex((cp) => cp.clientId === clientId);
+        
+        if (existingIndex !== -1) {
+          // 기존 항목 업데이트
+          yjsData.currentPaths.delete(existingIndex, 1);
+          yjsData.currentPaths.insert(existingIndex, [{ clientId, path: updatedPath }]);
+        } else {
+          // 새로 추가
+          yjsData.currentPaths.push([{ clientId, path: updatedPath }]);
+        }
+      }
+      
+      return { currentPath: updatedPath };
     }),
 }));

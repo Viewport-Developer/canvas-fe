@@ -24,7 +24,7 @@ export const useMoveStore = create<MoveStore>(() => ({
       return movePath(path, offset);
     });
 
-    usePathStore.setState({ paths: updatedPaths });
+    pathStore.setPaths(updatedPaths);
   },
 
   moveSelectedShapes: (offset) => {
@@ -38,7 +38,7 @@ export const useMoveStore = create<MoveStore>(() => ({
       return moveShape(shape, offset);
     });
 
-    useShapeStore.setState({ shapes: updatedShapes });
+    shapeStore.setShapes(updatedShapes);
   },
 
   moveSelectedTexts: (offset) => {
@@ -52,6 +52,6 @@ export const useMoveStore = create<MoveStore>(() => ({
       return moveText(text, offset);
     });
 
-    useTextStore.setState({ texts: updatedTexts });
+    textStore.setTexts(updatedTexts);
   },
 }));
