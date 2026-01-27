@@ -15,6 +15,8 @@ import { useHistoryStore } from "../store/historyStore";
 import { useCanvas } from "../hooks/useCanvas";
 import { useZoom } from "../hooks/useZoom";
 import TextInput from "./TextInput";
+import RemoteCursors from "./RemoteCursors";
+import type { RemoteCursor } from "../hooks/useYjsConnection";
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -45,9 +47,11 @@ const CanvasLayer = styled.canvas<{ $tool: Tool; $isPanning: boolean; $isMoving:
 
 type CanvasProps = {
   containerRef: RefObject<HTMLDivElement | null>;
+  updateCursorPosition: (position: { x: number; y: number } | null) => void;
+  remoteCursors: Map<number, RemoteCursor>;
 };
 
-const Canvas = ({ containerRef }: CanvasProps) => {
+const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasProps) => {
   const { tool, isPanning } = useToolStore();
   const {
     zoom,
@@ -75,7 +79,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   const { isDragSelecting, startDragSelect, updateDragSelect, stopDragSelect } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
   const { isMoving, startMoving, move, stopMoving } = useMove();
-  const { createPosition, editingTextId, startCreating, finishCreating } = useText();
+  const { createPosition, editingTextId, startCreating, finishCreating, updateTextInRealTime } = useText();
 
   // 캔버스 레이어 참조
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -153,6 +157,9 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     (e: React.MouseEvent) => {
       const point = getMousePos(e);
 
+      // 커서 위치 업데이트 (y.js awareness)
+      updateCursorPosition(point);
+
       switch (tool) {
         case "draw":
           draw(point);
@@ -186,6 +193,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
       move,
       isDragSelecting,
       updateDragSelect,
+      updateCursorPosition,
     ]
   );
 
@@ -292,6 +300,11 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     return editingTextId ? texts.find((t) => t.id === editingTextId) : null;
   }, [editingTextId, texts]);
 
+  // 마우스가 캔버스를 벗어날 때 커서 위치 초기화
+  const handleMouseLeave = useCallback(() => {
+    updateCursorPosition(null);
+  }, [updateCursorPosition]);
+
   return (
     <CanvasContainer>
       <CanvasLayer
@@ -299,6 +312,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         $tool={tool}
         $isPanning={isPanning}
         $isMoving={isMoving}
@@ -308,10 +322,17 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         $tool={tool}
         $isPanning={isPanning}
         $isMoving={isMoving}
         style={currentPath || currentShape ? { display: "block" } : { display: "none" }}
+      />
+      <RemoteCursors
+        remoteCursors={remoteCursors}
+        canvasRef={backgroundCanvasRef}
+        zoom={zoom}
+        pan={pan}
       />
       {createPosition && (
         <TextInput
@@ -323,6 +344,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
           zoom={zoom}
           pan={pan}
           onFinish={finishCreating}
+          onChange={(content) => updateTextInRealTime(content, zoom)}
         />
       )}
     </CanvasContainer>

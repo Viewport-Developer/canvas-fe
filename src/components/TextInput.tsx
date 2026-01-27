@@ -31,6 +31,7 @@ type TextInputProps = {
   zoom: number;
   pan: Point;
   onFinish: (content: string, actualPosition: Point, zoom: number) => void;
+  onChange?: (content: string) => void;
 };
 
 const TextInput = ({
@@ -41,6 +42,7 @@ const TextInput = ({
   zoom,
   pan,
   onFinish,
+  onChange,
 }: TextInputProps) => {
   const [inputValue, setInputValue] = useState(initialContent);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
@@ -133,7 +135,12 @@ const TextInput = ({
       $zoom={zoom}
       value={inputValue}
       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setInputValue(e.target.value);
+        const newValue = e.target.value;
+        setInputValue(newValue);
+        // 실시간 동기화
+        if (onChange) {
+          onChange(newValue);
+        }
       }}
       onBlur={handleFinish}
       onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
