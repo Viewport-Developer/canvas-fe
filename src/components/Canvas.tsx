@@ -14,9 +14,10 @@ import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 import { useCanvas } from "../hooks/useCanvas";
 import { useZoom } from "../hooks/useZoom";
+import { useYjsConnectionStore } from "../store/yjsStore";
+import { removePathsFromYjs, removeShapesFromYjs, removeTextsFromYjs } from "../utils";
 import TextInput from "./TextInput";
 import RemoteCursors from "./RemoteCursors";
-import type { RemoteCursor } from "../hooks/useYjsConnection";
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -47,26 +48,21 @@ const CanvasLayer = styled.canvas<{ $tool: Tool; $isPanning: boolean; $isMoving:
 
 type CanvasProps = {
   containerRef: RefObject<HTMLDivElement | null>;
-  updateCursorPosition: (position: { x: number; y: number } | null) => void;
-  remoteCursors: Map<number, RemoteCursor>;
 };
 
-const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasProps) => {
+const Canvas = ({ containerRef }: CanvasProps) => {
   const { tool, isPanning } = useToolStore();
   const {
     zoom,
     pan,
-    currentPath,
-    currentShape,
+    currentPaths,
+    currentShapes,
     paths,
     shapes,
     texts,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
-    removePaths,
-    removeShapes,
-    removeTexts,
+    selectedPaths,
+    selectedShapes,
+    selectedTexts,
     clearSelection,
   } = useCanvasStore();
   const { canUndo, undo, canRedo, redo, saveEraseAction } = useHistoryStore();
@@ -79,7 +75,7 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
   const { isDragSelecting, startDragSelect, updateDragSelect, stopDragSelect } = useSelect();
   const { isResizing, startResizing, resize, stopResizing } = useResize();
   const { isMoving, startMoving, move, stopMoving } = useMove();
-  const { createPosition, editingTextId, startCreating, finishCreating, updateTextInRealTime } = useText();
+  const { createPosition, editingTextId, startTexting, finishTexting, updateText } = useText();
 
   // 캔버스 레이어 참조
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -89,10 +85,12 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
   useCanvas(containerRef, backgroundCanvasRef, foregroundCanvasRef, editingTextId);
   useZoom(backgroundCanvasRef);
 
+  const updateCursorPosition = useYjsConnectionStore((s) => s.updateCursorPosition);
+
   // 마우스 좌표 계산
   const getMousePos = useCallback(
     (e: React.MouseEvent): Point => {
-      const canvas = currentPath || currentShape ? foregroundCanvasRef.current : backgroundCanvasRef.current;
+      const canvas = backgroundCanvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
 
       const rect = canvas.getBoundingClientRect();
@@ -102,13 +100,16 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
 
       return { x, y };
     },
-    [currentPath, currentShape, zoom, pan]
+    [zoom, pan],
   );
 
   // 마우스 다운 이벤트 핸들러
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       const point = getMousePos(e);
+
+      // 클릭 시에도 커서 위치를 상대방에게 공유
+      updateCursorPosition(point);
 
       switch (tool) {
         case "draw":
@@ -133,7 +134,7 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
           void (startResizing(point) || startMoving(point) || startDragSelect(point));
           break;
         case "text":
-          void (!createPosition && startCreating(point));
+          void (!createPosition && startTexting(point));
           break;
       }
     },
@@ -148,8 +149,9 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
       startMoving,
       startDragSelect,
       createPosition,
-      startCreating,
-    ]
+      startTexting,
+      updateCursorPosition,
+    ],
   );
 
   // 마우스 이동 이벤트 핸들러
@@ -176,7 +178,11 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
           drawShape(point);
           break;
         case "select":
-          void (isResizing && resize(point) || isMoving && move(point) || isDragSelecting && updateDragSelect(point));
+          void (
+            (isResizing && resize(point)) ||
+            (isMoving && move(point)) ||
+            (isDragSelecting && updateDragSelect(point))
+          );
           break;
       }
     },
@@ -194,7 +200,7 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
       isDragSelecting,
       updateDragSelect,
       updateCursorPosition,
-    ]
+    ],
   );
 
   // 마우스 업 이벤트 핸들러
@@ -215,7 +221,7 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
         stopShapeDrawing();
         break;
       case "select":
-        void (isResizing && stopResizing() || isMoving && stopMoving() || isDragSelecting && stopDragSelect());
+        void ((isResizing && stopResizing()) || (isMoving && stopMoving()) || (isDragSelecting && stopDragSelect()));
         break;
     }
   }, [
@@ -255,13 +261,13 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
 
         e.preventDefault();
 
-        const pathsToDelete = paths.filter((path) => selectedPathIds.includes(path.id));
-        const shapesToDelete = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
-        const textsToDelete = texts.filter((text) => selectedTextIds.includes(text.id));
+        const pathsToDelete = paths.filter((path) => selectedPaths.has(path.id));
+        const shapesToDelete = shapes.filter((shape) => selectedShapes.has(shape.id));
+        const textsToDelete = texts.filter((text) => selectedTexts.has(text.id));
 
-        removePaths(selectedPathIds);
-        removeShapes(selectedShapeIds);
-        removeTexts(selectedTextIds);
+        removePathsFromYjs([...selectedPaths]);
+        removeShapesFromYjs([...selectedShapes]);
+        removeTextsFromYjs([...selectedTexts]);
 
         // 히스토리 저장
         if (pathsToDelete.length > 0 || shapesToDelete.length > 0 || textsToDelete.length > 0) {
@@ -281,15 +287,12 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
     canRedo,
     undo,
     redo,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
+    selectedPaths,
+    selectedShapes,
+    selectedTexts,
     paths,
     shapes,
     texts,
-    removePaths,
-    removeShapes,
-    removeTexts,
     clearSelection,
     saveEraseAction,
     editingTextId,
@@ -326,14 +329,9 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
         $tool={tool}
         $isPanning={isPanning}
         $isMoving={isMoving}
-        style={currentPath || currentShape ? { display: "block" } : { display: "none" }}
+        style={currentPaths.length > 0 || currentShapes.length > 0 ? { display: "block" } : { display: "none" }}
       />
-      <RemoteCursors
-        remoteCursors={remoteCursors}
-        canvasRef={backgroundCanvasRef}
-        zoom={zoom}
-        pan={pan}
-      />
+      <RemoteCursors canvasRef={backgroundCanvasRef} zoom={zoom} pan={pan} />
       {createPosition && (
         <TextInput
           key={editingTextId || "new"}
@@ -343,8 +341,8 @@ const Canvas = ({ containerRef, updateCursorPosition, remoteCursors }: CanvasPro
           fontSize={editingText?.fontSize}
           zoom={zoom}
           pan={pan}
-          onFinish={finishCreating}
-          onChange={(content) => updateTextInRealTime(content, zoom)}
+          onFinish={finishTexting}
+          onChange={(content) => updateText(content, zoom)}
         />
       )}
     </CanvasContainer>

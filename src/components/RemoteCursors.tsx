@@ -1,6 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
-import type { RemoteCursor } from '../hooks/useYjsConnection';
+import { useEffect, useMemo, useState } from "react";
+import styled from "styled-components";
+import type { RemoteCursor } from "../types/yjs.types";
+import { useYjsConnectionStore } from "../store/yjsStore";
+
+export type RemoteCursorsProps = {
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  zoom: number;
+  pan: { x: number; y: number };
+};
 
 const CursorLayer = styled.div`
   position: absolute;
@@ -12,48 +19,48 @@ const CursorLayer = styled.div`
   z-index: 1000;
 `;
 
-const RemoteCursor = styled.div<{ $x: number; $y: number; $color: string }>`
+const RemoteCursor = styled.div
+  .attrs<{ $x: number; $y: number; $color: string }>((props) => ({
+    style: {
+      left: props.$x,
+      top: props.$y,
+      ["--cursor-color" as string]: props.$color,
+    } as React.CSSProperties,
+  }))`
   position: absolute;
-  left: ${(props) => props.$x}px;
-  top: ${(props) => props.$y}px;
   width: 0;
   height: 0;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  
+
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     left: -12px;
     top: -12px;
     width: 20px;
     height: 20px;
-    border: 2px solid ${(props) => props.$color};
+    border: 2px solid var(--cursor-color);
     border-radius: 50%;
-    background: ${(props) => props.$color};
+    background: var(--cursor-color);
     opacity: 0.3;
   }
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     left: -2px;
     top: -2px;
     width: 4px;
     height: 4px;
-    background: ${(props) => props.$color};
+    background: var(--cursor-color);
     border-radius: 50%;
   }
 `;
 
-interface RemoteCursorsProps {
-  remoteCursors: Map<number, RemoteCursor>;
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  zoom: number;
-  pan: { x: number; y: number };
-}
+const RemoteCursors = ({ canvasRef, zoom, pan }: RemoteCursorsProps) => {
+  const { remoteCursors } = useYjsConnectionStore();
 
-const RemoteCursors = ({ remoteCursors, canvasRef, zoom, pan }: RemoteCursorsProps) => {
   const [canvasRect, setCanvasRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
@@ -64,12 +71,12 @@ const RemoteCursors = ({ remoteCursors, canvasRef, zoom, pan }: RemoteCursorsPro
     };
 
     updateRect();
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, true);
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
 
     return () => {
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
     };
   }, [canvasRef, zoom, pan]);
 
@@ -94,12 +101,7 @@ const RemoteCursors = ({ remoteCursors, canvasRef, zoom, pan }: RemoteCursorsPro
   return (
     <CursorLayer>
       {remoteCursorPositions.map((cursor) => (
-        <RemoteCursor
-          key={cursor.clientId}
-          $x={cursor.screenX}
-          $y={cursor.screenY}
-          $color={cursor.color}
-        />
+        <RemoteCursor key={cursor.color} $x={cursor.screenX} $y={cursor.screenY} $color={cursor.color} />
       ))}
     </CursorLayer>
   );
