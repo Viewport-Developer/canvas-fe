@@ -48,4 +48,6 @@ export const CANVAS_CONFIG = {
   DEFAULT_TEXT_FONT_SIZE: 16,
   // 텍스트 줄 간격 오프셋
   DEFAULT_TEXT_LINE_HEIGHT_OFFSET: 4,
+  // 새 텍스트 박스 생성 시 클릭 위치보다 위로 띄울 거리 (캔버스 좌표)
+  TEXT_CREATE_OFFSET_Y: 8,
 } as const;

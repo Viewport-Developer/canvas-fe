@@ -32,21 +32,27 @@ export const useText = () => {
         return;
       }
 
+      // 클릭 위치보다 살짝 위에 텍스트 박스가 생기도록
+      const createPoint: Point = {
+        x: point.x,
+        y: point.y - CANVAS_CONFIG.TEXT_CREATE_OFFSET_Y,
+      };
+
       const newText: Text = {
         id: `text-${crypto.randomUUID()}`,
-        position: point,
+        position: createPoint,
         content: "",
         color: CANVAS_CONFIG.DEFAULT_TEXT_COLOR,
         fontSize: CANVAS_CONFIG.DEFAULT_TEXT_FONT_SIZE,
-        boundingBox: calculateTextBoundingBox("", point, CANVAS_CONFIG.DEFAULT_TEXT_FONT_SIZE),
+        boundingBox: calculateTextBoundingBox("", createPoint, CANVAS_CONFIG.DEFAULT_TEXT_FONT_SIZE),
       };
 
       setInitialText(null);
       setCurrentTextToAwareness(newText);
       setEditingTextId(newText.id);
-      setCreatePosition(point);
+      setCreatePosition(createPoint);
     },
-    [texts],
+    [texts]
   );
 
   // 실시간 텍스트 업데이트
@@ -70,28 +76,19 @@ export const useText = () => {
       const currentText = getCurrentTextFromAwareness();
       if (!currentText) return;
 
-      const paddingTop = -8;
-      const paddingLeft = 0.5;
-      const paddingOffsetX = paddingLeft / zoom;
-      const paddingOffsetY = paddingTop / zoom;
-      const actualPosition: Point = {
-        x: (createPosition?.x ?? currentText.position.x) + paddingOffsetX,
-        y: (createPosition?.y ?? currentText.position.y) + paddingOffsetY,
-      };
       const fontSize = CANVAS_CONFIG.DEFAULT_TEXT_FONT_SIZE / zoom;
-      const boundingBox = calculateTextBoundingBox(content, actualPosition, fontSize);
+      const boundingBox = calculateTextBoundingBox(content, currentText.position, fontSize);
       const newText: Text = {
         ...currentText,
-        position: actualPosition,
+        position: currentText.position,
         content,
         fontSize,
         boundingBox,
       };
 
       setCurrentTextToAwareness(newText);
-      setCreatePosition(actualPosition);
     },
-    [texts, createPosition, editingTextId],
+    [texts, editingTextId]
   );
 
   // 텍스트 편집 종료. 기존 텍스트: 수정 전 원본을 previousText로 히스토리 저장. 새 텍스트: currentText → Yjs push 후 clear.
@@ -123,7 +120,7 @@ export const useText = () => {
       setCreatePosition(null);
       setEditingTextId(null);
     },
-    [texts, editingTextId, initialText, saveTextAction],
+    [texts, editingTextId, initialText, saveTextAction]
   );
 
   return {
