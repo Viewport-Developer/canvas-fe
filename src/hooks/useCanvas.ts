@@ -2,36 +2,35 @@ import { useEffect, useCallback, type RefObject } from "react";
 import {
   clearCanvas,
   drawAllPaths,
-  drawPath,
   drawAllShapes,
-  drawShape,
   drawAllTexts,
   drawSelectionBox,
   drawDragSelectionBox,
   applyCanvasZoom,
   restoreCanvas,
-} from "../utils/canvas.utils";
-import { getCombinedBoundingBox } from "../utils/boundingBox.utils";
+  getCombinedBoundingBox,
+} from "../utils";
 import { useCanvasStore } from "../store/canvasStore";
 
 export const useCanvas = (
   containerRef: RefObject<HTMLDivElement | null>,
   backgroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
-  editingTextId: string | null,
+  editingTextId: string | null
 ) => {
   const {
     paths,
-    currentPath,
     shapes,
-    currentShape,
     texts,
+    currentPaths,
+    currentShapes,
+    currentTexts,
     pathsToErase,
     shapesToErase,
     textsToErase,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
+    selectedPaths,
+    selectedShapes,
+    selectedTexts,
     isDragSelecting,
     dragStartPoint,
     dragEndPoint,
@@ -56,33 +55,33 @@ export const useCanvas = (
     drawAllTexts(ctx, texts, textsToErase, editingTextId);
 
     // 선택된 항목의 바운딩 박스 그리기
-    const selectedPaths = paths.filter((path) => selectedPathIds.includes(path.id));
-    const selectedShapes = shapes.filter((shape) => selectedShapeIds.includes(shape.id));
-    const selectedTexts = texts.filter((text) => selectedTextIds.includes(text.id));
-    const totalSelectedCount = selectedPaths.length + selectedShapes.length + selectedTexts.length;
+    const selectedPathsArray = paths.filter((path) => selectedPaths.has(path.id));
+    const selectedShapesArray = shapes.filter((shape) => selectedShapes.has(shape.id));
+    const selectedTextsArray = texts.filter((text) => selectedTexts.has(text.id));
+    const totalSelectedCount = selectedPathsArray.length + selectedShapesArray.length + selectedTextsArray.length;
 
     if (totalSelectedCount > 0) {
       if (isDragSelecting) {
-        // 드래그중일 때는 개별 바운딩 박스 그리기
-        selectedPaths.forEach((path) => {
+        // 드래그중일 때는 개별 바운딩 박스 그리기 (드래그 박스는 아래에서 별도로 그림)
+        for (const path of selectedPathsArray) {
           drawSelectionBox(ctx, path.boundingBox);
-        });
-        selectedShapes.forEach((shape) => {
+        }
+        for (const shape of selectedShapesArray) {
           drawSelectionBox(ctx, shape.boundingBox);
-        });
-        selectedTexts.forEach((text) => {
+        }
+        for (const text of selectedTextsArray) {
           drawSelectionBox(ctx, text.boundingBox);
-        });
+        }
       } else {
         // 드래그 선택이 끝나면 결합된 바운딩 박스 그리기
-        const combinedBoundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes, selectedTexts);
+        const combinedBoundingBox = getCombinedBoundingBox(selectedPathsArray, selectedShapesArray, selectedTextsArray);
         if (combinedBoundingBox) {
           drawSelectionBox(ctx, combinedBoundingBox);
         }
       }
     }
 
-    // 드래그 박스 그리기
+    // 드래그 박스 그리기 (선택된 요소가 있어도 드래그 중이면 항상 표시)
     if (isDragSelecting && dragStartPoint && dragEndPoint) {
       drawDragSelectionBox(ctx, dragStartPoint, dragEndPoint);
     }
@@ -96,9 +95,9 @@ export const useCanvas = (
     pathsToErase,
     shapesToErase,
     textsToErase,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
+    selectedPaths,
+    selectedShapes,
+    selectedTexts,
     isDragSelecting,
     dragStartPoint,
     dragEndPoint,
@@ -107,7 +106,7 @@ export const useCanvas = (
     editingTextId,
   ]);
 
-  // 포그라운드 캔버스를 다시 그립니다.
+  // 포그라운드 캔버스를 다시 그립니다. (모든 클라이언트의 그리는 중인 path/shape/text)
   const redrawForeground = useCallback(() => {
     const canvas = foregroundCanvasRef.current;
     if (!canvas) return;
@@ -117,15 +116,16 @@ export const useCanvas = (
 
     clearCanvas(ctx, canvas.width, canvas.height);
 
-    if (currentPath || currentShape) {
+    if (currentPaths.length > 0 || currentShapes.length > 0 || currentTexts.length > 0) {
       applyCanvasZoom(ctx, zoom, pan.x, pan.y);
 
-      void (currentPath && drawPath(ctx, currentPath, false));
-      void (currentShape && drawShape(ctx, currentShape, false));
-      
+      drawAllPaths(ctx, currentPaths, new Set());
+      drawAllShapes(ctx, currentShapes, new Set());
+      drawAllTexts(ctx, currentTexts, new Set(), null);
+
       restoreCanvas(ctx);
     }
-  }, [foregroundCanvasRef, currentPath, currentShape, zoom, pan]);
+  }, [foregroundCanvasRef, currentPaths, currentShapes, currentTexts, zoom, pan]);
 
   // 캔버스 크기를 컨테이너에 맞춥니다.
   useEffect(() => {
@@ -137,7 +137,7 @@ export const useCanvas = (
 
         backgroundCanvasRef.current.width = width;
         backgroundCanvasRef.current.height = height;
-        
+
         foregroundCanvasRef.current.width = width;
         foregroundCanvasRef.current.height = height;
       }

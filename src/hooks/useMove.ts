@@ -1,22 +1,11 @@
 import { useState, useCallback } from "react";
 import type { Point, Path, Shape, Text } from "../types";
-import { isPointInBoundingBox, getCombinedBoundingBox } from "../utils/boundingBox.utils";
-import { getResizeHandleAtPoint } from "../utils/resize.utils";
+import { isPointInBoundingBox, getCombinedBoundingBox, getResizeHandleAtPoint } from "../utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 
 export const useMove = () => {
-  const {
-    paths,
-    shapes,
-    texts,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
-    moveSelectedPaths,
-    moveSelectedShapes,
-    moveSelectedTexts,
-  } = useCanvasStore();
+  const { paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts, moveSelected } = useCanvasStore();
 
   const [isMoving, setIsMoving] = useState(false);
   const [prevPosition, setPrevPosition] = useState<Point | null>(null);
@@ -29,10 +18,10 @@ export const useMove = () => {
   // 이동을 시작합니다.
   const startMoving = useCallback(
     (point: Point): boolean => {
-      const selectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
-      const selectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
-      const selectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
-      const boundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes, selectedTexts);
+      const selectedPathsArray = paths.filter((p) => selectedPaths.has(p.id));
+      const selectedShapesArray = shapes.filter((s) => selectedShapes.has(s.id));
+      const selectedTextsArray = texts.filter((t) => selectedTexts.has(t.id));
+      const boundingBox = getCombinedBoundingBox(selectedPathsArray, selectedShapesArray, selectedTextsArray);
       if (!boundingBox) return false;
 
       // 리사이즈 핸들을 클릭한 경우는 이동하지 않음
@@ -43,15 +32,15 @@ export const useMove = () => {
       if (!isPointInBoundingBox(point, boundingBox)) return false;
 
       // 이동 시작 시 초기 상태 저장 (히스토리용)
-      setInitialPaths(selectedPaths.map((path) => ({ ...path })));
-      setInitialShapes(selectedShapes.map((shape) => ({ ...shape })));
-      setInitialTexts(selectedTexts.map((text) => ({ ...text })));
+      setInitialPaths(selectedPathsArray.map((path) => ({ ...path })));
+      setInitialShapes(selectedShapesArray.map((shape) => ({ ...shape })));
+      setInitialTexts(selectedTextsArray.map((text) => ({ ...text })));
 
       setIsMoving(true);
       setPrevPosition(point);
       return true;
     },
-    [paths, shapes, texts, selectedPathIds, selectedShapeIds, selectedTextIds]
+    [paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts],
   );
 
   // 이동을 계속합니다.
@@ -66,41 +55,29 @@ export const useMove = () => {
         y: point.y - prevPosition.y,
       };
 
-      if (selectedPathIds.length > 0) {
-        moveSelectedPaths(offset);
+      if (selectedPaths.size > 0) {
+        moveSelected("path", offset);
       }
-      if (selectedShapeIds.length > 0) {
-        moveSelectedShapes(offset);
+      if (selectedShapes.size > 0) {
+        moveSelected("shape", offset);
       }
-      if (selectedTextIds.length > 0) {
-        moveSelectedTexts(offset);
+      if (selectedTexts.size > 0) {
+        moveSelected("text", offset);
       }
 
       setPrevPosition(point);
     },
-    [
-      isMoving,
-      prevPosition,
-      selectedPathIds,
-      selectedShapeIds,
-      selectedTextIds,
-      moveSelectedPaths,
-      moveSelectedShapes,
-      moveSelectedTexts,
-    ]
+    [isMoving, prevPosition, selectedPaths, selectedShapes, selectedTexts, moveSelected],
   );
 
   // 이동을 종료합니다.
   const stopMoving = useCallback(() => {
-    const hasChanged =
-      initialPaths.length > 0 ||
-      initialShapes.length > 0 ||
-      initialTexts.length > 0
+    const hasChanged = initialPaths.length > 0 || initialShapes.length > 0 || initialTexts.length > 0;
 
     if (hasChanged) {
-      const currentSelectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
-      const currentSelectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
-      const currentSelectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
+      const currentSelectedPaths = paths.filter((p) => selectedPaths.has(p.id));
+      const currentSelectedShapes = shapes.filter((s) => selectedShapes.has(s.id));
+      const currentSelectedTexts = texts.filter((t) => selectedTexts.has(t.id));
 
       saveMoveAction(
         initialPaths,
@@ -108,7 +85,7 @@ export const useMove = () => {
         initialTexts,
         currentSelectedPaths,
         currentSelectedShapes,
-        currentSelectedTexts
+        currentSelectedTexts,
       );
     }
 
@@ -121,9 +98,9 @@ export const useMove = () => {
     paths,
     shapes,
     texts,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
+    selectedPaths,
+    selectedShapes,
+    selectedTexts,
     initialPaths,
     initialShapes,
     initialTexts,

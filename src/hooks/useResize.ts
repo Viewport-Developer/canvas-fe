@@ -1,23 +1,12 @@
 import { useState, useCallback } from "react";
 import type { Point, BoundingBox, ResizeHandleType, Path, Shape, Text } from "../types";
-import { getResizeHandleAtPoint, getHandlePosition } from "../utils/resize.utils";
-import { getCombinedBoundingBox } from "../utils/boundingBox.utils";
+import { getResizeHandleAtPoint, getHandlePosition, getCombinedBoundingBox, calculateBoundingBox } from "../utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 export const useResize = () => {
-  const {
-    paths,
-    shapes,
-    texts,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
-    resizeSelectedPaths,
-    resizeSelectedShapes,
-    resizeSelectedTexts,
-  } = useCanvasStore();
+  const { paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts, resizeSelected } = useCanvasStore();
 
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandleType | null>(null);
@@ -36,7 +25,7 @@ export const useResize = () => {
     handle: ResizeHandleType,
     initialBox: BoundingBox,
     initialClickPosition: Point,
-    isTextResize: boolean = false
+    isTextResize: boolean = false,
   ): BoundingBox => {
     // 초기 핸들 위치 계산
     const initialHandlePosition = getHandlePosition(handle, initialBox);
@@ -54,7 +43,7 @@ export const useResize = () => {
     const initialHeight = initialBox.bottomLeft.y - initialBox.topLeft.y;
     const padding = Math.max(
       initialWidth * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-      initialHeight * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
+      initialHeight * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
     );
 
     let point1: Point;
@@ -105,43 +94,43 @@ export const useResize = () => {
         default:
           return initialBox;
       }
-    } else {
-      switch (handle) {
-        case "topLeft":
-          point1 = { x: newHandlePosition.x + padding, y: newHandlePosition.y + padding };
-          point2 = initialBox.bottomRight;
-          break;
-        case "topRight":
-          point1 = { x: newHandlePosition.x - padding, y: newHandlePosition.y + padding };
-          point2 = initialBox.bottomLeft;
-          break;
-        case "bottomLeft":
-          point1 = { x: newHandlePosition.x + padding, y: newHandlePosition.y - padding };
-          point2 = initialBox.topRight;
-          break;
-        case "bottomRight":
-          point1 = { x: newHandlePosition.x - padding, y: newHandlePosition.y - padding };
-          point2 = initialBox.topLeft;
-          break;
-        case "top":
-          point1 = { x: initialBox.topLeft.x, y: newHandlePosition.y + padding };
-          point2 = { x: initialBox.bottomRight.x, y: initialBox.bottomRight.y };
-          break;
-        case "bottom":
-          point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
-          point2 = { x: initialBox.bottomRight.x, y: newHandlePosition.y - padding };
-          break;
-        case "left":
-          point1 = { x: newHandlePosition.x + padding, y: initialBox.topLeft.y };
-          point2 = { x: initialBox.bottomRight.x, y: initialBox.bottomRight.y };
-          break;
-        case "right":
-          point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
-          point2 = { x: newHandlePosition.x - padding, y: initialBox.bottomRight.y };
-          break;
-        default:
-          return initialBox;
-      }
+      return calculateBoundingBox([point1, point2]);
+    }
+    switch (handle) {
+      case "topLeft":
+        point1 = { x: newHandlePosition.x + padding, y: newHandlePosition.y + padding };
+        point2 = initialBox.bottomRight;
+        break;
+      case "topRight":
+        point1 = { x: newHandlePosition.x - padding, y: newHandlePosition.y + padding };
+        point2 = initialBox.bottomLeft;
+        break;
+      case "bottomLeft":
+        point1 = { x: newHandlePosition.x + padding, y: newHandlePosition.y - padding };
+        point2 = initialBox.topRight;
+        break;
+      case "bottomRight":
+        point1 = { x: newHandlePosition.x - padding, y: newHandlePosition.y - padding };
+        point2 = initialBox.topLeft;
+        break;
+      case "top":
+        point1 = { x: initialBox.topLeft.x, y: newHandlePosition.y + padding };
+        point2 = { x: initialBox.bottomRight.x, y: initialBox.bottomRight.y };
+        break;
+      case "bottom":
+        point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
+        point2 = { x: initialBox.bottomRight.x, y: newHandlePosition.y - padding };
+        break;
+      case "left":
+        point1 = { x: newHandlePosition.x + padding, y: initialBox.topLeft.y };
+        point2 = { x: initialBox.bottomRight.x, y: initialBox.bottomRight.y };
+        break;
+      case "right":
+        point1 = { x: initialBox.topLeft.x, y: initialBox.topLeft.y };
+        point2 = { x: newHandlePosition.x - padding, y: initialBox.bottomRight.y };
+        break;
+      default:
+        return initialBox;
     }
 
     let minX = Math.min(point1.x, point2.x);
@@ -178,19 +167,19 @@ export const useResize = () => {
   // 리사이즈를 시작합니다.
   const startResizing = useCallback(
     (point: Point): boolean => {
-      const selectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
-      const selectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
-      const selectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
-      const boundingBox = getCombinedBoundingBox(selectedPaths, selectedShapes, selectedTexts);
+      const selectedPathsArray = paths.filter((p) => selectedPaths.has(p.id));
+      const selectedShapesArray = shapes.filter((s) => selectedShapes.has(s.id));
+      const selectedTextsArray = texts.filter((t) => selectedTexts.has(t.id));
+      const boundingBox = getCombinedBoundingBox(selectedPathsArray, selectedShapesArray, selectedTextsArray);
       if (!boundingBox) return false;
 
       const handle = getResizeHandleAtPoint(point, boundingBox);
       if (!handle) return false;
 
       // 리사이즈 시작 시 초기 상태 저장 (히스토리용)
-      setInitialPaths(selectedPaths.map((path) => ({ ...path })));
-      setInitialShapes(selectedShapes.map((shape) => ({ ...shape })));
-      setInitialTexts(selectedTexts.map((text) => ({ ...text })));
+      setInitialPaths(selectedPathsArray.map((path) => ({ ...path })));
+      setInitialShapes(selectedShapesArray.map((shape) => ({ ...shape })));
+      setInitialTexts(selectedTextsArray.map((text) => ({ ...text })));
 
       setIsResizing(true);
       setResizeHandle(handle);
@@ -198,7 +187,7 @@ export const useResize = () => {
       setInitialClickPosition(point);
       return true;
     },
-    [paths, shapes, texts, selectedPathIds, selectedShapeIds, selectedTextIds]
+    [paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts],
   );
 
   // 리사이즈를 계속합니다.
@@ -209,44 +198,60 @@ export const useResize = () => {
       }
 
       // 텍스트만 선택된 경우인지 확인
-      const isTextOnly = selectedTextIds.length > 0 && selectedPathIds.length === 0 && selectedShapeIds.length === 0;
+      const isTextOnly = selectedTexts.size > 0 && selectedPaths.size === 0 && selectedShapes.size === 0;
       const newBoundingBox = calculateNewBoundingBox(
         point,
         resizeHandle,
         initialBoundingBox,
         initialClickPosition,
-        isTextOnly
+        isTextOnly,
       );
 
-      const totalSelectedCount = selectedPathIds.length + selectedShapeIds.length + selectedTextIds.length;
+      const totalSelectedCount = selectedPaths.size + selectedShapes.size + selectedTexts.size;
 
       // 텍스트 리사이징
-      if (selectedTextIds.length > 0) {
+      if (selectedTexts.size > 0) {
         // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
         if (totalSelectedCount > 1) {
-          resizeSelectedTexts(newBoundingBox, initialBoundingBox, initialTexts, resizeHandle);
-        } else {
-          // 단일 요소 리사이징
-          resizeSelectedTexts(newBoundingBox, undefined, undefined, resizeHandle);
+          resizeSelected({
+            type: "text",
+            newBoundingBox,
+            initialBoundingBox,
+            initialItems: initialTexts,
+            resizeHandle,
+          });
+          return;
         }
+        // 단일 요소 리사이징
+        resizeSelected({ type: "text", newBoundingBox, resizeHandle });
       }
 
       if (totalSelectedCount > 1) {
         // 여러 요소가 선택된 경우 결합된 바운딩 박스 기준으로 스케일링
-        if (selectedPathIds.length > 0) {
-          resizeSelectedPaths(newBoundingBox, initialBoundingBox, initialPaths);
+        if (selectedPaths.size > 0) {
+          resizeSelected({
+            type: "path",
+            newBoundingBox,
+            initialBoundingBox,
+            initialItems: initialPaths,
+          });
         }
-        if (selectedShapeIds.length > 0) {
-          resizeSelectedShapes(newBoundingBox, initialBoundingBox, initialShapes);
+        if (selectedShapes.size > 0) {
+          resizeSelected({
+            type: "shape",
+            newBoundingBox,
+            initialBoundingBox,
+            initialItems: initialShapes,
+          });
         }
-      } else {
-        // 단일 요소 리사이징
-        if (selectedPathIds.length > 0) {
-          resizeSelectedPaths(newBoundingBox);
-        }
-        if (selectedShapeIds.length > 0) {
-          resizeSelectedShapes(newBoundingBox);
-        }
+        return;
+      }
+      // 단일 요소 리사이징
+      if (selectedPaths.size > 0) {
+        resizeSelected({ type: "path", newBoundingBox });
+      }
+      if (selectedShapes.size > 0) {
+        resizeSelected({ type: "shape", newBoundingBox });
       }
     },
     [
@@ -254,16 +259,14 @@ export const useResize = () => {
       resizeHandle,
       initialBoundingBox,
       initialClickPosition,
-      selectedPathIds,
-      selectedShapeIds,
-      selectedTextIds,
+      selectedPaths,
+      selectedShapes,
+      selectedTexts,
       initialPaths,
       initialShapes,
       initialTexts,
-      resizeSelectedPaths,
-      resizeSelectedShapes,
-      resizeSelectedTexts,
-    ]
+      resizeSelected,
+    ],
   );
 
   // 리사이즈를 종료합니다.
@@ -276,17 +279,20 @@ export const useResize = () => {
       return;
     }
 
-    const currentSelectedPaths = paths.filter((p) => selectedPathIds.includes(p.id));
-    const currentSelectedShapes = shapes.filter((s) => selectedShapeIds.includes(s.id));
-    const currentSelectedTexts = texts.filter((t) => selectedTextIds.includes(t.id));
+    const currentSelectedPaths = paths.filter((p) => selectedPaths.has(p.id));
+    const currentSelectedShapes = shapes.filter((s) => selectedShapes.has(s.id));
+    const currentSelectedTexts = texts.filter((t) => selectedTexts.has(t.id));
     const currentBoundingBox = getCombinedBoundingBox(
       currentSelectedPaths,
       currentSelectedShapes,
-      currentSelectedTexts
+      currentSelectedTexts,
     );
 
     // 리사이징 히스토리 저장 (경로, 도형, 텍스트 모두 포함)
-    if (currentBoundingBox && (currentSelectedPaths.length > 0 || currentSelectedShapes.length > 0 || currentSelectedTexts.length > 0)) {
+    if (
+      currentBoundingBox &&
+      (currentSelectedPaths.length > 0 || currentSelectedShapes.length > 0 || currentSelectedTexts.length > 0)
+    ) {
       saveResizeAction(
         initialPaths,
         initialShapes,
@@ -295,7 +301,7 @@ export const useResize = () => {
         currentSelectedPaths,
         currentSelectedShapes,
         currentSelectedTexts,
-        currentBoundingBox
+        currentBoundingBox,
       );
     }
 
@@ -312,9 +318,9 @@ export const useResize = () => {
     paths,
     shapes,
     texts,
-    selectedPathIds,
-    selectedShapeIds,
-    selectedTextIds,
+    selectedPaths,
+    selectedShapes,
+    selectedTexts,
     initialPaths,
     initialShapes,
     initialTexts,

@@ -1,30 +1,20 @@
 import { useState, useCallback } from "react";
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import {  isPointOnLine } from "../utils/distance.utils";
-import { isPointInBoundingBox } from "../utils/boundingBox.utils";
-import { isPointOnShape } from "../utils/shapeLineDetection.utils";
+import {
+  isPointOnPath,
+  isPointInBoundingBox,
+  isPointOnShape,
+  removePathsFromYjs,
+  removeShapesFromYjs,
+  removeTextsFromYjs,
+} from "../utils";
 import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 
 export const useEraser = () => {
-  const {
-    paths,
-    removePaths,
-    pathsToErase,
-    clearPathsToErase,
-    addPathToErase,
-    shapes,
-    removeShapes,
-    shapesToErase,
-    clearShapesToErase,
-    addShapeToErase,
-    texts,
-    removeTexts,
-    textsToErase,
-    clearTextsToErase,
-    addTextToErase,
-  } = useCanvasStore();
+  const { paths, pathsToErase, clearToErase, addToErase, shapes, shapesToErase, texts, textsToErase } =
+    useCanvasStore();
   const { saveEraseAction } = useHistoryStore();
 
   const [isErasing, setIsErasing] = useState(false);
@@ -36,32 +26,32 @@ export const useEraser = () => {
 
       // 경로 지우기: 경로의 선에 가까운지 확인
       for (const path of paths) {
-        if (pathsToErase.includes(path.id)) continue;
+        if (pathsToErase.has(path.id)) continue;
 
-        if (isPointOnLine(point, path, eraserRadius)) {
-          addPathToErase(path.id);
+        if (isPointOnPath(point, path, eraserRadius)) {
+          addToErase("path", path.id);
         }
       }
 
       // 도형 지우기: 도형의 선에 가까운지 확인
       for (const shape of shapes) {
-        if (shapesToErase.includes(shape.id)) continue;
+        if (shapesToErase.has(shape.id)) continue;
 
         if (isPointOnShape(point, shape, eraserRadius)) {
-          addShapeToErase(shape.id);
+          addToErase("shape", shape.id);
         }
       }
 
       // 텍스트 지우기: 바운딩 박스 내부에 커서가 있는지 확인
       for (const text of texts) {
-        if (textsToErase.includes(text.id)) continue;
+        if (textsToErase.has(text.id)) continue;
 
         if (isPointInBoundingBox(point, text.boundingBox)) {
-          addTextToErase(text.id);
+          addToErase("text", text.id);
         }
       }
     },
-    [paths, pathsToErase, shapes, shapesToErase, texts, textsToErase, addPathToErase, addShapeToErase, addTextToErase]
+    [paths, pathsToErase, shapes, shapesToErase, texts, textsToErase, addToErase]
   );
 
   // 지우기를 시작합니다.
@@ -86,37 +76,25 @@ export const useEraser = () => {
   const stopErasing = useCallback(() => {
     setIsErasing(false);
 
-    const pathsToEraseData = paths.filter((path) => pathsToErase.includes(path.id));
-    const shapesToEraseData = shapes.filter((shape) => shapesToErase.includes(shape.id));
-    const textsToEraseData = texts.filter((text) => textsToErase.includes(text.id));
+    const pathsToEraseArray = [...pathsToErase];
+    const shapesToEraseArray = [...shapesToErase];
+    const textsToEraseArray = [...textsToErase];
 
-    removePaths(pathsToErase);
-    removeShapes(shapesToErase);
-    removeTexts(textsToErase);
+    const pathsToEraseData = paths.filter((path) => pathsToErase.has(path.id));
+    const shapesToEraseData = shapes.filter((shape) => shapesToErase.has(shape.id));
+    const textsToEraseData = texts.filter((text) => textsToErase.has(text.id));
+
+    removePathsFromYjs(pathsToEraseArray);
+    removeShapesFromYjs(shapesToEraseArray);
+    removeTextsFromYjs(textsToEraseArray);
 
     // 히스토리 저장
-    if (pathsToErase.length > 0 || shapesToErase.length > 0 || textsToErase.length > 0) {
+    if (pathsToErase.size > 0 || shapesToErase.size > 0 || textsToErase.size > 0) {
       saveEraseAction(pathsToEraseData, shapesToEraseData, textsToEraseData);
     }
 
-    clearPathsToErase();
-    clearShapesToErase();
-    clearTextsToErase();
-  }, [
-    pathsToErase,
-    shapesToErase,
-    textsToErase,
-    paths,
-    shapes,
-    texts,
-    removePaths,
-    removeShapes,
-    removeTexts,
-    saveEraseAction,
-    clearPathsToErase,
-    clearShapesToErase,
-    clearTextsToErase,
-  ]);
+    clearToErase();
+  }, [pathsToErase, shapesToErase, textsToErase, paths, shapes, texts, saveEraseAction, clearToErase]);
 
   return {
     startErasing,
