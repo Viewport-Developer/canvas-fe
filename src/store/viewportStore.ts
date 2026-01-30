@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import type { Point } from "../types";
 
-interface ViewportStore {
+export type ViewportStore = {
   zoom: number;
   pan: Point;
 
   setZoom: (zoom: number) => void;
   setPan: (pan: Point) => void;
-}
+};
 
 export const useViewportStore = create<ViewportStore>((set) => ({
   zoom: 1,

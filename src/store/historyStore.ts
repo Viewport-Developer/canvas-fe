@@ -1,38 +1,39 @@
 import { create } from "zustand";
 import type {
-  HistoryAction,
+  BoundingBox,
   DrawAction,
   EraseAction,
-  PanAction,
-  ShapeAction,
-  ResizeAction,
+  HistoryAction,
   MoveAction,
-  TextAction,
-  Point,
   Path,
+  Point,
+  ResizeAction,
   Shape,
+  ShapeAction,
   Text,
-  BoundingBox,
+  TextAction,
+  PanAction,
 } from "../types";
-import { usePathStore } from "./pathStore";
-import { useShapeStore } from "./shapeStore";
-import { useTextStore } from "./textStore";
 import { useViewportStore } from "./viewportStore";
+import {
+  pushPathToYjs,
+  removePathsFromYjs,
+  pushShapeToYjs,
+  removeShapesFromYjs,
+  pushTextToYjs,
+  removeTextsFromYjs,
+} from "../utils";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
-interface HistoryStore {
+export type HistoryStore = {
   undoStack: HistoryAction[];
   redoStack: HistoryAction[];
 
-  // 그리기 액션 저장
   saveDrawAction: (path: DrawAction["path"]) => void;
-  // 지우기 액션 저장
-  saveEraseAction: (paths: EraseAction["paths"], shapes: EraseAction["shapes"], texts: EraseAction["texts"]) => void;
-  // 팬 액션 저장
-  savePanAction: (previousPan: Point, newPan: Point) => void;
-  // 도형 액션 저장
   saveShapeAction: (shape: ShapeAction["shape"]) => void;
-  // 리사이즈 액션 저장
+  saveTextAction: (previousText: Text | null, newText: Text) => void;
+  saveEraseAction: (paths: EraseAction["paths"], shapes: EraseAction["shapes"], texts: EraseAction["texts"]) => void;
+  savePanAction: (previousPan: Point, newPan: Point) => void;
   saveResizeAction: (
     previousPaths: Path[],
     previousShapes: Shape[],
@@ -41,26 +42,21 @@ interface HistoryStore {
     newPaths: Path[],
     newShapes: Shape[],
     newTexts: Text[],
-    newBoundingBox: BoundingBox
+    newBoundingBox: BoundingBox,
   ) => void;
-  // 이동 액션 저장
   saveMoveAction: (
     previousPaths: Path[],
     previousShapes: Shape[],
     previousTexts: Text[],
     newPaths: Path[],
     newShapes: Shape[],
-    newTexts: Text[]
+    newTexts: Text[],
   ) => void;
-  // 텍스트 액션 저장
-  saveTextAction: (previousTexts: Text[], newTexts: Text[]) => void;
-
   undo: () => void;
   redo: () => void;
-
   canUndo: () => boolean;
   canRedo: () => boolean;
-}
+};
 
 // 액션을 스택에 추가하는 함수
 const addActionToStack = (action: HistoryAction, currentStack: HistoryAction[]): HistoryAction[] => {
@@ -77,7 +73,32 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
   saveDrawAction: (path) => {
     const action: DrawAction = {
       type: "draw",
-      path,
+      path: { ...path },
+    };
+
+    set((prevState) => ({
+      undoStack: addActionToStack(action, prevState.undoStack),
+      redoStack: [],
+    }));
+  },
+
+  saveShapeAction: (shape) => {
+    const action: ShapeAction = {
+      type: "shape",
+      shape: { ...shape },
+    };
+
+    set((prevState) => ({
+      undoStack: addActionToStack(action, prevState.undoStack),
+      redoStack: [],
+    }));
+  },
+
+  saveTextAction: (previousText, newText) => {
+    const action: TextAction = {
+      type: "text",
+      previousText: previousText ? { ...previousText } : null,
+      newText: { ...newText },
     };
 
     set((prevState) => ({
@@ -113,19 +134,16 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
-  saveShapeAction: (shape) => {
-    const action: ShapeAction = {
-      type: "shape",
-      shape: { ...shape },
-    };
-
-    set((prevState) => ({
-      undoStack: addActionToStack(action, prevState.undoStack),
-      redoStack: [],
-    }));
-  },
-
-  saveResizeAction: (previousPaths, previousShapes, previousTexts, previousBoundingBox, newPaths, newShapes, newTexts, newBoundingBox) => {
+  saveResizeAction: (
+    previousPaths,
+    previousShapes,
+    previousTexts,
+    previousBoundingBox,
+    newPaths,
+    newShapes,
+    newTexts,
+    newBoundingBox,
+  ) => {
     const action: ResizeAction = {
       type: "resize",
       previousPaths: previousPaths.map((path) => ({ ...path })),
@@ -161,126 +179,67 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     }));
   },
 
-  saveTextAction: (previousTexts, newTexts) => {
-    const action: TextAction = {
-      type: "text",
-      previousTexts: previousTexts.map((text) => ({ ...text })),
-      newTexts: newTexts.map((text) => ({ ...text })),
-    };
-
-    set((prevState) => ({
-      undoStack: addActionToStack(action, prevState.undoStack),
-      redoStack: [],
-    }));
-  },
-
   undo: () => {
     const state = get();
     if (state.undoStack.length === 0) return;
 
     const lastAction = state.undoStack[state.undoStack.length - 1];
-    const pathStore = usePathStore.getState();
-    const shapeStore = useShapeStore.getState();
-    const textStore = useTextStore.getState();
     const viewportStore = useViewportStore.getState();
 
     switch (lastAction.type) {
       case "draw":
-        pathStore.removePaths([lastAction.path.id]);
+        removePathsFromYjs([lastAction.path.id]);
         break;
+      case "shape":
+        removeShapesFromYjs([lastAction.shape.id]);
+        break;
+      case "text": {
+        if (lastAction.previousText) pushTextToYjs(lastAction.previousText);
+        if (lastAction.newText) removeTextsFromYjs([lastAction.newText.id]);
+        break;
+      }
       case "erase":
-        lastAction.paths.forEach((path) => {
-          pathStore.addPath(path);
-        });
-        lastAction.shapes.forEach((shape) => {
-          shapeStore.addShape(shape);
-        });
-        lastAction.texts.forEach((text) => {
-          textStore.addText(text);
-        });
+        for (const path of lastAction.paths) {
+          pushPathToYjs(path);
+        }
+        for (const shape of lastAction.shapes) {
+          pushShapeToYjs(shape);
+        }
+        for (const text of lastAction.texts) {
+          pushTextToYjs(text);
+        }
         break;
       case "pan":
         viewportStore.setPan(lastAction.previousPan);
         break;
-      case "shape":
-        shapeStore.removeShapes([lastAction.shape.id]);
-        break;
       case "resize": {
-        const currentPaths = pathStore.paths;
-        const currentShapes = shapeStore.shapes;
-        const currentTexts = textStore.texts;
+        const previousPathIds = lastAction.previousPaths.map((p) => p.id);
+        const previousShapeIds = lastAction.previousShapes.map((s) => s.id);
+        const previousTextIds = lastAction.previousTexts.map((t) => t.id);
 
-        // 이전 상태로 교체
-        const updatedPaths = currentPaths.map((path) => {
-          const previousPath = lastAction.previousPaths.find((p) => p.id === path.id);
-          return previousPath || path;
-        });
-
-        const updatedShapes = currentShapes.map((shape) => {
-          const previousShape = lastAction.previousShapes.find((s) => s.id === shape.id);
-          return previousShape || shape;
-        });
-
-        const updatedTexts = currentTexts.map((text) => {
-          const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
-          return previousText || text;
-        });
-
-        pathStore.setPaths(updatedPaths);
-        shapeStore.setShapes(updatedShapes);
-        textStore.setTexts(updatedTexts);
+        removePathsFromYjs(previousPathIds);
+        lastAction.previousPaths.forEach((path) => pushPathToYjs(path));
+        removeShapesFromYjs(previousShapeIds);
+        lastAction.previousShapes.forEach((shape) => pushShapeToYjs(shape));
+        removeTextsFromYjs(previousTextIds);
+        lastAction.previousTexts.forEach((text) => pushTextToYjs(text));
         break;
       }
       case "move": {
-        const currentPaths = pathStore.paths;
-        const currentShapes = shapeStore.shapes;
-        const currentTexts = textStore.texts;
+        const previousPathIds = lastAction.previousPaths.map((p) => p.id);
+        const previousShapeIds = lastAction.previousShapes.map((s) => s.id);
+        const previousTextIds = lastAction.previousTexts.map((t) => t.id);
 
-        // 이전 상태로 교체
-        const updatedPaths = currentPaths.map((path) => {
-          const previousPath = lastAction.previousPaths.find((p) => p.id === path.id);
-          return previousPath || path;
-        });
-
-        const updatedShapes = currentShapes.map((shape) => {
-          const previousShape = lastAction.previousShapes.find((s) => s.id === shape.id);
-          return previousShape || shape;
-        });
-
-        const updatedTexts = currentTexts.map((text) => {
-          const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
-          return previousText || text;
-        });
-
-        pathStore.setPaths(updatedPaths);
-        shapeStore.setShapes(updatedShapes);
-        textStore.setTexts(updatedTexts);
+        removePathsFromYjs(previousPathIds);
+        lastAction.previousPaths.forEach((path) => pushPathToYjs(path));
+        removeShapesFromYjs(previousShapeIds);
+        lastAction.previousShapes.forEach((shape) => pushShapeToYjs(shape));
+        removeTextsFromYjs(previousTextIds);
+        lastAction.previousTexts.forEach((text) => pushTextToYjs(text));
         break;
       }
-      case "text": {
-        const currentTexts = textStore.texts;
-
-        // 새로 생성된 텍스트 제거
-        const newTextIds = lastAction.newTexts.map((text) => text.id);
-        const previousTextIds = lastAction.previousTexts.map((text) => text.id);
-        const textsToKeep = currentTexts.filter(
-          (text) => !newTextIds.includes(text.id) || previousTextIds.includes(text.id)
-        );
-
-        // 이전 텍스트로 교체
-        const updatedTexts = textsToKeep.map((text) => {
-          const previousText = lastAction.previousTexts.find((t) => t.id === text.id);
-          return previousText || text;
-        });
-
-        // 삭제된 텍스트 복원
-        const deletedTexts = lastAction.previousTexts.filter(
-          (prevText) => !currentTexts.some((text) => text.id === prevText.id)
-        );
-
-        textStore.setTexts([...updatedTexts, ...deletedTexts]);
+      default:
         break;
-      }
     }
 
     set({
@@ -294,110 +253,60 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     if (state.redoStack.length === 0) return;
 
     const nextAction = state.redoStack[state.redoStack.length - 1];
-    const pathStore = usePathStore.getState();
-    const shapeStore = useShapeStore.getState();
-    const textStore = useTextStore.getState();
     const viewportStore = useViewportStore.getState();
 
     switch (nextAction.type) {
       case "draw":
-        pathStore.addPath(nextAction.path);
+        pushPathToYjs(nextAction.path);
         break;
+      case "shape":
+        pushShapeToYjs(nextAction.shape);
+        break;
+      case "text": {
+        if (nextAction.previousText) removeTextsFromYjs([nextAction.previousText.id]);
+        if (nextAction.newText) pushTextToYjs(nextAction.newText);
+        break;
+      }
       case "erase": {
         const pathIds = nextAction.paths.map((path) => path.id);
         const shapeIds = nextAction.shapes.map((shape) => shape.id);
         const textIds = nextAction.texts.map((text) => text.id);
-        pathStore.removePaths(pathIds);
-        shapeStore.removeShapes(shapeIds);
-        textStore.removeTexts(textIds);
+        removePathsFromYjs(pathIds);
+        removeShapesFromYjs(shapeIds);
+        removeTextsFromYjs(textIds);
         break;
       }
       case "pan":
         viewportStore.setPan(nextAction.newPan);
         break;
-      case "shape":
-        shapeStore.addShape(nextAction.shape);
-        break;
       case "resize": {
-        const currentPaths = pathStore.paths;
-        const currentShapes = shapeStore.shapes;
-        const currentTexts = textStore.texts;
+        const newPathIds = nextAction.newPaths.map((p) => p.id);
+        const newShapeIds = nextAction.newShapes.map((s) => s.id);
+        const newTextIds = nextAction.newTexts.map((t) => t.id);
 
-        // 새 상태로 교체
-        const updatedPaths = currentPaths.map((path) => {
-          const newPath = nextAction.newPaths.find((p) => p.id === path.id);
-          return newPath || path;
-        });
-
-        // 새 상태로 교체
-        const updatedShapes = currentShapes.map((shape) => {
-          const newShape = nextAction.newShapes.find((s) => s.id === shape.id);
-          return newShape || shape;
-        });
-
-        // 새 상태로 교체
-        const updatedTexts = currentTexts.map((text) => {
-          const newText = nextAction.newTexts.find((t) => t.id === text.id);
-          return newText || text;
-        });
-
-        pathStore.setPaths(updatedPaths);
-        shapeStore.setShapes(updatedShapes);
-        textStore.setTexts(updatedTexts);
+        removePathsFromYjs(newPathIds);
+        nextAction.newPaths.forEach((path) => pushPathToYjs(path));
+        removeShapesFromYjs(newShapeIds);
+        nextAction.newShapes.forEach((shape) => pushShapeToYjs(shape));
+        removeTextsFromYjs(newTextIds);
+        nextAction.newTexts.forEach((text) => pushTextToYjs(text));
         break;
       }
       case "move": {
-        const currentPaths = pathStore.paths;
-        const currentShapes = shapeStore.shapes;
-        const currentTexts = textStore.texts;
+        const newPathIds = nextAction.newPaths.map((p) => p.id);
+        const newShapeIds = nextAction.newShapes.map((s) => s.id);
+        const newTextIds = nextAction.newTexts.map((t) => t.id);
 
-       // 새 상태로 교체
-        const updatedPaths = currentPaths.map((path) => {
-          const newPath = nextAction.newPaths.find((p) => p.id === path.id);
-          return newPath || path;
-        });
-
-        // 새 상태로 교체
-        const updatedShapes = currentShapes.map((shape) => {
-          const newShape = nextAction.newShapes.find((s) => s.id === shape.id);
-          return newShape || shape;
-        });
-
-        // 새 상태로 교체
-        const updatedTexts = currentTexts.map((text) => {
-          const newText = nextAction.newTexts.find((t) => t.id === text.id);
-          return newText || text;
-        });
-
-        pathStore.setPaths(updatedPaths);
-        shapeStore.setShapes(updatedShapes);
-        textStore.setTexts(updatedTexts);
+        removePathsFromYjs(newPathIds);
+        nextAction.newPaths.forEach((path) => pushPathToYjs(path));
+        removeShapesFromYjs(newShapeIds);
+        nextAction.newShapes.forEach((shape) => pushShapeToYjs(shape));
+        removeTextsFromYjs(newTextIds);
+        nextAction.newTexts.forEach((text) => pushTextToYjs(text));
         break;
       }
-      case "text": {
-        const currentTexts = textStore.texts;
-
-        // 새 텍스트로 교체
-        const updatedTexts = currentTexts.map((text) => {
-          const newText = nextAction.newTexts.find((t) => t.id === text.id);
-          return newText || text;
-        });
-
-        // 새로 추가된 텍스트 추가
-        const addedTexts = nextAction.newTexts.filter(
-          (newText) => !currentTexts.some((text) => text.id === newText.id)
-        );
-
-        // 삭제된 텍스트 제거
-        const finalTexts = [...updatedTexts, ...addedTexts].filter(
-          (text) =>
-            nextAction.newTexts.some((newText) => newText.id === text.id) ||
-            !nextAction.previousTexts.some((prevText) => prevText.id === text.id)
-        );
-
-        textStore.setTexts(finalTexts);
+      default:
         break;
-      }
     }
 
     set({

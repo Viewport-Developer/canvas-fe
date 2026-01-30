@@ -1,47 +1,40 @@
 import { create } from "zustand";
 
-interface EraserStore {
-  pathsToErase: string[];
-  shapesToErase: string[];
-  textsToErase: string[];
+export type EraserStore = {
+  pathsToErase: Set<string>;
+  shapesToErase: Set<string>;
+  textsToErase: Set<string>;
 
-  clearPathsToErase: () => void;
-  addPathToErase: (id: string) => void;
-  clearShapesToErase: () => void;
-  addShapeToErase: (id: string) => void;
-  clearTextsToErase: () => void;
-  addTextToErase: (id: string) => void;
-}
+  clearToErase: () => void;
+  addToErase: (type: "path" | "shape" | "text", id: string) => void;
+};
 
 export const useEraserStore = create<EraserStore>((set) => ({
-  pathsToErase: [],
-  shapesToErase: [],
-  textsToErase: [],
+  pathsToErase: new Set<string>(),
+  shapesToErase: new Set<string>(),
+  textsToErase: new Set<string>(),
 
-  clearPathsToErase: () => set({ pathsToErase: [] }),
-
-  addPathToErase: (id) =>
-    set((state) => {
-      if (state.pathsToErase.includes(id)) return state;
-
-      return { pathsToErase: [...state.pathsToErase, id] };
+  clearToErase: () =>
+    set({
+      pathsToErase: new Set<string>(),
+      shapesToErase: new Set<string>(),
+      textsToErase: new Set<string>(),
     }),
 
-  clearShapesToErase: () => set({ shapesToErase: [] }),
-
-  addShapeToErase: (id) =>
+  addToErase: (type, id) =>
     set((state) => {
-      if (state.shapesToErase.includes(id)) return state;
-
-      return { shapesToErase: [...state.shapesToErase, id] };
-    }),
-
-  clearTextsToErase: () => set({ textsToErase: [] }),
-
-  addTextToErase: (id) =>
-    set((state) => {
-      if (state.textsToErase.includes(id)) return state;
-      
-      return { textsToErase: [...state.textsToErase, id] };
+      if (type === "path") {
+        if (state.pathsToErase.has(id)) return state;
+        return { pathsToErase: new Set([...state.pathsToErase, id]) };
+      }
+      if (type === "shape") {
+        if (state.shapesToErase.has(id)) return state;
+        return { shapesToErase: new Set([...state.shapesToErase, id]) };
+      }
+      if (type === "text") {
+        if (state.textsToErase.has(id)) return state;
+        return { textsToErase: new Set([...state.textsToErase, id]) };
+      }
+      return state;
     }),
 }));
