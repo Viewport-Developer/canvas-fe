@@ -309,13 +309,12 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   }, [updateCursorPosition]);
 
   return (
-    <CanvasContainer>
+    <CanvasContainer onMouseLeave={handleMouseLeave}>
       <CanvasLayer
         ref={backgroundCanvasRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
         $tool={tool}
         $isPanning={isPanning}
         $isMoving={isMoving}
@@ -325,7 +324,6 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
         $tool={tool}
         $isPanning={isPanning}
         $isMoving={isMoving}
