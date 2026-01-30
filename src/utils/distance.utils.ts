@@ -14,7 +14,7 @@ export const isInEraserRange = (point: Point, eraserPoint: Point, radius: number
 };
 
 // 점이 선에 가까운지 확인합니다.
-export const isPointOnLine = (point: Point, path: Path, eraserRadius: number) => {
+export const isPointOnPath = (point: Point, path: Path, eraserRadius: number) => {
   if (!isPointInBoundingBox(point, path.boundingBox)) {
     return false;
   }
@@ -25,4 +25,4 @@ export const isPointOnLine = (point: Point, path: Path, eraserRadius: number) =>
   const hasCollision = path.points.some((pathPoint) => isInEraserRange(pathPoint, point, totalRadius));
 
   return hasCollision;
-}
+};

@@ -2,7 +2,7 @@ import type { Path, Shape, Text, BoundingBox, ResizeHandleType } from "../types"
 import { calculateBoundingBox, calculateBoundingBoxSize, calculateTextBoundingBox } from "./boundingBox.utils";
 
 // 곡선을 새로운 바운딩 박스에 맞게 스케일링합니다.
-export const scalePathToBoundingBox = (path: Path, oldBox: BoundingBox, newBox: BoundingBox): Path => {
+export const scalePathByBoundingBox = (path: Path, oldBox: BoundingBox, newBox: BoundingBox): Path => {
   const oldSize = calculateBoundingBoxSize(oldBox);
   const newSize = calculateBoundingBoxSize(newBox);
 
@@ -28,7 +28,7 @@ export const scalePathToBoundingBox = (path: Path, oldBox: BoundingBox, newBox: 
 };
 
 // 도형을 새로운 바운딩 박스에 맞게 스케일링합니다.
-export const scaleShapeToBoundingBox = (shape: Shape, oldBox: BoundingBox, newBox: BoundingBox): Shape => {
+export const scaleShapeByBoundingBox = (shape: Shape, oldBox: BoundingBox, newBox: BoundingBox): Shape => {
   const oldSize = calculateBoundingBoxSize(oldBox);
   const newSize = calculateBoundingBoxSize(newBox);
 
@@ -69,12 +69,63 @@ export const scaleShapeToBoundingBox = (shape: Shape, oldBox: BoundingBox, newBo
   };
 };
 
+// 텍스트를 새로운 바운딩 박스 너비에 맞게 스케일링합니다.
+export const scaleTextToBoundingBox = (
+  text: Text,
+  oldBox: BoundingBox,
+  newBox: BoundingBox,
+  resizeHandle?: ResizeHandleType,
+): Text => {
+  const oldWidth = oldBox.topRight.x - oldBox.topLeft.x;
+  const newWidth = newBox.topRight.x - newBox.topLeft.x;
+  const oldHeight = oldBox.bottomLeft.y - oldBox.topLeft.y;
+  const newHeight = newBox.bottomLeft.y - newBox.topLeft.y;
+
+  if (oldWidth === 0) return text;
+
+  // 너비 비율 계산
+  const widthRatio = newWidth / oldWidth;
+
+  // 높이 비율 계산
+  const heightRatio = oldHeight !== 0 ? newHeight / oldHeight : 1;
+
+  let scaleRatio: number;
+  if (resizeHandle === "top" || resizeHandle === "bottom") {
+    // 위아래 핸들: 높이 비율 사용
+    scaleRatio = heightRatio;
+  } else {
+    // 좌우/모서리 핸들: 너비 비율 사용
+    scaleRatio = widthRatio;
+  }
+
+  const newFontSize = text.fontSize * scaleRatio;
+
+  // 최소 폰트 사이즈 보장 (1px 이상)
+  const finalFontSize = Math.max(1, newFontSize);
+
+  // 위치는 topLeft 기준으로 유지
+  const newPosition = {
+    x: newBox.topLeft.x,
+    y: newBox.topLeft.y,
+  };
+
+  // 새로운 바운딩 박스 계산
+  const newBoundingBox = calculateTextBoundingBox(text.content, newPosition, finalFontSize);
+
+  return {
+    ...text,
+    position: newPosition,
+    fontSize: finalFontSize,
+    boundingBox: newBoundingBox,
+  };
+};
+
 // 결합된 바운딩 박스의 비율에 맞게 경로를 스케일링합니다.
 export const scalePathByCombinedBoundingBox = (
   path: Path,
   initialPathBox: BoundingBox,
   initialCombinedBox: BoundingBox,
-  newCombinedBox: BoundingBox
+  newCombinedBox: BoundingBox,
 ): Path => {
   const initialCombinedSize = calculateBoundingBoxSize(initialCombinedBox);
   const newCombinedSize = calculateBoundingBoxSize(newCombinedBox);
@@ -134,7 +185,7 @@ export const scaleShapeByCombinedBoundingBox = (
   shape: Shape,
   initialShapeBox: BoundingBox,
   initialCombinedBox: BoundingBox,
-  newCombinedBox: BoundingBox
+  newCombinedBox: BoundingBox,
 ): Shape => {
   const initialCombinedSize = calculateBoundingBoxSize(initialCombinedBox);
   const newCombinedSize = calculateBoundingBoxSize(newCombinedBox);
@@ -205,64 +256,13 @@ export const scaleShapeByCombinedBoundingBox = (
   };
 };
 
-// 텍스트를 새로운 바운딩 박스 너비에 맞게 스케일링합니다.
-export const scaleTextToBoundingBox = (
-  text: Text,
-  oldBox: BoundingBox,
-  newBox: BoundingBox,
-  resizeHandle?: ResizeHandleType
-): Text => {
-  const oldWidth = oldBox.topRight.x - oldBox.topLeft.x;
-  const newWidth = newBox.topRight.x - newBox.topLeft.x;
-  const oldHeight = oldBox.bottomLeft.y - oldBox.topLeft.y;
-  const newHeight = newBox.bottomLeft.y - newBox.topLeft.y;
-
-  if (oldWidth === 0) return text;
-
-  // 너비 비율 계산
-  const widthRatio = newWidth / oldWidth;
-
-  // 높이 비율 계산
-  const heightRatio = oldHeight !== 0 ? newHeight / oldHeight : 1;
-
-  let scaleRatio: number;
-  if (resizeHandle === "top" || resizeHandle === "bottom") {
-    // 위아래 핸들: 높이 비율 사용
-    scaleRatio = heightRatio;
-  } else {
-    // 좌우/모서리 핸들: 너비 비율 사용
-    scaleRatio = widthRatio;
-  }
-
-  const newFontSize = text.fontSize * scaleRatio;
-
-  // 최소 폰트 사이즈 보장 (1px 이상)
-  const finalFontSize = Math.max(1, newFontSize);
-
-  // 위치는 topLeft 기준으로 유지
-  const newPosition = {
-    x: newBox.topLeft.x,
-    y: newBox.topLeft.y,
-  };
-
-  // 새로운 바운딩 박스 계산
-  const newBoundingBox = calculateTextBoundingBox(text.content, newPosition, finalFontSize);
-
-  return {
-    ...text,
-    position: newPosition,
-    fontSize: finalFontSize,
-    boundingBox: newBoundingBox,
-  };
-};
-
 // 결합된 바운딩 박스의 비율에 맞게 텍스트를 스케일링합니다.
 export const scaleTextByCombinedBoundingBox = (
   text: Text,
   initialTextBox: BoundingBox,
   initialCombinedBox: BoundingBox,
   newCombinedBox: BoundingBox,
-  resizeHandle?: ResizeHandleType
+  resizeHandle?: ResizeHandleType,
 ): Text => {
   const initialCombinedWidth = initialCombinedBox.topRight.x - initialCombinedBox.topLeft.x;
   const newCombinedWidth = newCombinedBox.topRight.x - newCombinedBox.topLeft.x;

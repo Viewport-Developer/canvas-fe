@@ -3,7 +3,7 @@ import { isPointInBoundingBox } from "./boundingBox.utils";
 import { calculateDistance } from "./distance.utils";
 
 // 점이 선분에 가까운지 확인합니다 (선의 두께 고려).
-const isPointNearLineSegment = (point: Point, p1: Point, p2: Point, threshold: number): boolean => {
+const isPointNearLine = (point: Point, p1: Point, p2: Point, threshold: number): boolean => {
   const dx = p2.x - p1.x;
   const dy = p2.y - p1.y;
   const lengthSquared = dx * dx + dy * dy;
@@ -35,10 +35,10 @@ const isPointOnRectangle = (point: Point, startPoint: Point, endPoint: Point, th
   const bottomRight = { x: maxX, y: maxY };
 
   return (
-    isPointNearLineSegment(point, topLeft, topRight, threshold) ||
-    isPointNearLineSegment(point, bottomLeft, bottomRight, threshold) ||
-    isPointNearLineSegment(point, topLeft, bottomLeft, threshold) ||
-    isPointNearLineSegment(point, topRight, bottomRight, threshold)
+    isPointNearLine(point, topLeft, topRight, threshold) ||
+    isPointNearLine(point, bottomLeft, bottomRight, threshold) ||
+    isPointNearLine(point, topLeft, bottomLeft, threshold) ||
+    isPointNearLine(point, topRight, bottomRight, threshold)
   );
 };
 
@@ -48,8 +48,8 @@ const isPointOnCircle = (point: Point, startPoint: Point, endPoint: Point, thres
   const height = endPoint.y - startPoint.y;
   const centerX = startPoint.x + width / 2;
   const centerY = startPoint.y + height / 2;
-  const radiusX = Math.abs(width) / 2;
-  const radiusY = Math.abs(height) / 2;
+  const radiusX = width / 2;
+  const radiusY = height / 2;
 
   // 타원 방정식: ((x - cx) / rx)^2 + ((y - cy) / ry)^2 = 1
   const dx = (point.x - centerX) / radiusX;
@@ -73,10 +73,10 @@ const isPointOnDiamond = (point: Point, startPoint: Point, endPoint: Point, thre
   const left = { x: startPoint.x, y: centerY };
 
   return (
-    isPointNearLineSegment(point, top, right, threshold) ||
-    isPointNearLineSegment(point, right, bottom, threshold) ||
-    isPointNearLineSegment(point, bottom, left, threshold) ||
-    isPointNearLineSegment(point, left, top, threshold)
+    isPointNearLine(point, top, right, threshold) ||
+    isPointNearLine(point, right, bottom, threshold) ||
+    isPointNearLine(point, bottom, left, threshold) ||
+    isPointNearLine(point, left, top, threshold)
   );
 };
 

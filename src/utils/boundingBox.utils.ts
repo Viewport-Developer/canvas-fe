@@ -3,10 +3,6 @@ import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 // 포인트 배열로부터 바운딩 박스를 계산합니다.
 export const calculateBoundingBox = (points: Point[]): BoundingBox => {
-  if (points.length === 0) {
-    throw new Error("포인트 배열이 비어있습니다.");
-  }
-
   let minX = points[0].x;
   let maxX = points[0].x;
   let minY = points[0].y;
@@ -60,12 +56,12 @@ export const getCombinedBoundingBox = (paths: Path[], shapes: Shape[], texts: Te
   let minY = allBoxes[0].topLeft.y;
   let maxY = allBoxes[0].bottomLeft.y;
 
-  allBoxes.forEach((box) => {
+  for (const box of allBoxes) {
     minX = Math.min(minX, box.topLeft.x);
     maxX = Math.max(maxX, box.topRight.x);
     minY = Math.min(minY, box.topLeft.y);
     maxY = Math.max(maxY, box.bottomLeft.y);
-  });
+  }
 
   return {
     topLeft: { x: minX, y: minY },
@@ -120,10 +116,10 @@ export const calculateTextBoundingBox = (content: string, position: Point, fontS
   const lines = content.split("\n");
   const lineHeight = fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET;
 
-  lines.forEach((line) => {
+  for (const line of lines) {
     const metrics = tempCtx.measureText(line);
     maxWidth = Math.max(maxWidth, metrics.width);
-  });
+  }
 
   const totalHeight = lines.length * lineHeight;
 

@@ -22,11 +22,11 @@ export const drawPath = (ctx: CanvasRenderingContext2D, path: Path, isInPathsToE
 };
 
 // 모든 경로를 그립니다.
-export const drawAllPaths = (ctx: CanvasRenderingContext2D, paths: Path[], pathsToErase: string[] = []) => {
-  paths.forEach((path) => {
-    const willBeErased = pathsToErase.includes(path.id);
+export const drawAllPaths = (ctx: CanvasRenderingContext2D, paths: Path[], pathsToErase: Set<string> = new Set()) => {
+  for (const path of paths) {
+    const willBeErased = pathsToErase.has(path.id);
     drawPath(ctx, path, willBeErased);
-  });
+  }
 };
 
 // 단일 도형을 그립니다.
@@ -68,17 +68,23 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInPaths
       ctx.closePath();
       break;
     }
+    default:
+      break;
   }
 
   ctx.stroke();
 };
 
 // 모든 도형을 그립니다.
-export const drawAllShapes = (ctx: CanvasRenderingContext2D, shapes: Shape[], shapesToErase: string[] = []) => {
-  shapes.forEach((shape) => {
-    const willBeErased = shapesToErase.includes(shape.id);
+export const drawAllShapes = (
+  ctx: CanvasRenderingContext2D,
+  shapes: Shape[],
+  shapesToErase: Set<string> = new Set(),
+) => {
+  for (const shape of shapes) {
+    const willBeErased = shapesToErase.has(shape.id);
     drawShape(ctx, shape, willBeErased);
-  });
+  }
 };
 
 // 단일 텍스트를 그립니다.
@@ -94,9 +100,10 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text, isInTextsToE
   const lines = text.content.split("\n");
   const lineHeight = text.fontSize + CANVAS_CONFIG.DEFAULT_TEXT_LINE_HEIGHT_OFFSET;
 
-  lines.forEach((line, index) => {
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
     ctx.fillText(line, text.position.x, text.position.y + index * lineHeight);
-  });
+  }
 
   ctx.restore();
 };
@@ -105,14 +112,14 @@ export const drawText = (ctx: CanvasRenderingContext2D, text: Text, isInTextsToE
 export const drawAllTexts = (
   ctx: CanvasRenderingContext2D,
   texts: Text[],
-  textsToErase: string[] = [],
+  textsToErase: Set<string> = new Set(),
   editingTextId: string | null,
 ) => {
-  texts.forEach((text) => {
+  for (const text of texts) {
     // 편집 중인 텍스트는 렌더링하지 않음
-    if (editingTextId && text.id === editingTextId) return;
-    
-    const willBeErased = textsToErase.includes(text.id);
+    if (text.id === editingTextId) continue;
+
+    const willBeErased = textsToErase.has(text.id);
     drawText(ctx, text, willBeErased);
-  });
+  }
 };

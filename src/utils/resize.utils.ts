@@ -10,7 +10,7 @@ export const getHandlePosition = (handle: ResizeHandleType, boundingBox: Boundin
   const height = bottomLeft.y - topLeft.y;
   const padding = Math.max(
     width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
+    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
   );
 
   switch (handle) {
@@ -43,9 +43,9 @@ export const getResizeHandleAtPoint = (point: Point, boundingBox: BoundingBox): 
   const height = bottomLeft.y - topLeft.y;
   const padding = Math.max(
     width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
+    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
   );
-  
+
   const handleRadius = CANVAS_CONFIG.RESIZE_HANDLE_RADIUS;
 
   // 모서리 핸들 위치

@@ -32,7 +32,7 @@ export const drawSelectionBox = (ctx: CanvasRenderingContext2D, boundingBox: Bou
   // 패딩을 width와 height의 비율로 계산
   const padding = Math.max(
     width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
+    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
   );
   const handleRadius = CANVAS_CONFIG.RESIZE_HANDLE_RADIUS;
 
@@ -48,11 +48,11 @@ export const drawSelectionBox = (ctx: CanvasRenderingContext2D, boundingBox: Bou
     { x: topRight.x + padding, y: bottomLeft.y + padding },
   ];
 
-  corners.forEach((corner) => {
+  for (const corner of corners) {
     ctx.beginPath();
     ctx.arc(corner.x, corner.y, handleRadius, 0, Math.PI * 2);
     ctx.fill();
-  });
+  }
 
   ctx.restore();
 };
