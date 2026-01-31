@@ -15,6 +15,7 @@ import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
 import { useTextStore } from "./textStore";
 import { useSelectionStore } from "./selectionStore";
+import { useYjsConnectionStore } from "./yjsStore";
 
 export type MoveStore = {
   moveSelected: (type: "path" | "shape" | "text", offset: Point) => void;
@@ -22,7 +23,9 @@ export type MoveStore = {
 
 export const useMoveStore = create<MoveStore>(() => ({
   moveSelected: (type, offset) => {
+    const { yjsData } = useYjsConnectionStore.getState();
     const selectionStore = useSelectionStore.getState();
+    if (!yjsData) return;
 
     if (type === "path") {
       const pathStore = usePathStore.getState();
@@ -33,8 +36,10 @@ export const useMoveStore = create<MoveStore>(() => ({
         .filter((path) => selectionStore.selectedPaths.has(path.id))
         .map((path) => movePath(path, offset));
 
-      removePathsFromYjs(selectedIds);
-      movedPaths.forEach((path) => pushPathToYjs(path));
+      yjsData.paths.doc?.transact(() => {
+        removePathsFromYjs(selectedIds);
+        movedPaths.forEach((path) => pushPathToYjs(path));
+      });
       return;
     }
 
@@ -47,8 +52,10 @@ export const useMoveStore = create<MoveStore>(() => ({
         .filter((shape) => selectionStore.selectedShapes.has(shape.id))
         .map((shape) => moveShape(shape, offset));
 
-      removeShapesFromYjs(selectedIds);
-      movedShapes.forEach((shape) => pushShapeToYjs(shape));
+      yjsData.shapes.doc?.transact(() => {
+        removeShapesFromYjs(selectedIds);
+        movedShapes.forEach((shape) => pushShapeToYjs(shape));
+      });
       return;
     }
 
@@ -61,8 +68,10 @@ export const useMoveStore = create<MoveStore>(() => ({
         .filter((text) => selectionStore.selectedTexts.has(text.id))
         .map((text) => moveText(text, offset));
 
-      removeTextsFromYjs(selectedIds);
-      movedTexts.forEach((text) => pushTextToYjs(text));
+      yjsData.texts.doc?.transact(() => {
+        removeTextsFromYjs(selectedIds);
+        movedTexts.forEach((text) => pushTextToYjs(text));
+      });
       return;
     }
   },

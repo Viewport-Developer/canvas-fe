@@ -43,12 +43,14 @@ export const useResizeStore = create<ResizeStore>(() => ({
         );
       });
 
-      for (let i = pathsArray.length - 1; i >= 0; i--) {
-        if (selectionStore.selectedPaths.has(pathsArray[i].id)) {
-          yjsData.paths.delete(i, 1);
-          yjsData.paths.insert(i, [updatedPaths[i]]);
+      yjsData.paths.doc?.transact(() => {
+        for (let i = pathsArray.length - 1; i >= 0; i--) {
+          if (selectionStore.selectedPaths.has(pathsArray[i].id)) {
+            yjsData.paths.delete(i, 1);
+            yjsData.paths.insert(i, [updatedPaths[i]]);
+          }
         }
-      }
+      });
       return;
     }
 
@@ -73,12 +75,14 @@ export const useResizeStore = create<ResizeStore>(() => ({
         );
       });
 
-      for (let i = shapesArray.length - 1; i >= 0; i--) {
-        if (selectionStore.selectedShapes.has(shapesArray[i].id)) {
-          yjsData.shapes.delete(i, 1);
-          yjsData.shapes.insert(i, [updatedShapes[i]]);
+      yjsData.shapes.doc?.transact(() => {
+        for (let i = shapesArray.length - 1; i >= 0; i--) {
+          if (selectionStore.selectedShapes.has(shapesArray[i].id)) {
+            yjsData.shapes.delete(i, 1);
+            yjsData.shapes.insert(i, [updatedShapes[i]]);
+          }
         }
-      }
+      });
       return;
     }
 
@@ -104,12 +108,14 @@ export const useResizeStore = create<ResizeStore>(() => ({
         );
       });
 
-      for (let i = textsArray.length - 1; i >= 0; i--) {
-        if (selectionStore.selectedTexts.has(textsArray[i].id)) {
-          yjsData.texts.delete(i, 1);
-          yjsData.texts.insert(i, [updatedTexts[i]]);
+      yjsData.texts.doc?.transact(() => {
+        for (let i = textsArray.length - 1; i >= 0; i--) {
+          if (selectionStore.selectedTexts.has(textsArray[i].id)) {
+            yjsData.texts.delete(i, 1);
+            yjsData.texts.insert(i, [updatedTexts[i]]);
+          }
         }
-      }
+      });
     }
   },
 }));
