@@ -116,7 +116,7 @@ export const useText = () => {
 
       pushTextToYjs(newText);
       setCurrentTextToAwareness(null);
-      saveTextAction(initialText, newText);
+      saveTextAction(null, newText);
       setCreatePosition(null);
       setEditingTextId(null);
     },

@@ -57,6 +57,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
     pan,
     currentPaths,
     currentShapes,
+    currentTexts,
     paths,
     shapes,
     texts,
@@ -327,7 +328,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
         $tool={tool}
         $isPanning={isPanning}
         $isMoving={isMoving}
-        style={currentPaths.length > 0 || currentShapes.length > 0 ? { display: "block" } : { display: "none" }}
+        style={currentPaths.length > 0 || currentShapes.length > 0 || currentTexts.length > 0 ? { display: "block" } : { display: "none" }}
       />
       <RemoteCursors canvasRef={backgroundCanvasRef} zoom={zoom} pan={pan} />
       {createPosition && (

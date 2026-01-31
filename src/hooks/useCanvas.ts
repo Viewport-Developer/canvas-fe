@@ -121,11 +121,11 @@ export const useCanvas = (
 
       drawAllPaths(ctx, currentPaths, new Set());
       drawAllShapes(ctx, currentShapes, new Set());
-      drawAllTexts(ctx, currentTexts, new Set(), null);
+      drawAllTexts(ctx, currentTexts, new Set(), editingTextId);
 
       restoreCanvas(ctx);
     }
-  }, [foregroundCanvasRef, currentPaths, currentShapes, currentTexts, zoom, pan]);
+  }, [foregroundCanvasRef, currentPaths, currentShapes, currentTexts, zoom, pan, editingTextId]);
 
   // 캔버스 크기를 컨테이너에 맞춥니다.
   useEffect(() => {
