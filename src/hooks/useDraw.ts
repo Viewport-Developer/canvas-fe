@@ -61,7 +61,7 @@ export const useDraw = () => {
       setLastTime(now);
       setLastPoint(point);
     },
-    [lastTime, lastPoint],
+    [lastTime, lastPoint]
   );
 
   // 그리기를 종료하고 경로를 저장합니다.

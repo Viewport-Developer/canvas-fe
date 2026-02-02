@@ -40,7 +40,7 @@ export const useMove = () => {
       setPrevPosition(point);
       return true;
     },
-    [paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts],
+    [paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts]
   );
 
   // 이동을 계속합니다.
@@ -67,7 +67,7 @@ export const useMove = () => {
 
       setPrevPosition(point);
     },
-    [isMoving, prevPosition, selectedPaths, selectedShapes, selectedTexts, moveSelected],
+    [isMoving, prevPosition, selectedPaths, selectedShapes, selectedTexts, moveSelected]
   );
 
   // 이동을 종료합니다.
@@ -85,7 +85,7 @@ export const useMove = () => {
         initialTexts,
         currentSelectedPaths,
         currentSelectedShapes,
-        currentSelectedTexts,
+        currentSelectedTexts
       );
     }
 

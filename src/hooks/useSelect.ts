@@ -72,7 +72,7 @@ export const useSelect = () => {
         clearSelection();
       }
     },
-    [paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts, clearSelection, addSelected],
+    [paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts, clearSelection, addSelected]
   );
 
   // 드래그 선택을 시작합니다.
@@ -84,7 +84,7 @@ export const useSelect = () => {
       setDragStartPoint(point);
       setDragEndPoint(point);
     },
-    [selectAtPoint, setIsDragSelecting, setDragStartPoint, setDragEndPoint],
+    [selectAtPoint, setIsDragSelecting, setDragStartPoint, setDragEndPoint]
   );
 
   // 드래그 선택을 업데이트합니다.
@@ -134,7 +134,7 @@ export const useSelect = () => {
       selectedTexts,
       addSelected,
       setDragEndPoint,
-    ],
+    ]
   );
 
   // 드래그 선택을 종료합니다.

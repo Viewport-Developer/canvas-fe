@@ -19,7 +19,7 @@ export const usePan = () => {
       setInitialPan({ ...pan });
       setIsPanning(true);
     },
-    [pan, setIsPanning],
+    [pan, setIsPanning]
   );
 
   // 팬을 계속합니다.
@@ -40,7 +40,7 @@ export const usePan = () => {
 
       setPanStart({ x: e.clientX, y: e.clientY });
     },
-    [panStart, zoom, pan, setPan],
+    [panStart, zoom, pan, setPan]
   );
 
   // 팬을 종료합니다.

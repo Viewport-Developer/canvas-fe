@@ -22,7 +22,11 @@ export const drawPath = (ctx: CanvasRenderingContext2D, path: Path, isInPathsToE
 };
 
 // 모든 경로를 그립니다.
-export const drawAllPaths = (ctx: CanvasRenderingContext2D, paths: Path[], pathsToErase: Set<string> = new Set()) => {
+export const drawAllPaths = (
+  ctx: CanvasRenderingContext2D,
+  paths: Path[],
+  pathsToErase: Set<string> = new Set()
+) => {
   for (const path of paths) {
     const willBeErased = pathsToErase.has(path.id);
     drawPath(ctx, path, willBeErased);
@@ -79,7 +83,7 @@ export const drawShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInPaths
 export const drawAllShapes = (
   ctx: CanvasRenderingContext2D,
   shapes: Shape[],
-  shapesToErase: Set<string> = new Set(),
+  shapesToErase: Set<string> = new Set()
 ) => {
   for (const shape of shapes) {
     const willBeErased = shapesToErase.has(shape.id);
@@ -113,7 +117,7 @@ export const drawAllTexts = (
   ctx: CanvasRenderingContext2D,
   texts: Text[],
   textsToErase: Set<string> = new Set(),
-  editingTextId: string | null,
+  editingTextId: string | null
 ) => {
   for (const text of texts) {
     // 편집 중인 텍스트는 렌더링하지 않음

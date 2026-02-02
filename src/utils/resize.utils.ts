@@ -11,7 +11,7 @@ export const getHandlePosition = (handle: ResizeHandleType, boundingBox: Boundin
   const height = bottomLeft.y - topLeft.y;
   const padding = Math.max(
     width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
+    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
   );
 
   switch (handle) {
@@ -44,7 +44,7 @@ export const getResizeHandleAtPoint = (point: Point, boundingBox: BoundingBox): 
   const height = bottomLeft.y - topLeft.y;
   const padding = Math.max(
     width * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
+    height * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
   );
 
   const handleRadius = CANVAS_CONFIG.RESIZE_HANDLE_RADIUS;
@@ -107,7 +107,7 @@ export const calculateNewBoundingBox = (
   handle: ResizeHandleType,
   initialBox: BoundingBox,
   initialClickPosition: Point,
-  isTextResize: boolean = false,
+  isTextResize: boolean = false
 ): BoundingBox => {
   const initialHandlePosition = getHandlePosition(handle, initialBox);
 
@@ -122,7 +122,7 @@ export const calculateNewBoundingBox = (
   const initialHeight = initialBox.bottomLeft.y - initialBox.topLeft.y;
   const padding = Math.max(
     initialWidth * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
-    initialHeight * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO,
+    initialHeight * CANVAS_CONFIG.SELECTION_BOX_PADDING_RATIO
   );
 
   let point1: Point;

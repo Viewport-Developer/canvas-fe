@@ -32,7 +32,11 @@ export type HistoryStore = {
   saveDrawAction: (path: DrawAction["path"]) => void;
   saveShapeAction: (shape: ShapeAction["shape"]) => void;
   saveTextAction: (previousText: Text | null, newText: Text) => void;
-  saveEraseAction: (paths: EraseAction["paths"], shapes: EraseAction["shapes"], texts: EraseAction["texts"]) => void;
+  saveEraseAction: (
+    paths: EraseAction["paths"],
+    shapes: EraseAction["shapes"],
+    texts: EraseAction["texts"]
+  ) => void;
   savePanAction: (previousPan: Point, newPan: Point) => void;
   saveResizeAction: (
     previousPaths: Path[],
@@ -42,7 +46,7 @@ export type HistoryStore = {
     newPaths: Path[],
     newShapes: Shape[],
     newTexts: Text[],
-    newBoundingBox: BoundingBox,
+    newBoundingBox: BoundingBox
   ) => void;
   saveMoveAction: (
     previousPaths: Path[],
@@ -50,7 +54,7 @@ export type HistoryStore = {
     previousTexts: Text[],
     newPaths: Path[],
     newShapes: Shape[],
-    newTexts: Text[],
+    newTexts: Text[]
   ) => void;
   undo: () => void;
   redo: () => void;
@@ -142,7 +146,7 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
     newPaths,
     newShapes,
     newTexts,
-    newBoundingBox,
+    newBoundingBox
   ) => {
     const action: ResizeAction = {
       type: "resize",

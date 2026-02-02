@@ -74,7 +74,11 @@ export const useCanvas = (
         }
       } else {
         // 드래그 선택이 끝나면 결합된 바운딩 박스 그리기
-        const combinedBoundingBox = getCombinedBoundingBox(selectedPathsArray, selectedShapesArray, selectedTextsArray);
+        const combinedBoundingBox = getCombinedBoundingBox(
+          selectedPathsArray,
+          selectedShapesArray,
+          selectedTextsArray
+        );
         if (combinedBoundingBox) {
           drawSelectionBox(ctx, combinedBoundingBox);
         }

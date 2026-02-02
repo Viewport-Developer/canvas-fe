@@ -6,7 +6,7 @@ export const scalePathByCombinedBoundingBox = (
   path: Path,
   initialPathBox: BoundingBox,
   initialCombinedBox: BoundingBox,
-  newCombinedBox: BoundingBox,
+  newCombinedBox: BoundingBox
 ): Path => {
   const initialCombinedSize = calculateBoundingBoxSize(initialCombinedBox);
   const newCombinedSize = calculateBoundingBoxSize(newCombinedBox);
@@ -66,7 +66,7 @@ export const scaleShapeByCombinedBoundingBox = (
   shape: Shape,
   initialShapeBox: BoundingBox,
   initialCombinedBox: BoundingBox,
-  newCombinedBox: BoundingBox,
+  newCombinedBox: BoundingBox
 ): Shape => {
   const initialCombinedSize = calculateBoundingBoxSize(initialCombinedBox);
   const newCombinedSize = calculateBoundingBoxSize(newCombinedBox);
@@ -143,7 +143,7 @@ export const scaleTextByCombinedBoundingBox = (
   initialTextBox: BoundingBox,
   initialCombinedBox: BoundingBox,
   newCombinedBox: BoundingBox,
-  resizeHandle?: ResizeHandleType,
+  resizeHandle?: ResizeHandleType
 ): Text => {
   const initialCombinedWidth = initialCombinedBox.topRight.x - initialCombinedBox.topLeft.x;
   const newCombinedWidth = newCombinedBox.topRight.x - newCombinedBox.topLeft.x;
