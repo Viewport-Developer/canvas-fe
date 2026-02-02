@@ -1,11 +1,22 @@
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point, BoundingBox, ResizeHandleType, Path, Shape, Text } from "../types";
 import { getResizeHandleAtPoint, getCombinedBoundingBox, calculateNewBoundingBox } from "../utils";
-import { useCanvasStore } from "../store/canvasStore";
+import { usePathStore } from "../store/pathStore";
+import { useShapeStore } from "../store/shapeStore";
+import { useTextStore } from "../store/textStore";
+import { useSelectionStore } from "../store/selectionStore";
+import { useResizeStore } from "../store/resizeStore";
 import { useHistoryStore } from "../store/historyStore";
 
 export const useResize = () => {
-  const { paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts, resizeSelected } = useCanvasStore();
+  const [paths] = usePathStore(useShallow((s) => [s.paths]));
+  const [shapes] = useShapeStore(useShallow((s) => [s.shapes]));
+  const [texts] = useTextStore(useShallow((s) => [s.texts]));
+  const [selectedPaths, selectedShapes, selectedTexts] = useSelectionStore(
+    useShallow((s) => [s.selectedPaths, s.selectedShapes, s.selectedTexts])
+  );
+  const [resizeSelected] = useResizeStore(useShallow((s) => [s.resizeSelected]));
 
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandleType | null>(null);
@@ -16,7 +27,7 @@ export const useResize = () => {
   const [initialShapes, setInitialShapes] = useState<Shape[]>([]);
   const [initialTexts, setInitialTexts] = useState<Text[]>([]);
 
-  const { saveResizeAction } = useHistoryStore();
+  const [saveResizeAction] = useHistoryStore(useShallow((s) => [s.saveResizeAction]));
 
   // 리사이즈를 시작합니다.
   const startResizing = useCallback(

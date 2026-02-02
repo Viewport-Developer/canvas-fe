@@ -1,11 +1,12 @@
 import { useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point, Shape, ShapeType } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import { useHistoryStore } from "../store/historyStore";
 import { getCurrentShapeFromAwareness, pushShapeToYjs, setCurrentShapeToAwareness } from "../utils";
 
 export const useShape = () => {
-  const { saveShapeAction } = useHistoryStore();
+  const [saveShapeAction] = useHistoryStore(useShallow((s) => [s.saveShapeAction]));
 
   // 도형 그리기를 시작합니다.
   const startShapeDrawing = useCallback((point: Point, shapeType: ShapeType) => {

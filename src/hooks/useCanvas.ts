@@ -1,4 +1,5 @@
 import { useEffect, useCallback, type RefObject } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   clearCanvas,
   drawAllPaths,
@@ -10,7 +11,12 @@ import {
   restoreCanvas,
   getCombinedBoundingBox,
 } from "../utils";
-import { useCanvasStore } from "../store/canvasStore";
+import { usePathStore } from "../store/pathStore";
+import { useShapeStore } from "../store/shapeStore";
+import { useTextStore } from "../store/textStore";
+import { useEraserStore } from "../store/eraserStore";
+import { useSelectionStore } from "../store/selectionStore";
+import { useViewportStore } from "../store/viewportStore";
 
 export const useCanvas = (
   containerRef: RefObject<HTMLDivElement | null>,
@@ -18,25 +24,24 @@ export const useCanvas = (
   foregroundCanvasRef: RefObject<HTMLCanvasElement | null>,
   editingTextId: string | null
 ) => {
-  const {
-    paths,
-    shapes,
-    texts,
-    currentPaths,
-    currentShapes,
-    currentTexts,
-    pathsToErase,
-    shapesToErase,
-    textsToErase,
-    selectedPaths,
-    selectedShapes,
-    selectedTexts,
-    isDragSelecting,
-    dragStartPoint,
-    dragEndPoint,
-    zoom,
-    pan,
-  } = useCanvasStore();
+  const [paths, currentPaths] = usePathStore(useShallow((s) => [s.paths, s.currentPaths]));
+  const [shapes, currentShapes] = useShapeStore(useShallow((s) => [s.shapes, s.currentShapes]));
+  const [texts, currentTexts] = useTextStore(useShallow((s) => [s.texts, s.currentTexts]));
+  const [pathsToErase, shapesToErase, textsToErase] = useEraserStore(
+    useShallow((s) => [s.pathsToErase, s.shapesToErase, s.textsToErase])
+  );
+  const [selectedPaths, selectedShapes, selectedTexts, isDragSelecting, dragStartPoint, dragEndPoint] =
+    useSelectionStore(
+      useShallow((s) => [
+        s.selectedPaths,
+        s.selectedShapes,
+        s.selectedTexts,
+        s.isDragSelecting,
+        s.dragStartPoint,
+        s.dragEndPoint,
+      ])
+    );
+  const [zoom, pan] = useViewportStore(useShallow((s) => [s.zoom, s.pan]));
 
   // 백그라운드 캔버스를 다시 그립니다.
   const redrawBackground = useCallback(() => {

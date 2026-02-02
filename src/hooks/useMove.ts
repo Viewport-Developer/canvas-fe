@@ -1,11 +1,22 @@
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point, Path, Shape, Text } from "../types";
 import { isPointInBoundingBox, getCombinedBoundingBox, getResizeHandleAtPoint } from "../utils";
-import { useCanvasStore } from "../store/canvasStore";
+import { usePathStore } from "../store/pathStore";
+import { useShapeStore } from "../store/shapeStore";
+import { useTextStore } from "../store/textStore";
+import { useSelectionStore } from "../store/selectionStore";
+import { useMoveStore } from "../store/moveStore";
 import { useHistoryStore } from "../store/historyStore";
 
 export const useMove = () => {
-  const { paths, shapes, texts, selectedPaths, selectedShapes, selectedTexts, moveSelected } = useCanvasStore();
+  const [paths] = usePathStore(useShallow((s) => [s.paths]));
+  const [shapes] = useShapeStore(useShallow((s) => [s.shapes]));
+  const [texts] = useTextStore(useShallow((s) => [s.texts]));
+  const [selectedPaths, selectedShapes, selectedTexts] = useSelectionStore(
+    useShallow((s) => [s.selectedPaths, s.selectedShapes, s.selectedTexts])
+  );
+  const [moveSelected] = useMoveStore(useShallow((s) => [s.moveSelected]));
 
   const [isMoving, setIsMoving] = useState(false);
   const [prevPosition, setPrevPosition] = useState<Point | null>(null);
@@ -13,7 +24,7 @@ export const useMove = () => {
   const [initialShapes, setInitialShapes] = useState<Shape[]>([]);
   const [initialTexts, setInitialTexts] = useState<Text[]>([]);
 
-  const { saveMoveAction } = useHistoryStore();
+  const [saveMoveAction] = useHistoryStore(useShallow((s) => [s.saveMoveAction]));
 
   // 이동을 시작합니다.
   const startMoving = useCallback(

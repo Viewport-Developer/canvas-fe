@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import {
@@ -9,13 +10,20 @@ import {
   removeShapesFromYjs,
   removeTextsFromYjs,
 } from "../utils";
-import { useCanvasStore } from "../store/canvasStore";
+import { usePathStore } from "../store/pathStore";
+import { useShapeStore } from "../store/shapeStore";
+import { useTextStore } from "../store/textStore";
+import { useEraserStore } from "../store/eraserStore";
 import { useHistoryStore } from "../store/historyStore";
 
 export const useEraser = () => {
-  const { paths, pathsToErase, clearToErase, addToErase, shapes, shapesToErase, texts, textsToErase } =
-    useCanvasStore();
-  const { saveEraseAction } = useHistoryStore();
+  const [paths] = usePathStore(useShallow((s) => [s.paths]));
+  const [shapes] = useShapeStore(useShallow((s) => [s.shapes]));
+  const [texts] = useTextStore(useShallow((s) => [s.texts]));
+  const [pathsToErase, shapesToErase, textsToErase, clearToErase, addToErase] = useEraserStore(
+    useShallow((s) => [s.pathsToErase, s.shapesToErase, s.textsToErase, s.clearToErase, s.addToErase])
+  );
+  const [saveEraseAction] = useHistoryStore(useShallow((s) => [s.saveEraseAction]));
 
   const [isErasing, setIsErasing] = useState(false);
 

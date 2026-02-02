@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import styled from "styled-components";
 import type { RemoteCursor } from "../types/yjs.types";
 import { useYjsConnectionStore } from "../store/yjsStore";
@@ -59,7 +60,7 @@ const RemoteCursor = styled.div
 `;
 
 const RemoteCursors = ({ canvasRef, zoom, pan }: RemoteCursorsProps) => {
-  const { remoteCursors } = useYjsConnectionStore();
+  const [remoteCursors] = useYjsConnectionStore(useShallow((s) => [s.remoteCursors]));
 
   const [canvasRect, setCanvasRect] = useState<DOMRect | null>(null);
 
@@ -83,14 +84,15 @@ const RemoteCursors = ({ canvasRef, zoom, pan }: RemoteCursorsProps) => {
   const remoteCursorPositions = useMemo(() => {
     if (!canvasRect) return [];
 
-    return Array.from(remoteCursors.values())
-      .filter((cursor) => cursor.position !== null)
-      .map((cursor) => {
+    return Array.from(remoteCursors.entries())
+      .filter(([, cursor]) => cursor.position !== null)
+      .map(([clientId, cursor]) => {
         // 캔버스 좌표를 화면 좌표로 변환
         const screenX = (cursor.position!.x - pan.x) * zoom + canvasRect.left;
         const screenY = (cursor.position!.y - pan.y) * zoom + canvasRect.top;
 
         return {
+          clientId,
           ...cursor,
           screenX,
           screenY,
@@ -101,7 +103,7 @@ const RemoteCursors = ({ canvasRef, zoom, pan }: RemoteCursorsProps) => {
   return (
     <CursorLayer>
       {remoteCursorPositions.map((cursor) => (
-        <RemoteCursor key={cursor.color} $x={cursor.screenX} $y={cursor.screenY} $color={cursor.color} />
+        <RemoteCursor key={cursor.clientId} $x={cursor.screenX} $y={cursor.screenY} $color={cursor.color} />
       ))}
     </CursorLayer>
   );

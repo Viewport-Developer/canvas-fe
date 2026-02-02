@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point, BoundingBox } from "../types";
 import {
   isPointInBoundingBox,
@@ -7,14 +8,17 @@ import {
   isPointOnPath,
   isPointOnShape,
 } from "../utils";
-import { useCanvasStore } from "../store/canvasStore";
+import { usePathStore } from "../store/pathStore";
+import { useShapeStore } from "../store/shapeStore";
+import { useTextStore } from "../store/textStore";
+import { useSelectionStore } from "../store/selectionStore";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 
 export const useSelect = () => {
-  const {
-    paths,
-    shapes,
-    texts,
+  const [paths] = usePathStore(useShallow((s) => [s.paths]));
+  const [shapes] = useShapeStore(useShallow((s) => [s.shapes]));
+  const [texts] = useTextStore(useShallow((s) => [s.texts]));
+  const [
     selectedPaths,
     selectedShapes,
     selectedTexts,
@@ -26,7 +30,21 @@ export const useSelect = () => {
     setIsDragSelecting,
     setDragStartPoint,
     setDragEndPoint,
-  } = useCanvasStore();
+  ] = useSelectionStore(
+    useShallow((s) => [
+      s.selectedPaths,
+      s.selectedShapes,
+      s.selectedTexts,
+      s.addSelected,
+      s.clearSelection,
+      s.isDragSelecting,
+      s.dragStartPoint,
+      s.dragEndPoint,
+      s.setIsDragSelecting,
+      s.setDragStartPoint,
+      s.setDragEndPoint,
+    ])
+  );
 
   // 주어진 점에서 요소를 선택합니다.
   const selectAtPoint = useCallback(

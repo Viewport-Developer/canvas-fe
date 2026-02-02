@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point, Text } from "../types";
 import { useTextStore } from "../store/textStore";
 import { useHistoryStore } from "../store/historyStore";
@@ -13,8 +14,8 @@ import {
 } from "../utils";
 
 export const useText = () => {
-  const { texts } = useTextStore();
-  const { saveTextAction } = useHistoryStore();
+  const [texts] = useTextStore(useShallow((s) => [s.texts]));
+  const [saveTextAction] = useHistoryStore(useShallow((s) => [s.saveTextAction]));
 
   const [createPosition, setCreatePosition] = useState<Point | null>(null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);

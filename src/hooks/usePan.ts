@@ -1,13 +1,14 @@
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point } from "../types";
-import { useCanvasStore } from "../store/canvasStore";
+import { useViewportStore } from "../store/viewportStore";
 import { useToolStore } from "../store/toolStore";
 import { useHistoryStore } from "../store/historyStore";
 
 export const usePan = () => {
-  const { setIsPanning } = useToolStore();
-  const { zoom, pan, setPan } = useCanvasStore();
-  const { savePanAction } = useHistoryStore();
+  const [setIsPanning] = useToolStore(useShallow((s) => [s.setIsPanning]));
+  const [zoom, pan, setPan] = useViewportStore(useShallow((s) => [s.zoom, s.pan, s.setPan]));
+  const [savePanAction] = useHistoryStore(useShallow((s) => [s.savePanAction]));
 
   const [panStart, setPanStart] = useState<Point | null>(null);
   const [initialPan, setInitialPan] = useState<Point | null>(null);

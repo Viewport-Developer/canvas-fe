@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { Point, Path } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
 import {
@@ -11,7 +12,7 @@ import {
 import { useHistoryStore } from "../store/historyStore";
 
 export const useDraw = () => {
-  const { saveDrawAction } = useHistoryStore();
+  const [saveDrawAction] = useHistoryStore(useShallow((s) => [s.saveDrawAction]));
 
   const [lastPoint, setLastPoint] = useState<Point | null>(null);
   const [lastTime, setLastTime] = useState(0);

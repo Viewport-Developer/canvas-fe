@@ -1,4 +1,5 @@
 import { useRef, useEffect, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import styled from "styled-components";
 import ToolBar from "./components/ToolBar";
 import Canvas from "./components/Canvas";
@@ -39,8 +40,8 @@ const App = () => {
   // y.js 연결 설정
   useYjsConnection(canvasId, wsUrl);
 
-  const yjsData = useYjsConnectionStore((s) => s.yjsData);
-  const awareness = useYjsConnectionStore((s) => s.awareness);
+  const [yjsData] = useYjsConnectionStore(useShallow((s) => [s.yjsData]));
+  const [awareness] = useYjsConnectionStore(useShallow((s) => [s.awareness]));
   const hasBoundRef = useRef(false);
 
   // y.js와 Zustand 바인딩

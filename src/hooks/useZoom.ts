@@ -1,9 +1,10 @@
 import { useEffect, type RefObject } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
-import { useCanvasStore } from "../store/canvasStore";
+import { useViewportStore } from "../store/viewportStore";
 
 export const useZoom = (canvasRef: RefObject<HTMLCanvasElement | null>) => {
-  const { zoom, setZoom, pan, setPan } = useCanvasStore();
+  const [zoom, setZoom, pan, setPan] = useViewportStore(useShallow((s) => [s.zoom, s.setZoom, s.pan, s.setPan]));
 
   useEffect(() => {
     const canvas = canvasRef.current;

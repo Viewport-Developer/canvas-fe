@@ -1,6 +1,12 @@
 import { useRef, useEffect, useCallback, useMemo, type RefObject } from "react";
+import { useShallow } from "zustand/react/shallow";
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
+import { usePathStore } from "../store/pathStore";
+import { useShapeStore } from "../store/shapeStore";
+import { useTextStore } from "../store/textStore";
+import { useSelectionStore } from "../store/selectionStore";
+import { useViewportStore } from "../store/viewportStore";
 import { useDraw } from "../hooks/useDraw";
 import { useEraser } from "../hooks/useEraser";
 import { usePan } from "../hooks/usePan";
@@ -10,7 +16,6 @@ import { useResize } from "../hooks/useResize";
 import { useMove } from "../hooks/useMove";
 import { useText } from "../hooks/useText";
 import type { Point, Tool } from "../types";
-import { useCanvasStore } from "../store/canvasStore";
 import { useHistoryStore } from "../store/historyStore";
 import { useCanvas } from "../hooks/useCanvas";
 import { useZoom } from "../hooks/useZoom";
@@ -51,22 +56,17 @@ type CanvasProps = {
 };
 
 const Canvas = ({ containerRef }: CanvasProps) => {
-  const { tool, isPanning } = useToolStore();
-  const {
-    zoom,
-    pan,
-    currentPaths,
-    currentShapes,
-    currentTexts,
-    paths,
-    shapes,
-    texts,
-    selectedPaths,
-    selectedShapes,
-    selectedTexts,
-    clearSelection,
-  } = useCanvasStore();
-  const { canUndo, undo, canRedo, redo, saveEraseAction } = useHistoryStore();
+  const [tool, isPanning] = useToolStore(useShallow((s) => [s.tool, s.isPanning]));
+  const [zoom, pan] = useViewportStore(useShallow((s) => [s.zoom, s.pan]));
+  const [paths, currentPaths] = usePathStore(useShallow((s) => [s.paths, s.currentPaths]));
+  const [shapes, currentShapes] = useShapeStore(useShallow((s) => [s.shapes, s.currentShapes]));
+  const [texts, currentTexts] = useTextStore(useShallow((s) => [s.texts, s.currentTexts]));
+  const [selectedPaths, selectedShapes, selectedTexts, clearSelection] = useSelectionStore(
+    useShallow((s) => [s.selectedPaths, s.selectedShapes, s.selectedTexts, s.clearSelection])
+  );
+  const [canUndo, undo, canRedo, redo, saveEraseAction] = useHistoryStore(
+    useShallow((s) => [s.canUndo, s.undo, s.canRedo, s.redo, s.saveEraseAction])
+  );
 
   // 각 기능별 훅
   const { startDrawing, draw, stopDrawing } = useDraw();
@@ -86,7 +86,7 @@ const Canvas = ({ containerRef }: CanvasProps) => {
   useCanvas(containerRef, backgroundCanvasRef, foregroundCanvasRef, editingTextId);
   useZoom(backgroundCanvasRef);
 
-  const updateCursorPosition = useYjsConnectionStore((s) => s.updateCursorPosition);
+  const [updateCursorPosition] = useYjsConnectionStore(useShallow((s) => [s.updateCursorPosition]));
 
   // 마우스 좌표 계산
   const getMousePos = useCallback(

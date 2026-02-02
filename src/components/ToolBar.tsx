@@ -1,7 +1,8 @@
 import { useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import styled from "styled-components";
 import { useToolStore } from "../store/toolStore";
-import { useCanvasStore } from "../store/canvasStore";
+import { useSelectionStore } from "../store/selectionStore";
 import type { Tool } from "../types";
 
 const StyledToolBar = styled.div`
@@ -45,8 +46,8 @@ const TOOLS: Array<{ tool: Tool; icon: string }> = [
 ] as const;
 
 const ToolBar = () => {
-  const { tool, setTool } = useToolStore();
-  const { clearSelection } = useCanvasStore();
+  const [tool, setTool] = useToolStore(useShallow((s) => [s.tool, s.setTool]));
+  const [clearSelection] = useSelectionStore(useShallow((s) => [s.clearSelection]));
 
   const handleToolChange = useCallback(
     (newTool: Tool) => {
