@@ -39,14 +39,14 @@ export const useYjsConnectionStore = create<YjsConnectionStore>((set, get) => ({
 
 export const createYjsDoc = (): Y.Doc => {
   const doc = new Y.Doc();
-  doc.getArray<Path>("paths");
-  doc.getArray<Shape>("shapes");
-  doc.getArray<Text>("texts");
+  doc.getMap<Path>("paths");
+  doc.getMap<Shape>("shapes");
+  doc.getMap<Text>("texts");
   return doc;
 };
 
 export const getYjsData = (doc: Y.Doc): YjsCanvasData => ({
-  paths: doc.getArray<Path>("paths"),
-  shapes: doc.getArray<Shape>("shapes"),
-  texts: doc.getArray<Text>("texts"),
+  paths: doc.getMap<Path>("paths"),
+  shapes: doc.getMap<Shape>("shapes"),
+  texts: doc.getMap<Text>("texts"),
 });

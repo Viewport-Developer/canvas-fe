@@ -39,15 +39,14 @@ export const useResizeStore = create<ResizeStore>(() => ({
           initialPath,
           initialPath.boundingBox,
           initialBoundingBox,
-          newBoundingBox,
+          newBoundingBox
         );
       });
 
       yjsData.paths.doc?.transact(() => {
-        for (let i = pathsArray.length - 1; i >= 0; i--) {
+        for (let i = 0; i < pathsArray.length; i++) {
           if (selectionStore.selectedPaths.has(pathsArray[i].id)) {
-            yjsData.paths.delete(i, 1);
-            yjsData.paths.insert(i, [updatedPaths[i]]);
+            yjsData.paths.set(pathsArray[i].id, updatedPaths[i]);
           }
         }
       });
@@ -71,15 +70,14 @@ export const useResizeStore = create<ResizeStore>(() => ({
           initialShape,
           initialShape.boundingBox,
           initialBoundingBox,
-          newBoundingBox,
+          newBoundingBox
         );
       });
 
       yjsData.shapes.doc?.transact(() => {
-        for (let i = shapesArray.length - 1; i >= 0; i--) {
+        for (let i = 0; i < shapesArray.length; i++) {
           if (selectionStore.selectedShapes.has(shapesArray[i].id)) {
-            yjsData.shapes.delete(i, 1);
-            yjsData.shapes.insert(i, [updatedShapes[i]]);
+            yjsData.shapes.set(shapesArray[i].id, updatedShapes[i]);
           }
         }
       });
@@ -104,15 +102,14 @@ export const useResizeStore = create<ResizeStore>(() => ({
           initialText.boundingBox,
           initialBoundingBox,
           newBoundingBox,
-          resizeHandle,
+          resizeHandle
         );
       });
 
       yjsData.texts.doc?.transact(() => {
-        for (let i = textsArray.length - 1; i >= 0; i--) {
+        for (let i = 0; i < textsArray.length; i++) {
           if (selectionStore.selectedTexts.has(textsArray[i].id)) {
-            yjsData.texts.delete(i, 1);
-            yjsData.texts.insert(i, [updatedTexts[i]]);
+            yjsData.texts.set(textsArray[i].id, updatedTexts[i]);
           }
         }
       });

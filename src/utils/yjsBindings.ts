@@ -1,3 +1,4 @@
+import * as Y from "yjs";
 import { usePathStore } from "../store/pathStore";
 import { useShapeStore } from "../store/shapeStore";
 import { useTextStore } from "../store/textStore";
@@ -6,27 +7,32 @@ import type { YjsCanvasData, AwarenessState, AwarenessLike, Shape, Path, Text, R
 
 const getCursorColor = (clientId: number): string => `hsl(${(clientId * 137.508) % 360}, 70%, 50%)`;
 
+// Y.Map → 배열로 변환
+const yMapToPathsArray = (yMap: Y.Map<Path>): Path[] => Array.from(yMap.values());
+const yMapToShapesArray = (yMap: Y.Map<Shape>): Shape[] => Array.from(yMap.values());
+const yMapToTextsArray = (yMap: Y.Map<Text>): Text[] => Array.from(yMap.values());
+
 export const bindYjsToZustand = (yjsData: YjsCanvasData, awareness: AwarenessLike) => {
   const pathStore = usePathStore.getState();
   const shapeStore = useShapeStore.getState();
   const textStore = useTextStore.getState();
 
-  // Y.js 문서의 초기 데이터를 Zustand 스토어에 로드
-  pathStore.setPaths(yjsData.paths.toArray());
-  shapeStore.setShapes(yjsData.shapes.toArray());
-  textStore.setTexts(yjsData.texts.toArray());
+  // Y.Map 데이터를 배열로 변환해 Zustand에 로드
+  pathStore.setPaths(yMapToPathsArray(yjsData.paths));
+  shapeStore.setShapes(yMapToShapesArray(yjsData.shapes));
+  textStore.setTexts(yMapToTextsArray(yjsData.texts));
 
-  // Y.js paths/shapes/texts 변경 시 스토어에 반영
+  // Y.Map 변경 시 배열로 변환해 스토어에 반영
   const pathsObserver = () => {
-    pathStore.setPaths(yjsData.paths.toArray());
+    pathStore.setPaths(yMapToPathsArray(yjsData.paths));
   };
 
   const shapesObserver = () => {
-    shapeStore.setShapes(yjsData.shapes.toArray());
+    shapeStore.setShapes(yMapToShapesArray(yjsData.shapes));
   };
 
   const textsObserver = () => {
-    textStore.setTexts(yjsData.texts.toArray());
+    textStore.setTexts(yMapToTextsArray(yjsData.texts));
   };
 
   yjsData.paths.observe(pathsObserver);

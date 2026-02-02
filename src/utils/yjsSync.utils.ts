@@ -1,6 +1,3 @@
-import { usePathStore } from "../store/pathStore";
-import { useShapeStore } from "../store/shapeStore";
-import { useTextStore } from "../store/textStore";
 import { useYjsConnectionStore } from "../store/yjsStore";
 import type { Path, Shape, Text } from "../types";
 
@@ -36,45 +33,30 @@ export const setCurrentTextToAwareness = (currentText: Text | null): void => {
 
 export const pushPathToYjs = (path: Path): void => {
   const { yjsData } = useYjsConnectionStore.getState();
-  yjsData!.paths.push([path]);
+  yjsData!.paths.set(path.id, path);
 };
 
 export const removePathsFromYjs = (ids: string[]): void => {
   const { yjsData } = useYjsConnectionStore.getState();
-  const paths = usePathStore.getState().paths;
-  const indicesToRemove = ids.map((id) => paths.findIndex((p) => p.id === id)).sort((a, b) => b - a);
-
-  for (const i of indicesToRemove) {
-    yjsData!.paths.delete(i, 1);
-  }
+  ids.forEach((id) => yjsData!.paths.delete(id));
 };
 
 export const pushShapeToYjs = (shape: Shape): void => {
   const { yjsData } = useYjsConnectionStore.getState();
-  yjsData!.shapes.push([shape]);
+  yjsData!.shapes.set(shape.id, shape);
 };
 
 export const removeShapesFromYjs = (ids: string[]): void => {
   const { yjsData } = useYjsConnectionStore.getState();
-  const shapes = useShapeStore.getState().shapes;
-  const indicesToRemove = ids.map((id) => shapes.findIndex((s) => s.id === id)).sort((a, b) => b - a);
-
-  for (const i of indicesToRemove) {
-    yjsData!.shapes.delete(i, 1);
-  }
+  ids.forEach((id) => yjsData!.shapes.delete(id));
 };
 
 export const pushTextToYjs = (text: Text): void => {
   const { yjsData } = useYjsConnectionStore.getState();
-  yjsData!.texts.push([text]);
+  yjsData!.texts.set(text.id, text);
 };
 
 export const removeTextsFromYjs = (ids: string[]): void => {
   const { yjsData } = useYjsConnectionStore.getState();
-  const texts = useTextStore.getState().texts;
-  const indicesToRemove = ids.map((id) => texts.findIndex((t) => t.id === id)).sort((a, b) => b - a);
-
-  for (const i of indicesToRemove) {
-    yjsData!.texts.delete(i, 1);
-  }
+  ids.forEach((id) => yjsData!.texts.delete(id));
 };

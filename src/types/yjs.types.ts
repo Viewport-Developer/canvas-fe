@@ -3,9 +3,9 @@ import type { Path, Shape, Text } from "./index";
 
 // Y.js 문서의 캔버스 데이터 구조
 export type YjsCanvasData = {
-  paths: Y.Array<Path>;
-  shapes: Y.Array<Shape>;
-  texts: Y.Array<Text>;
+  paths: Y.Map<Path>;
+  shapes: Y.Map<Shape>;
+  texts: Y.Map<Text>;
 };
 
 // 원격 사용자의 커서 정보 (Y.js Awareness API를 통해 실시간 추적)
