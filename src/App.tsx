@@ -18,7 +18,7 @@ const App = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 환경변수에서 설정 가져오기
-  const wsUrl = import.meta.env.VITE_WS_URL;
+  const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:1234";
 
   // URL 쿼리 파라미터에서 canvasId 가져오기, 없으면 새로 생성
   const canvasId = useMemo(() => {
