@@ -149,6 +149,9 @@ export const useCanvas = (
 
         foregroundCanvasRef.current.width = width;
         foregroundCanvasRef.current.height = height;
+
+        redrawBackground();
+        redrawForeground();
       }
     };
 
@@ -158,7 +161,7 @@ export const useCanvas = (
     return () => {
       window.removeEventListener("resize", updateSize);
     };
-  }, [backgroundCanvasRef, foregroundCanvasRef, containerRef]);
+  }, [backgroundCanvasRef, foregroundCanvasRef, containerRef, redrawBackground, redrawForeground]);
 
   useEffect(() => {
     redrawBackground();
