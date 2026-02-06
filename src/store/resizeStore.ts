@@ -17,7 +17,14 @@ export type ResizeStore = {
 };
 
 export const useResizeStore = create<ResizeStore>(() => ({
-  resizeSelected: ({ newBoundingBox, initialBoundingBox, initialPaths, initialShapes, initialTexts, resizeHandle }) => {
+  resizeSelected: ({
+    newBoundingBox,
+    initialBoundingBox,
+    initialPaths,
+    initialShapes,
+    initialTexts,
+    resizeHandle,
+  }) => {
     const { yjsData } = useYjsConnectionStore.getState();
     const selectionStore = useSelectionStore.getState();
 
@@ -26,6 +33,9 @@ export const useResizeStore = create<ResizeStore>(() => ({
     const pathStore = usePathStore.getState();
     const shapeStore = useShapeStore.getState();
     const textStore = useTextStore.getState();
+
+    // 텍스트가 포함된 경우 텍스트처럼 동작하도록 resizeHandle 전달
+    const hasText = initialTexts.length > 0;
 
     // 변경된 요소들 수집
     const updatedPaths = pathStore.paths
@@ -38,7 +48,8 @@ export const useResizeStore = create<ResizeStore>(() => ({
           initialPath,
           initialPath.boundingBox,
           initialBoundingBox,
-          newBoundingBox
+          newBoundingBox,
+          hasText ? resizeHandle : null
         );
       })
       .filter((path) => path !== null) as Path[];
@@ -53,7 +64,8 @@ export const useResizeStore = create<ResizeStore>(() => ({
           initialShape,
           initialShape.boundingBox,
           initialBoundingBox,
-          newBoundingBox
+          newBoundingBox,
+          hasText ? resizeHandle : null
         );
       })
       .filter((shape) => shape !== null) as Shape[];

@@ -6,14 +6,24 @@ export const scalePathByCombinedBoundingBox = (
   path: Path,
   initialPathBox: BoundingBox,
   initialCombinedBox: BoundingBox,
-  newCombinedBox: BoundingBox
+  newCombinedBox: BoundingBox,
+  resizeHandle?: ResizeHandleType | null
 ): Path => {
   const initialCombinedSize = calculateBoundingBoxSize(initialCombinedBox);
   const newCombinedSize = calculateBoundingBoxSize(newCombinedBox);
 
   // 결합된 바운딩 박스의 스케일 비율 계산
-  const scaleX = initialCombinedSize.width !== 0 ? newCombinedSize.width / initialCombinedSize.width : 1;
-  const scaleY = initialCombinedSize.height !== 0 ? newCombinedSize.height / initialCombinedSize.height : 1;
+  let scaleX = initialCombinedSize.width !== 0 ? newCombinedSize.width / initialCombinedSize.width : 1;
+  let scaleY = initialCombinedSize.height !== 0 ? newCombinedSize.height / initialCombinedSize.height : 1;
+
+  // 텍스트가 포함된 리사이즈: 텍스트처럼 동작
+  if (resizeHandle) {
+    if (resizeHandle === "top" || resizeHandle === "bottom") {
+      scaleX = scaleY;
+    } else {
+      scaleY = scaleX;
+    }
+  }
 
   // 초기 결합된 바운딩 박스의 중심점
   const initialCombinedCenter = {
@@ -66,14 +76,24 @@ export const scaleShapeByCombinedBoundingBox = (
   shape: Shape,
   initialShapeBox: BoundingBox,
   initialCombinedBox: BoundingBox,
-  newCombinedBox: BoundingBox
+  newCombinedBox: BoundingBox,
+  resizeHandle?: ResizeHandleType | null
 ): Shape => {
   const initialCombinedSize = calculateBoundingBoxSize(initialCombinedBox);
   const newCombinedSize = calculateBoundingBoxSize(newCombinedBox);
 
   // 결합된 바운딩 박스의 스케일 비율 계산
-  const scaleX = initialCombinedSize.width !== 0 ? newCombinedSize.width / initialCombinedSize.width : 1;
-  const scaleY = initialCombinedSize.height !== 0 ? newCombinedSize.height / initialCombinedSize.height : 1;
+  let scaleX = initialCombinedSize.width !== 0 ? newCombinedSize.width / initialCombinedSize.width : 1;
+  let scaleY = initialCombinedSize.height !== 0 ? newCombinedSize.height / initialCombinedSize.height : 1;
+
+  // 텍스트가 포함된 리사이즈: 텍스트처럼 동작
+  if (resizeHandle) {
+    if (resizeHandle === "top" || resizeHandle === "bottom") {
+      scaleX = scaleY;
+    } else {
+      scaleY = scaleX;
+    }
+  }
 
   // 초기 결합된 바운딩 박스의 중심점
   const initialCombinedCenter = {
