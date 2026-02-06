@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Point } from "../types";
 import { movePath, moveShape, moveText } from "../utils";
+import { pushPathToYjs, pushShapeToYjs, pushTextToYjs } from "../utils/yjsSync.utils";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
 import { useTextStore } from "./textStore";
@@ -26,7 +27,7 @@ export const useMoveStore = create<MoveStore>(() => ({
         .map((path) => movePath(path, offset));
 
       yjsData.paths.doc?.transact(() => {
-        movedPaths.forEach((path) => yjsData.paths.set(path.id, path));
+        movedPaths.forEach((path) => pushPathToYjs(path));
       });
       return;
     }
@@ -40,7 +41,7 @@ export const useMoveStore = create<MoveStore>(() => ({
         .map((shape) => moveShape(shape, offset));
 
       yjsData.shapes.doc?.transact(() => {
-        movedShapes.forEach((shape) => yjsData.shapes.set(shape.id, shape));
+        movedShapes.forEach((shape) => pushShapeToYjs(shape));
       });
       return;
     }
@@ -54,7 +55,7 @@ export const useMoveStore = create<MoveStore>(() => ({
         .map((text) => moveText(text, offset));
 
       yjsData.texts.doc?.transact(() => {
-        movedTexts.forEach((text) => yjsData.texts.set(text.id, text));
+        movedTexts.forEach((text) => pushTextToYjs(text));
       });
       return;
     }

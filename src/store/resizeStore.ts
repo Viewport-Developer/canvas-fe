@@ -5,6 +5,7 @@ import {
   scaleShapeByCombinedBoundingBox,
   scaleTextByCombinedBoundingBox,
 } from "../utils";
+import { pushPathToYjs, pushShapeToYjs, pushTextToYjs } from "../utils/yjsSync.utils";
 import { usePathStore } from "./pathStore";
 import { useShapeStore } from "./shapeStore";
 import { useTextStore } from "./textStore";
@@ -29,26 +30,23 @@ export const useResizeStore = create<ResizeStore>(() => ({
       const pathsArray = pathStore.paths;
       const initialPaths = initialItems as Path[];
 
-      const updatedPaths = pathsArray.map((path) => {
-        if (!selectionStore.selectedPaths.has(path.id)) return path;
+      const updatedPaths = pathsArray
+        .filter((path) => selectionStore.selectedPaths.has(path.id))
+        .map((path) => {
+          const initialPath = initialPaths.find((p) => p.id === path.id);
+          if (!initialPath) return null;
 
-        const initialPath = initialPaths.find((p) => p.id === path.id);
-        if (!initialPath) return path;
-
-        return scalePathByCombinedBoundingBox(
-          initialPath,
-          initialPath.boundingBox,
-          initialBoundingBox,
-          newBoundingBox
-        );
-      });
+          return scalePathByCombinedBoundingBox(
+            initialPath,
+            initialPath.boundingBox,
+            initialBoundingBox,
+            newBoundingBox
+          );
+        })
+        .filter((path) => path !== null) as Path[];
 
       yjsData.paths.doc?.transact(() => {
-        for (let i = 0; i < pathsArray.length; i++) {
-          if (selectionStore.selectedPaths.has(pathsArray[i].id)) {
-            yjsData.paths.set(pathsArray[i].id, updatedPaths[i]);
-          }
-        }
+        updatedPaths.forEach((path) => pushPathToYjs(path));
       });
       return;
     }
@@ -60,26 +58,23 @@ export const useResizeStore = create<ResizeStore>(() => ({
       const shapesArray = shapeStore.shapes;
       const initialShapes = initialItems as Shape[];
 
-      const updatedShapes = shapesArray.map((shape) => {
-        if (!selectionStore.selectedShapes.has(shape.id)) return shape;
+      const updatedShapes = shapesArray
+        .filter((shape) => selectionStore.selectedShapes.has(shape.id))
+        .map((shape) => {
+          const initialShape = initialShapes.find((s) => s.id === shape.id);
+          if (!initialShape) return null;
 
-        const initialShape = initialShapes.find((s) => s.id === shape.id);
-        if (!initialShape) return shape;
-
-        return scaleShapeByCombinedBoundingBox(
-          initialShape,
-          initialShape.boundingBox,
-          initialBoundingBox,
-          newBoundingBox
-        );
-      });
+          return scaleShapeByCombinedBoundingBox(
+            initialShape,
+            initialShape.boundingBox,
+            initialBoundingBox,
+            newBoundingBox
+          );
+        })
+        .filter((shape) => shape !== null) as Shape[];
 
       yjsData.shapes.doc?.transact(() => {
-        for (let i = 0; i < shapesArray.length; i++) {
-          if (selectionStore.selectedShapes.has(shapesArray[i].id)) {
-            yjsData.shapes.set(shapesArray[i].id, updatedShapes[i]);
-          }
-        }
+        updatedShapes.forEach((shape) => pushShapeToYjs(shape));
       });
       return;
     }
@@ -91,27 +86,24 @@ export const useResizeStore = create<ResizeStore>(() => ({
       const textsArray = textStore.texts;
       const initialTexts = initialItems as Text[];
 
-      const updatedTexts = textsArray.map((text) => {
-        if (!selectionStore.selectedTexts.has(text.id)) return text;
+      const updatedTexts = textsArray
+        .filter((text) => selectionStore.selectedTexts.has(text.id))
+        .map((text) => {
+          const initialText = initialTexts.find((t) => t.id === text.id);
+          if (!initialText) return null;
 
-        const initialText = initialTexts.find((t) => t.id === text.id);
-        if (!initialText) return text;
-
-        return scaleTextByCombinedBoundingBox(
-          initialText,
-          initialText.boundingBox,
-          initialBoundingBox,
-          newBoundingBox,
-          resizeHandle
-        );
-      });
+          return scaleTextByCombinedBoundingBox(
+            initialText,
+            initialText.boundingBox,
+            initialBoundingBox,
+            newBoundingBox,
+            resizeHandle
+          );
+        })
+        .filter((text) => text !== null) as Text[];
 
       yjsData.texts.doc?.transact(() => {
-        for (let i = 0; i < textsArray.length; i++) {
-          if (selectionStore.selectedTexts.has(textsArray[i].id)) {
-            yjsData.texts.set(textsArray[i].id, updatedTexts[i]);
-          }
-        }
+        updatedTexts.forEach((text) => pushTextToYjs(text));
       });
     }
   },
