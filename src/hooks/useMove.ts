@@ -66,19 +66,11 @@ export const useMove = () => {
         y: point.y - prevPosition.y,
       };
 
-      if (selectedPaths.size > 0) {
-        moveSelected("path", offset);
-      }
-      if (selectedShapes.size > 0) {
-        moveSelected("shape", offset);
-      }
-      if (selectedTexts.size > 0) {
-        moveSelected("text", offset);
-      }
+      moveSelected(offset);
 
       setPrevPosition(point);
     },
-    [isMoving, prevPosition, selectedPaths, selectedShapes, selectedTexts, moveSelected]
+    [isMoving, prevPosition, moveSelected]
   );
 
   // 이동을 종료합니다.

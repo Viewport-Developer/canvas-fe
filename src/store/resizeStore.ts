@@ -17,94 +17,74 @@ export type ResizeStore = {
 };
 
 export const useResizeStore = create<ResizeStore>(() => ({
-  resizeSelected: ({ type, newBoundingBox, initialBoundingBox, initialItems, resizeHandle }) => {
+  resizeSelected: ({ newBoundingBox, initialBoundingBox, initialPaths, initialShapes, initialTexts, resizeHandle }) => {
     const { yjsData } = useYjsConnectionStore.getState();
     const selectionStore = useSelectionStore.getState();
 
     if (!yjsData) return;
 
-    if (type === "path") {
-      if (selectionStore.selectedPaths.size === 0) return;
+    const pathStore = usePathStore.getState();
+    const shapeStore = useShapeStore.getState();
+    const textStore = useTextStore.getState();
 
-      const pathStore = usePathStore.getState();
-      const pathsArray = pathStore.paths;
-      const initialPaths = initialItems as Path[];
+    // 변경된 요소들 수집
+    const updatedPaths = pathStore.paths
+      .filter((path) => selectionStore.selectedPaths.has(path.id))
+      .map((path) => {
+        const initialPath = initialPaths.find((p) => p.id === path.id);
+        if (!initialPath) return null;
 
-      const updatedPaths = pathsArray
-        .filter((path) => selectionStore.selectedPaths.has(path.id))
-        .map((path) => {
-          const initialPath = initialPaths.find((p) => p.id === path.id);
-          if (!initialPath) return null;
+        return scalePathByCombinedBoundingBox(
+          initialPath,
+          initialPath.boundingBox,
+          initialBoundingBox,
+          newBoundingBox
+        );
+      })
+      .filter((path) => path !== null) as Path[];
 
-          return scalePathByCombinedBoundingBox(
-            initialPath,
-            initialPath.boundingBox,
-            initialBoundingBox,
-            newBoundingBox
-          );
-        })
-        .filter((path) => path !== null) as Path[];
+    const updatedShapes = shapeStore.shapes
+      .filter((shape) => selectionStore.selectedShapes.has(shape.id))
+      .map((shape) => {
+        const initialShape = initialShapes.find((s) => s.id === shape.id);
+        if (!initialShape) return null;
 
-      yjsData.paths.doc?.transact(() => {
-        updatedPaths.forEach((path) => pushPathToYjs(path));
-      });
+        return scaleShapeByCombinedBoundingBox(
+          initialShape,
+          initialShape.boundingBox,
+          initialBoundingBox,
+          newBoundingBox
+        );
+      })
+      .filter((shape) => shape !== null) as Shape[];
+
+    const updatedTexts = textStore.texts
+      .filter((text) => selectionStore.selectedTexts.has(text.id))
+      .map((text) => {
+        const initialText = initialTexts.find((t) => t.id === text.id);
+        if (!initialText) return null;
+
+        return scaleTextByCombinedBoundingBox(
+          initialText,
+          initialText.boundingBox,
+          initialBoundingBox,
+          newBoundingBox,
+          resizeHandle
+        );
+      })
+      .filter((text) => text !== null) as Text[];
+
+    // 변경된 요소가 없으면 종료
+    if (updatedPaths.length === 0 && updatedShapes.length === 0 && updatedTexts.length === 0) {
       return;
     }
 
-    if (type === "shape") {
-      if (selectionStore.selectedShapes.size === 0) return;
-
-      const shapeStore = useShapeStore.getState();
-      const shapesArray = shapeStore.shapes;
-      const initialShapes = initialItems as Shape[];
-
-      const updatedShapes = shapesArray
-        .filter((shape) => selectionStore.selectedShapes.has(shape.id))
-        .map((shape) => {
-          const initialShape = initialShapes.find((s) => s.id === shape.id);
-          if (!initialShape) return null;
-
-          return scaleShapeByCombinedBoundingBox(
-            initialShape,
-            initialShape.boundingBox,
-            initialBoundingBox,
-            newBoundingBox
-          );
-        })
-        .filter((shape) => shape !== null) as Shape[];
-
-      yjsData.shapes.doc?.transact(() => {
-        updatedShapes.forEach((shape) => pushShapeToYjs(shape));
-      });
-      return;
-    }
-
-    if (type === "text") {
-      if (selectionStore.selectedTexts.size === 0) return;
-
-      const textStore = useTextStore.getState();
-      const textsArray = textStore.texts;
-      const initialTexts = initialItems as Text[];
-
-      const updatedTexts = textsArray
-        .filter((text) => selectionStore.selectedTexts.has(text.id))
-        .map((text) => {
-          const initialText = initialTexts.find((t) => t.id === text.id);
-          if (!initialText) return null;
-
-          return scaleTextByCombinedBoundingBox(
-            initialText,
-            initialText.boundingBox,
-            initialBoundingBox,
-            newBoundingBox,
-            resizeHandle
-          );
-        })
-        .filter((text) => text !== null) as Text[];
-
-      yjsData.texts.doc?.transact(() => {
-        updatedTexts.forEach((text) => pushTextToYjs(text));
-      });
-    }
+    // 하나의 transact로 모든 변경사항 처리
+    const doc = yjsData.paths.doc || yjsData.shapes.doc || yjsData.texts.doc;
+    doc?.transact(() => {
+      updatedPaths.forEach((path) => pushPathToYjs(path));
+      updatedShapes.forEach((shape) => pushShapeToYjs(shape));
+      updatedTexts.forEach((text) => pushTextToYjs(text));
+    });
   },
 }));

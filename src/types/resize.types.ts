@@ -4,9 +4,10 @@ import type { Shape } from "./shape.types";
 import type { Text } from "./text.types";
 
 export type ResizeSelected = {
-  type: "path" | "shape" | "text";
   newBoundingBox: BoundingBox;
   initialBoundingBox: BoundingBox;
-  initialItems: Path[] | Shape[] | Text[];
+  initialPaths: Path[];
+  initialShapes: Shape[];
+  initialTexts: Text[];
   resizeHandle?: ResizeHandleType;
 };

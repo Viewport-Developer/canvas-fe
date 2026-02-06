@@ -74,39 +74,20 @@ export const useResize = () => {
       );
 
       // 단일/다중 구분 없이 결합 바운딩 박스 로직만 사용 (단일은 결합 박스에 하나만 있는 경우)
-      if (selectedPaths.size > 0) {
-        resizeSelected({
-          type: "path",
-          newBoundingBox,
-          initialBoundingBox,
-          initialItems: initialPaths,
-        });
-      }
-      if (selectedShapes.size > 0) {
-        resizeSelected({
-          type: "shape",
-          newBoundingBox,
-          initialBoundingBox,
-          initialItems: initialShapes,
-        });
-      }
-      if (selectedTexts.size > 0) {
-        resizeSelected({
-          type: "text",
-          newBoundingBox,
-          initialBoundingBox,
-          initialItems: initialTexts,
-          resizeHandle,
-        });
-      }
+      resizeSelected({
+        newBoundingBox,
+        initialBoundingBox,
+        initialPaths,
+        initialShapes,
+        initialTexts,
+        resizeHandle,
+      });
     },
     [
       isResizing,
       resizeHandle,
       initialBoundingBox,
       initialClickPosition,
-      selectedPaths,
-      selectedShapes,
       selectedTexts,
       initialPaths,
       initialShapes,

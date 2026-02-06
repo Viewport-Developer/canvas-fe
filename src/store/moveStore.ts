@@ -9,55 +9,43 @@ import { useSelectionStore } from "./selectionStore";
 import { useYjsConnectionStore } from "./yjsStore";
 
 export type MoveStore = {
-  moveSelected: (type: "path" | "shape" | "text", offset: Point) => void;
+  moveSelected: (offset: Point) => void;
 };
 
 export const useMoveStore = create<MoveStore>(() => ({
-  moveSelected: (type, offset) => {
+  moveSelected: (offset) => {
     const { yjsData } = useYjsConnectionStore.getState();
     const selectionStore = useSelectionStore.getState();
     if (!yjsData) return;
 
-    if (type === "path") {
-      const pathStore = usePathStore.getState();
-      if (selectionStore.selectedPaths.size === 0) return;
+    const pathStore = usePathStore.getState();
+    const shapeStore = useShapeStore.getState();
+    const textStore = useTextStore.getState();
 
-      const movedPaths = pathStore.paths
-        .filter((path) => selectionStore.selectedPaths.has(path.id))
-        .map((path) => movePath(path, offset));
+    // 변경된 요소들 수집
+    const movedPaths = pathStore.paths
+      .filter((path) => selectionStore.selectedPaths.has(path.id))
+      .map((path) => movePath(path, offset));
 
-      yjsData.paths.doc?.transact(() => {
-        movedPaths.forEach((path) => pushPathToYjs(path));
-      });
+    const movedShapes = shapeStore.shapes
+      .filter((shape) => selectionStore.selectedShapes.has(shape.id))
+      .map((shape) => moveShape(shape, offset));
+
+    const movedTexts = textStore.texts
+      .filter((text) => selectionStore.selectedTexts.has(text.id))
+      .map((text) => moveText(text, offset));
+
+    // 변경된 요소가 없으면 종료
+    if (movedPaths.length === 0 && movedShapes.length === 0 && movedTexts.length === 0) {
       return;
     }
 
-    if (type === "shape") {
-      const shapeStore = useShapeStore.getState();
-      if (selectionStore.selectedShapes.size === 0) return;
-
-      const movedShapes = shapeStore.shapes
-        .filter((shape) => selectionStore.selectedShapes.has(shape.id))
-        .map((shape) => moveShape(shape, offset));
-
-      yjsData.shapes.doc?.transact(() => {
-        movedShapes.forEach((shape) => pushShapeToYjs(shape));
-      });
-      return;
-    }
-
-    if (type === "text") {
-      const textStore = useTextStore.getState();
-      if (selectionStore.selectedTexts.size === 0) return;
-
-      const movedTexts = textStore.texts
-        .filter((text) => selectionStore.selectedTexts.has(text.id))
-        .map((text) => moveText(text, offset));
-
-      yjsData.texts.doc?.transact(() => {
-        movedTexts.forEach((text) => pushTextToYjs(text));
-      });
-      return;
-    }
+    // 하나의 transact로 모든 변경사항 처리
+    const doc = yjsData.paths.doc || yjsData.shapes.doc || yjsData.texts.doc;
+    doc?.transact(() => {
+      movedPaths.forEach((path) => pushPathToYjs(path));
+      movedShapes.forEach((shape) => pushShapeToYjs(shape));
+      movedTexts.forEach((text) => pushTextToYjs(text));
+    });
   },
 }));
