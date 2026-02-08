@@ -44,7 +44,7 @@ export const useYjsConnection = (canvasId: string, wsUrl: string): void => {
     const connect = () => {
       providerRef.current?.destroy();
 
-      const provider = new WebsocketProvider(wsUrl, canvasId, doc);
+      const provider = new WebsocketProvider(`${wsUrl}/canvas`, canvasId, doc);
       useYjsConnectionStore.getState().setClientId(provider.awareness.clientID);
       useYjsConnectionStore.getState().setAwareness(provider.awareness);
 
