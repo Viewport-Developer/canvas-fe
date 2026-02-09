@@ -1,5 +1,6 @@
 import type { Path, Shape, Text } from "../types";
 import { CANVAS_CONFIG } from "../constants/canvas.constants";
+import { expandPoints } from "./pathCurve.utils";
 
 // 단일 경로를 그립니다.
 export const drawPath = (ctx: CanvasRenderingContext2D, path: Path, isInPathsToErase: boolean = false) => {
@@ -12,10 +13,40 @@ export const drawPath = (ctx: CanvasRenderingContext2D, path: Path, isInPathsToE
   ctx.lineJoin = "round";
   ctx.globalAlpha = isInPathsToErase ? CANVAS_CONFIG.ERASE_PREVIEW_ALPHA : 1;
 
-  ctx.moveTo(path.points[0].x, path.points[0].y);
+  const points = path.points;
+  ctx.moveTo(points[0].x, points[0].y);
 
-  for (let i = 1; i < path.points.length; i++) {
-    ctx.lineTo(path.points[i].x, path.points[i].y);
+  if (points.length < 3) {
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+  } else {
+    const p = points.flatMap((pt) => [pt.x, pt.y]);
+    const expanded = expandPoints(p, CANVAS_CONFIG.DEFAULT_PATH_TENSION);
+    let prevC2x: number | null = null;
+    let prevC2y: number | null = null;
+    const len = p.length;
+
+    for (let i = 0; i < expanded.length; i += 6) {
+      const c1x = expanded[i];
+      const c1y = expanded[i + 1];
+      const midX = expanded[i + 2];
+      const midY = expanded[i + 3];
+      const c2x = expanded[i + 4];
+      const c2y = expanded[i + 5];
+
+      if (prevC2x !== null && prevC2y !== null) {
+        ctx.bezierCurveTo(prevC2x, prevC2y, c1x, c1y, midX, midY);
+      } else {
+        ctx.bezierCurveTo(p[0], p[1], c1x, c1y, midX, midY);
+      }
+      prevC2x = c2x;
+      prevC2y = c2y;
+    }
+
+    if (prevC2x !== null && prevC2y !== null) {
+      ctx.bezierCurveTo(prevC2x, prevC2y, p[len - 2], p[len - 1], p[len - 2], p[len - 1]);
+    }
   }
 
   ctx.stroke();

@@ -13,6 +13,8 @@ export const CANVAS_CONFIG = {
   DRAW_THROTTLE_MS: 16,
   // 최소 포인트 간 거리
   MIN_POINT_DISTANCE: 2,
+  // 경로 곡선 tension (0~1, 클수록 더 휘어짐)
+  DEFAULT_PATH_TENSION: 0.5,
 
   // 지우개 반경
   ERASER_RADIUS: 24,
