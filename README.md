@@ -22,6 +22,10 @@ React + TypeScript 기반의 실시간 협업 캔버스 드로잉 애플리케�
 - **실시간 동기화**: y.js, y-websocket
 - **백엔드**: TEMP2 프로젝트 (Node.js 클러스터 + MongoDB)
 
+## 전체 아키텍처
+
+![전체 아키텍처](https://tennis-upload.s3.ap-northeast-2.amazonaws.com/pictures/mermaid-diagram.png)
+
 ## 설치 및 실행
 
 ```bash
