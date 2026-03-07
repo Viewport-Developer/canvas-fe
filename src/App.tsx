@@ -3,7 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import styled from "styled-components";
 import ToolBar from "./components/ToolBar";
 import Canvas from "./components/Canvas";
-import CopyLink from "./components/ConnectionStatus";
+import CopyLink from "./components/CopyLink";
 import { useYjsConnection } from "./hooks/useYjsConnection";
 import { useYjsConnectionStore } from "./store/yjsStore";
 import { bindYjsToZustand } from "./utils";
