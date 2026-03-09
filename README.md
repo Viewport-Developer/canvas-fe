@@ -24,7 +24,7 @@ React + TypeScript 기반의 실시간 협업 캔버스 드로잉 애플리케�
 
 ## 전체 아키텍처
 
-![전체 아키텍처](https://tennis-upload.s3.ap-northeast-2.amazonaws.com/pictures/mermaid-diagram.png)
+![전체 아키텍처](https://tennis-upload.s3.ap-northeast-2.amazonaws.com/pictures/architecture.png)
 
 ## 주요 파일
 
