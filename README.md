@@ -20,7 +20,7 @@ React + TypeScript 기반의 실시간 협업 캔버스 드로잉 애플리케�
 - **상태 관리**: Zustand
 - **스타일링**: styled-components
 - **실시간 동기화**: y.js, y-websocket
-- **백엔드**: TEMP2 프로젝트 (Node.js 클러스터 + MongoDB)
+- **백엔드**: [canvas-be 프로젝트](https://github.com/Viewport-Developer/canvas-be) (Node.js 클러스터 + MongoDB)
 
 ## 전체 아키텍처
 
